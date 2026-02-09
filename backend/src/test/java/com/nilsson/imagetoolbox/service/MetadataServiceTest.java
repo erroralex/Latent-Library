@@ -10,9 +10,10 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- Unit tests for {@link MetadataService} focusing on the extraction and parsing
- of AI generation metadata from various raw string formats.
-*/
+ * Unit tests for MetadataService.
+ * Focuses on the extraction and parsing of AI generation metadata from raw string formats.
+ * Verifies correct identification of software, prompts, and technical parameters.
+ */
 class MetadataServiceTest {
 
     private final MetadataService service = new MetadataService(List.of(new ComfyUIStrategy()));
@@ -49,14 +50,11 @@ class MetadataServiceTest {
 
         assertNotNull(results, "Result map should not be null");
 
-        // 1. Identity
         assertEquals("ComfyUI", results.get("Software"), "Should identify software as ComfyUI");
 
-        // 2. Prompt Extraction
         assertTrue(results.containsKey("Prompt"), "Should contain Prompt key");
         assertTrue(results.get("Prompt").contains("beautiful landscape"), "Prompt should contain the text input");
 
-        // 3. Technical Parameters
         assertEquals("847593291", results.get("Seed"), "Seed should match KSampler input");
         assertEquals("25", results.get("Steps"), "Steps should match KSampler input");
 

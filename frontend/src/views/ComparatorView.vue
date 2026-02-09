@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * ComparatorView.vue
+ *
+ * Provides a side-by-side image comparison tool with a draggable slider.
+ * Users can drop two images into slots A and B to visually compare differences.
+ */
 import { ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 

@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * FolderNav.vue
+ *
+ * A sidebar component for navigating the file system and collections.
+ * Displays a tree view of drives, pinned folders, and user collections.
+ * Supports lazy loading of folder contents and context menu actions.
+ */
 import {ref, onMounted} from 'vue';
 import axios from 'axios';
 import {useBrowserStore} from '@/stores/browser';
@@ -15,15 +22,13 @@ const toast = useToast();
 const nodes = ref([]);
 const expandedKeys = ref({});
 const selectedKey = ref(null);
-const contextMenuSelection = ref(null); // Added for context menu support
+const contextMenuSelection = ref(null);
 const cm = ref();
 const menuModel = ref([]);
 
-// Load initial structure
 const loadTree = async () => {
   const rootNodes = [];
 
-  // Collections Section
   try {
     const colRes = await axios.get('/api/collections');
     const colChildren = colRes.data.map(c => ({
@@ -40,13 +45,12 @@ const loadTree = async () => {
       icon: 'pi pi-list',
       children: colChildren,
       selectable: false,
-      type: 'root' // Added type
+      type: 'root'
     });
   } catch (e) {
     console.error(e);
   }
 
-  // Pinned Section
   try {
     const pinRes = await axios.get('/api/folders/pinned');
     const pinChildren = pinRes.data.map(p => ({
@@ -55,7 +59,7 @@ const loadTree = async () => {
       data: p,
       icon: 'pi pi-thumbtack',
       type: 'pinned',
-      leaf: false // Can be expanded to show subfolders
+      leaf: false
     }));
     rootNodes.push({
       key: 'pinned',
@@ -63,13 +67,12 @@ const loadTree = async () => {
       icon: 'pi pi-bookmark',
       children: pinChildren,
       selectable: false,
-      type: 'root' // Added type
+      type: 'root'
     });
   } catch (e) {
     console.error(e);
   }
 
-  // Drives Section
   try {
     const driveRes = await axios.get('/api/folders/roots');
     const driveChildren = driveRes.data.map(d => ({
@@ -86,14 +89,13 @@ const loadTree = async () => {
       icon: 'pi pi-server',
       children: driveChildren,
       selectable: false,
-      type: 'root' // Added type
+      type: 'root'
     });
   } catch (e) {
     console.error(e);
   }
 
   nodes.value = rootNodes;
-  // Auto-expand top-level sections
   expandedKeys.value = {'collections': true, 'pinned': true, 'drives': true};
 };
 
@@ -109,18 +111,17 @@ const onNodeExpand = async (node) => {
         data: f,
         icon: 'pi pi-folder',
         type: 'folder',
-        leaf: false // Assume folders have children for now
+        leaf: false
       }));
     } catch (e) {
       console.error('Failed to load children', e);
-      node.leaf = true; // Mark as leaf if error or empty
+      node.leaf = true;
     }
   }
 };
 
 const onNodeSelect = (node) => {
   if (node.type === 'collection') {
-    // TODO: Implement collection loading in store
     console.log('Selected collection:', node.data);
   } else if (node.type === 'folder' || node.type === 'pinned') {
     store.loadFolder(node.data.path);
@@ -193,7 +194,6 @@ const openInSpeedSorter = async (path) => {
 };
 
 const openInExplorer = async (path) => {
-  // This requires backend support to open system explorer
   try {
     await axios.post('/api/system/open-folder', null, {params: {path}});
   } catch (e) {

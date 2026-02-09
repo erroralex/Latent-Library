@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
+/**
+ * Pinia store for managing the state of the Image Browser.
+ * Handles file lists, selection, metadata fetching, filtering, and view modes.
+ * Acts as the central data source for the browser UI components.
+ */
 export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],

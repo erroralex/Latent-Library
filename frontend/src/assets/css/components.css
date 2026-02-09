@@ -6,6 +6,7 @@
     font-weight: 600 !important;
     transition: all 0.2s ease !important;
     backdrop-filter: blur(4px) !important;
+    cursor: pointer !important; /* Ensure pointer cursor */
 }
 
 .p-button:enabled:hover {
@@ -78,6 +79,10 @@
     font-weight: 500 !important;
 }
 
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link {
+    cursor: pointer !important; /* Ensure pointer cursor */
+}
+
 .p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link:hover {
     background: rgba(255, 255, 255, 0.05) !important;
     border-radius: 6px !important;
@@ -126,6 +131,7 @@
     background: #0b0c10 !important;
     box-shadow: var(--glow-soft) !important;
     transition: transform 0.2s !important;
+    cursor: grab !important; /* Ensure grab cursor */
 }
 
 .p-slider .p-slider-handle:hover {

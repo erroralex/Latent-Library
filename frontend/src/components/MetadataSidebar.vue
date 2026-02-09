@@ -1,4 +1,12 @@
 <script setup>
+/**
+ * MetadataSidebar.vue
+ *
+ * Displays detailed metadata for the currently selected image.
+ * Shows prompts, negative prompts, generation parameters (Model, Seed, CFG, etc.),
+ * and allows users to rate the image.
+ * Includes copy-to-clipboard functionality for prompts.
+ */
 import { useBrowserStore } from '@/stores/browser';
 import { computed } from 'vue';
 import Sidebar from 'primevue/sidebar';
@@ -20,17 +28,14 @@ const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
 };
 
-// Helper to parse LoRAs from string or prompt
 const loras = computed(() => {
     if (meta.value.Loras) return meta.value.Loras.split(',').map(s => s.trim());
-    // Fallback regex parsing could go here if needed
     return [];
 });
 </script>
 
 <template>
     <div class="metadata-sidebar h-full flex flex-column surface-card border-left-1 surface-border" style="width: 380px; min-width: 380px;">
-        <!-- Header -->
         <div class="p-3 border-bottom-1 surface-border">
             <div class="font-bold text-lg mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap" :title="fileName">
                 {{ fileName }}
@@ -41,9 +46,7 @@ const loras = computed(() => {
             </div>
         </div>
 
-        <!-- Content -->
         <div class="flex-grow-1 overflow-y-auto p-3">
-            <!-- Rating -->
             <div class="flex justify-content-center gap-1 mb-3">
                 <Button v-for="i in 5" :key="i"
                         :icon="i <= store.currentRating ? 'pi pi-star-fill' : 'pi pi-star'"
@@ -53,7 +56,6 @@ const loras = computed(() => {
 
             <Divider />
 
-            <!-- Prompts -->
             <div class="mb-3">
                 <div class="flex justify-content-between align-items-center mb-1">
                     <span class="font-bold text-sm text-500">PROMPT</span>
@@ -76,7 +78,6 @@ const loras = computed(() => {
 
             <Divider />
 
-            <!-- Tech Grid -->
             <div class="grid grid-nogutter gap-3">
                 <div class="col-12">
                     <label class="block text-xs text-500 mb-1">Model</label>
@@ -102,7 +103,6 @@ const loras = computed(() => {
 
             <Divider />
 
-            <!-- LoRAs -->
             <div class="mb-3">
                 <span class="block font-bold text-sm text-500 mb-2">RESOURCES / LoRAs</span>
                 <div class="flex flex-wrap gap-2">

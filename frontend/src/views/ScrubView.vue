@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * ScrubView.vue
+ *
+ * Provides a user interface for the Metadata Scrubber tool.
+ * Allows users to upload an image, preview it, and download a "clean" version
+ * with all metadata (EXIF, prompts, workflow data) stripped out.
+ */
 import { ref } from 'vue';
 import axios from 'axios';
 import FileUpload from 'primevue/fileupload';
