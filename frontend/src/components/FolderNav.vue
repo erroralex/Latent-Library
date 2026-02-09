@@ -147,7 +147,7 @@ onMounted(loadTree);
       <span class="text-gradient">Library</span>
     </div>
 
-    <div class="flex-grow-1 overflow-y-auto" style="padding-bottom: 20px;">
+    <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
       <Tree
           :value="nodes"
           selectionMode="single"
@@ -180,7 +180,7 @@ onMounted(loadTree);
   -webkit-text-fill-color: transparent;
 }
 
-/* Force Tree Container Transparency */
+/* Force Tree Transparency & Styling */
 :deep(.p-tree) {
   background: transparent !important;
   border: none !important;
@@ -189,32 +189,112 @@ onMounted(loadTree);
 
 /* Base Node Style */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
-  padding: 0.6rem 0.8rem;
-  margin: 6px 12px;
+  padding: 0.5rem 0.75rem;
+  margin: 4px 0;
   border-radius: 6px;
-  color: #9ca3af;
-  transition: all 0.2s ease-out;
-  border: 1px solid transparent;
+  color: #9ca3af; /* text-gray-400 */
+  transition: all 0.2s ease;
+  border: none;
+  font-weight: 600; /* font-semibold */
   position: relative;
+  z-index: 1;
+  background: transparent !important;
+  overflow: visible !important;
 }
 
-/* Hover & Selected State - Black Square + Neon Glow (No Outline) */
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover),
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
-  background: #000000 !important;
-  border: 1px solid transparent !important; /* Transparent Border */
-  color: #66fcf1 !important;
+/* Remove default focus outline */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus) {
+  box-shadow: none !important;
+}
 
-  /* Strong Cyan Glow */
-  box-shadow: 0 0 20px rgba(102, 252, 241, 0.5) !important;
+/* 1. Gradient Glow Layer (Deepest) */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::before) {
+  content: '';
+  position: absolute;
+  inset: -1px; /* Tighter inset */
+  background: var(--app-grad-hover);
+  border-radius: 6px;
+  z-index: -2;
+  opacity: 0;
+  filter: blur(4px); /* Tighter glow */
+  transition: opacity 0.3s ease;
+}
 
-  z-index: 10;
+/* 2. Background Layer (Middle) */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::after) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border-radius: 6px;
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+/* Hover State - Black Background + White Text + Glow */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover) {
+  color: white !important;
   transform: translateY(-1px);
 }
 
-/* Icons inherit color */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::before) {
+  opacity: 0.8;
+}
+
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::after) {
+  background: #000000; /* Opaque black */
+}
+
+/* Reset gradient text on hover */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-label),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-icon) {
+  background: none !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+}
+
+/* Selected State - Black Background + Gradient Text + Glow (Static) */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
+  /* Gradient Text applied to label and icon */
+  color: transparent !important;
+}
+
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-label),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-icon) {
+  background-image: var(--app-grad-hover);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent !important;
+  display: inline-block; /* Ensure background-clip works */
+}
+
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::before) {
+  opacity: 0.8;
+}
+
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::after) {
+  background: #000000; /* Opaque black */
+}
+
+/* Selected Hover - Keep selected style */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight:hover) {
+  background: transparent !important; /* Let pseudo handle it */
+}
+
+/* Icon Colors - Inherit from text to match gradient behavior */
 :deep(.p-tree .p-treenode-icon) {
   color: inherit !important;
   transition: color 0.2s;
+}
+
+/* Toggler (Arrow) Styling */
+:deep(.p-tree .p-tree-toggler) {
+  color: #6b7280; /* text-gray-500 */
+  margin-right: 0.25rem;
+}
+:deep(.p-tree .p-tree-toggler:hover) {
+  color: white;
+  background: transparent;
 }
 </style>
