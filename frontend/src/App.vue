@@ -73,8 +73,8 @@ const closeWindow = () => {
         <Button v-for="item in items" :key="item.path"
                 :label="item.label"
                 :icon="item.icon"
-                class="p-button-text font-semibold text-lg px-4 py-2 transition-colors transition-duration-200"
-                :class="[ isActive(item.path) ? 'text-cyan-400 bg-white-alpha-10' : 'text-gray-400 hover:text-white hover:bg-white-alpha-10' ]"
+                class="nav-btn p-button-text font-semibold text-lg px-4 py-2 transition-all transition-duration-200"
+                :class="{ 'active-nav-btn': isActive(item.path) }"
                 @click="navigate(item.path)" />
       </div>
 
@@ -116,11 +116,93 @@ const closeWindow = () => {
   -webkit-app-region: no-drag;
 }
 
+/* Nav Button Styling */
+.nav-btn {
+  color: #9ca3af !important; /* text-gray-400 */
+  border-radius: 8px;
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* 1. Gradient Glow Layer (Deepest) */
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px; /* Tighter inset */
+  background: var(--app-grad-hover);
+  border-radius: 9px;
+  z-index: -2;
+  opacity: 0;
+  filter: blur(4px); /* Tighter glow */
+  transition: opacity 0.3s ease;
+}
+
+/* 2. Background Layer (Middle) */
+.nav-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border-radius: 8px;
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+/* Hover: Black Background + White Text + Glow */
+.nav-btn:hover {
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+.nav-btn:hover::before {
+  opacity: 0.8;
+}
+
+.nav-btn:hover::after {
+  background: #000000; /* Opaque black */
+}
+
+/* Reset gradient text on hover to ensure it's white */
+:deep(.nav-btn:hover .p-button-label),
+:deep(.nav-btn:hover .p-button-icon) {
+  background: none !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+}
+
+/* Active: Black Background + Gradient Text + Glow (Static) */
+.active-nav-btn::before {
+  opacity: 0.8;
+}
+
+.active-nav-btn::after {
+  background: #000000; /* Opaque black */
+}
+
+/* Apply gradient to text and icon ONLY when active */
+:deep(.active-nav-btn .p-button-label),
+:deep(.active-nav-btn .p-button-icon) {
+  background: var(--app-grad-hover);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent !important;
+}
+
 /* Specific override for the close button to ensure red hover */
 .window-close-btn:hover {
   background-color: var(--app-red-warning) !important;
   color: white !important;
   box-shadow: 0 0 15px rgba(255, 77, 77, 0.6) !important;
   background-image: none !important; /* Remove the global gradient */
+}
+
+/* Ensure close button icon doesn't get the gradient text effect */
+:deep(.window-close-btn:hover .p-button-icon) {
+  background: none !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
 }
 </style>

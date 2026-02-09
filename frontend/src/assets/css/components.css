@@ -1,22 +1,64 @@
 /* Buttons */
 .p-button {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: transparent !important; /* Use pseudo-element for background */
+    border: none !important; /* Border handled by pseudo-element */
     color: var(--text-primary) !important;
     font-weight: 600 !important;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-    backdrop-filter: blur(4px) !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-    border-radius: 8px !important;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    box-shadow: none !important; /* Shadow handled by pseudo-element */
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
 }
 
-/* HOVER: The Gradient Highlight you requested */
+/* 1. Gradient Glow Layer (Deepest) */
+.p-button::before {
+    content: '';
+    position: absolute;
+    inset: -1px; /* Tighter inset */
+    background: var(--app-grad-hover);
+    border-radius: 9px; /* Slightly larger than button radius (8px) */
+    z-index: -2;
+    opacity: 0;
+    filter: blur(4px); /* Tighter glow */
+    transition: opacity 0.3s ease;
+}
+
+/* 2. Background/Border Layer (Middle) */
+.p-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    z-index: -1;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* HOVER State */
 .p-button:enabled:hover {
-    background: var(--app-grad-hover) !important;
-    border-color: transparent !important;
-    box-shadow: 0 0 20px rgba(102, 252, 241, 0.4) !important; /* Glow effect */
-    color: #000000 !important; /* Black text creates high contrast on bright gradient */
-    transform: translateY(-2px) !important;
+    transform: translateY(-1px) !important; /* Reduced movement */
+    color: white !important;
+}
+
+/* Show Glow */
+.p-button:enabled:hover::before {
+    opacity: 0.8;
+}
+
+/* Darken Background to block glow center */
+.p-button:enabled:hover::after {
+    background: #000000;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure text is WHITE on hover, NOT gradient */
+.p-button:enabled:hover .p-button-label,
+.p-button:enabled:hover .p-button-icon {
+    background: none !important;
+    -webkit-text-fill-color: white !important;
+    color: white !important;
 }
 
 .p-button:enabled:active {
@@ -24,16 +66,14 @@
     opacity: 0.9;
 }
 
-.p-button.p-button-text {
-    background: transparent !important;
-    border-color: transparent !important;
-    color: var(--text-secondary) !important;
-    box-shadow: none !important;
+/* Text Buttons (Nav, Sidebar) - Default transparent */
+.p-button.p-button-text::after {
+    background: transparent;
+    border-color: transparent;
 }
 
-.p-button.p-button-text:enabled:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: var(--text-primary) !important;
+.p-button.p-button-text:enabled:hover::after {
+    background: #000000; /* Opaque black on hover */
 }
 
 /* Inputs */
@@ -75,7 +115,7 @@
 
 .p-treenode-content:hover {
     background: rgba(255, 255, 255, 0.05) !important;
-    color: var(--text-primary) !important;
+    color: white !important;
 }
 
 .p-treenode-content.p-highlight {
@@ -105,10 +145,10 @@
 }
 
 .p-contextmenu .p-menuitem-link:hover {
-    background: var(--app-grad-hover) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .p-contextmenu .p-menuitem-link:hover .p-menuitem-text,
 .p-contextmenu .p-menuitem-link:hover .p-menuitem-icon {
-    color: #000 !important; /* Black text on the bright gradient */
+    color: white !important;
 }
