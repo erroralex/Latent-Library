@@ -189,15 +189,15 @@ onUnmounted(() => {
             <div class="flex align-items-center gap-3">
                 <span class="text-xl font-bold text-gradient">Speed Sorter</span>
                 <Button label="Select Input" icon="pi pi-folder-open" @click="selectInput" class="p-button-sm" />
-                <span class="text-sm text-muted font-italic">{{ inputDir || 'No input folder selected' }}</span>
+                <span class="text-sm text-gray-400 font-italic">{{ inputDir || 'No input folder selected' }}</span>
             </div>
-            <span class="text-lg font-bold text-primary">{{ progress }}</span>
+            <span class="text-lg font-bold text-white">{{ progress }}</span>
         </div>
 
         <div class="flex-grow-1 flex gap-3 overflow-hidden">
             <div class="flex-grow-1 glass-panel border-round flex align-items-center justify-content-center relative overflow-hidden">
                 <img v-if="currentImageUrl" :src="currentImageUrl" class="max-w-full max-h-full shadow-8" style="object-fit: contain;" />
-                <div v-else class="text-2xl text-muted">
+                <div v-else class="text-2xl text-gray-500">
                     {{ inputDir ? 'No images found or all processed' : 'Select an input folder to start' }}
                 </div>
             </div>
@@ -205,7 +205,7 @@ onUnmounted(() => {
 
         <div class="mt-3 glass-panel p-3 border-round flex justify-content-center gap-4">
             <div v-for="(target, i) in targets" :key="i" class="flex flex-column align-items-center gap-1">
-                <span class="text-cyan-400 font-bold">Key [{{ i + 1 }}]</span>
+                <span class="text-gradient font-bold">Key [{{ i + 1 }}]</span>
                 <Button :label="target.name || 'Set Folder'"
                         @click="selectTarget(i)"
                         class="p-button-sm w-10rem text-overflow-ellipsis"
@@ -215,7 +215,7 @@ onUnmounted(() => {
 
             <div class="border-left-1 border-white-alpha-10 mx-2"></div>
 
-            <div class="flex flex-column gap-1 text-xs text-muted justify-content-center">
+            <div class="flex flex-column gap-1 text-xs text-gray-400 justify-content-center">
                 <span><strong class="text-white">DEL / X</strong> : Recycle Bin</span>
                 <span><strong class="text-white">Ctrl+Z</strong> : Undo</span>
                 <span><strong class="text-white">SPACE</strong> : Skip</span>
@@ -223,3 +223,18 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.text-gradient {
+    background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-panel {
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+</style>

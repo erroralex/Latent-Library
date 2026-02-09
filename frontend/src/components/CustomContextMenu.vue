@@ -132,9 +132,10 @@ defineExpose({ show, hide });
   align-items: center;
 }
 
+/* Hover: Gradient Background + Black Text */
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--app-grad-hover);
+  color: #000000;
 }
 
 .menu-item.disabled {
@@ -152,13 +153,20 @@ defineExpose({ show, hide });
 .menu-icon {
   margin-right: 12px;
   font-size: 14px;
-  color: #66fcf1; /* Neon Cyan */
+  color: #66fcf1; /* Neon Cyan Default */
   width: 16px;
   text-align: center;
+  transition: color 0.1s;
+}
+
+/* Icon turns black on hover to match text */
+.menu-item:hover .menu-icon {
+  color: #000000;
 }
 
 .menu-label {
   flex-grow: 1;
+  font-weight: 500;
 }
 
 .menu-separator {
