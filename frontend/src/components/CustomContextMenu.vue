@@ -1,0 +1,169 @@
+<script setup>
+import { ref, onBeforeUnmount } from 'vue';
+
+const props = defineProps({
+  model: {
+    type: Array,
+    default: () => []
+  }
+});
+
+const visible = ref(false);
+const x = ref(0);
+const y = ref(0);
+const menuRef = ref(null);
+
+// --- Public Methods ---
+
+const show = (event) => {
+  console.log("CustomContextMenu: Show triggered", event);
+
+  if (!event) {
+    console.error("CustomContextMenu: No event passed to show()");
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  // 1. Position immediately at mouse cursor
+  x.value = event.clientX;
+  y.value = event.clientY;
+
+  // 2. Show menu
+  visible.value = true;
+
+  // 3. Add global click listener to close it
+  // Delay slightly to prevent the current click from closing it immediately
+  setTimeout(() => {
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('contextmenu', closeMenu);
+    window.addEventListener('scroll', hide, { capture: true }); // Close on scroll
+  }, 50);
+};
+
+const hide = () => {
+  visible.value = false;
+  window.removeEventListener('click', closeMenu);
+  window.removeEventListener('contextmenu', closeMenu);
+  window.removeEventListener('scroll', hide, { capture: true });
+};
+
+// --- Internal Logic ---
+
+const closeMenu = () => {
+  hide();
+};
+
+const execute = (item) => {
+  if (!item.disabled && item.command) {
+    item.command();
+  }
+  hide();
+};
+
+onBeforeUnmount(() => {
+  hide();
+});
+
+defineExpose({ show, hide });
+</script>
+
+<template>
+  <Teleport to="body">
+    <div
+        v-if="visible"
+        ref="menuRef"
+        class="custom-context-menu"
+        :style="{ top: y + 'px', left: x + 'px' }"
+        @contextmenu.prevent
+    >
+      <ul class="custom-menu-list">
+        <template v-for="(item, index) in model" :key="index">
+          <li v-if="item.separator" class="menu-separator"></li>
+
+          <li v-else-if="item.visible !== false"
+              class="menu-item"
+              :class="{ 'disabled': item.disabled }"
+              @click.stop="execute(item)"
+          >
+            <div class="menu-item-content">
+              <span v-if="item.icon" :class="['menu-icon', item.icon]"></span>
+              <span class="menu-label">{{ item.label }}</span>
+            </div>
+          </li>
+        </template>
+      </ul>
+    </div>
+  </Teleport>
+</template>
+
+<style>
+/* Global Styles (Not Scoped) for Teleported Content */
+.custom-context-menu {
+  position: fixed;
+  z-index: 999999 !important; /* Ensure it's on top of everything */
+  min-width: 200px;
+  background: rgba(10, 12, 16, 0.95); /* Deep dark background */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  padding: 6px 0;
+  color: #e0e0e0;
+  font-family: var(--font-family, sans-serif);
+  font-size: 14px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.custom-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: center;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.menu-item.disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.menu-item-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.menu-icon {
+  margin-right: 12px;
+  font-size: 14px;
+  color: #66fcf1; /* Neon Cyan */
+  width: 16px;
+  text-align: center;
+}
+
+.menu-label {
+  flex-grow: 1;
+}
+
+.menu-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+}
+</style>

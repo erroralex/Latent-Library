@@ -2,33 +2,36 @@ body {
     margin: 0;
     font-family: var(--font-family);
     background-color: var(--app-bg-deepest);
+
+    /* Subtle dark ambiance instead of bright blobs */
     background-image:
-        radial-gradient(circle at 15% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(122, 42, 255, 0.03) 0%, transparent 25%);
+            radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
+            radial-gradient(circle at 85% 75%, rgba(216, 112, 255, 0.08) 0%, transparent 40%);
+
+    background-attachment: fixed;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow: hidden; /* Prevent body scroll, let containers handle it */
+    overflow: hidden;
 }
 
-/* Scrollbars - Sleek & Minimal */
+/* Scrollbars - Dark & Minimal */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #000;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 3px;
-    transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Text Utilities */
@@ -40,20 +43,26 @@ body {
     background: var(--app-grad-text);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: bold;
+    font-weight: 800;
 }
 
-/* Glass Panel Utility Class */
+/* Glass Panel Utility - The "Black Glass" Look */
 .glass-panel {
     background: var(--app-bg-panel);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: var(--border-glass);
     box-shadow: var(--shadow-glass);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Ensure links are clickable */
-a {
-    text-decoration: none;
-    color: inherit;
+/* Add a gloss shine to panels */
+.glass-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--app-glass-gloss);
+    pointer-events: none;
+    z-index: 1;
 }

@@ -8,7 +8,7 @@ import axios from 'axios';
 import { useBrowserStore } from '@/stores/browser';
 import { useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
-import ContextMenu from 'primevue/contextmenu';
+import CustomContextMenu from './CustomContextMenu.vue';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 
@@ -19,12 +19,13 @@ const toast = useToast();
 const nodes = ref([]);
 const expandedKeys = ref({});
 const selectedKey = ref({});
-const contextMenuSelection = ref({});
+const contextMenuSelection = ref(null);
+
+// Ref for the custom menu
 const cm = ref();
 const menuModel = ref([]);
 
 // --- Data Loading ---
-
 const loadTree = async () => {
   const rootNodes = [];
 
@@ -32,108 +33,41 @@ const loadTree = async () => {
   try {
     const colRes = await axios.get('/api/collections');
     const colChildren = colRes.data.map(c => ({
-      key: `col-${c}`,
-      label: c,
-      data: c,
-      icon: 'pi pi-folder',
-      type: 'collection',
-      leaf: true
+      key: `col-${c}`, label: c, data: c, icon: 'pi pi-folder', type: 'collection', leaf: true
     }));
-
-    rootNodes.push({
-      key: 'collections',
-      label: 'Collections',
-      icon: 'pi pi-list',
-      children: colChildren,
-      selectable: false,
-      type: 'root',
-      leaf: false
-    });
-  } catch (e) {
-    console.error("Error loading collections", e);
-  }
+    rootNodes.push({ key: 'collections', label: 'Collections', icon: 'pi pi-list', children: colChildren, type: 'root', leaf: false });
+  } catch (e) { console.error("Error loading collections", e); }
 
   // 2. Pinned
   try {
     const pinRes = await axios.get('/api/folders/pinned');
     const pinChildren = pinRes.data.map(p => ({
-      key: `pinned-${p.path}`, // Unique key prefix
-      label: p.name || p.path,
-      data: p,
-      icon: 'pi pi-bookmark',
-      type: 'pinned',
-      leaf: false,
-      children: []
+      key: `pinned-${p.path}`, label: p.name || p.path, data: p, icon: 'pi pi-bookmark', type: 'pinned', leaf: false
     }));
+    rootNodes.push({ key: 'pinned', label: 'Pinned', icon: 'pi pi-bookmark', children: pinChildren, type: 'root', leaf: false });
+  } catch (e) { console.error("Error loading pinned", e); }
 
-    rootNodes.push({
-      key: 'pinned',
-      label: 'Pinned',
-      icon: 'pi pi-bookmark',
-      children: pinChildren,
-      selectable: false,
-      type: 'root',
-      leaf: false
-    });
-  } catch (e) {
-    console.error("Error loading pinned", e);
-  }
-
-  // 3. Drives (This PC)
+  // 3. Drives
   try {
     const driveRes = await axios.get('/api/folders/roots');
     const driveChildren = driveRes.data.map(d => ({
-      key: `drive-${d.path}`, // Unique key prefix
-      label: d.name || d.path,
-      data: d,
-      icon: 'pi pi-server',
-      type: 'folder',
-      leaf: false,
-      children: []
+      key: `drive-${d.path}`, label: d.name || d.path, data: d, icon: 'pi pi-server', type: 'folder', leaf: false
     }));
-
-    rootNodes.push({
-      key: 'drives',
-      label: 'This PC',
-      icon: 'pi pi-desktop',
-      children: driveChildren,
-      selectable: false,
-      type: 'root',
-      leaf: false
-    });
-  } catch (e) {
-    console.error("Error loading drives", e);
-  }
+    rootNodes.push({ key: 'drives', label: 'This PC', icon: 'pi pi-desktop', children: driveChildren, type: 'root', leaf: false });
+  } catch (e) { console.error("Error loading drives", e); }
 
   nodes.value = rootNodes;
-
-  // Auto-expand the main groups
-  expandedKeys.value = {
-    'collections': true,
-    'pinned': true,
-    'drives': true
-  };
+  expandedKeys.value = { 'collections': true, 'pinned': true, 'drives': true };
 };
 
 const onNodeExpand = async (node) => {
-  // PrimeVue Tree passes the node object directly in the event for lazy loading
-  // BUT the event structure depends on the version.
-  // In newer PrimeVue versions, the event is the node itself or {node: ...}
-  // Let's handle both cases safely.
   const actualNode = node.node || node;
-
-  if (!actualNode.data?.path) return;
-  if (actualNode._loaded) return;
-
+  if (!actualNode.data?.path || actualNode._loaded) return;
   actualNode.loading = true;
-
   try {
-    const res = await axios.get('/api/folders/children', {
-      params: { path: actualNode.data.path }
-    });
-
+    const res = await axios.get('/api/folders/children', { params: { path: actualNode.data.path } });
     actualNode.children = res.data.map(f => ({
-      key: `${actualNode.key}-${f.name}`, // Generate unique key based on parent key
+      key: `${actualNode.key}-${f.name}`,
       label: f.name || f.path,
       data: f,
       icon: f.isDirectory ? 'pi pi-folder' : 'pi pi-file',
@@ -141,52 +75,31 @@ const onNodeExpand = async (node) => {
       leaf: !f.isDirectory,
       children: []
     }));
-
     actualNode._loaded = true;
-
   } catch (e) {
-    console.error('Failed to load children for path:', actualNode.data.path, e);
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Could not access folder.',
-      life: 3000
-    });
-    // Do NOT mark as leaf, allow retry
-    actualNode._loaded = false;
-  } finally {
-    actualNode.loading = false;
-  }
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not access folder.', life: 3000 });
+  } finally { actualNode.loading = false; }
 };
 
 const onNodeSelect = async (node) => {
   const actualNode = node.node || node;
-  if (!actualNode.data?.path) return;
-
-  try {
-    await store.loadFolder(actualNode.data.path);
-  } catch (e) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Could not load folder contents',
-      life: 2000
-    });
+  if (actualNode.data?.path) {
+    try { await store.loadFolder(actualNode.data.path); }
+    catch (e) { toast.add({ severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000 }); }
   }
 };
 
 // --- Context Menu Handlers ---
-
 const onNodeContextMenu = (event) => {
-  // PrimeVue Tree context menu event structure: { originalEvent: Event, node: TreeNode }
+  // PrimeVue Tree returns { originalEvent, node }
   const node = event.node;
+  console.log("FolderNav: Right Click detected on", node.label);
 
   if (!node) return;
 
-  contextMenuSelection.value = {
-    [node.key]: true
-  };
+  contextMenuSelection.value = node;
 
+  // Build model
   menuModel.value = [
     {
       label: 'Pin Folder',
@@ -202,7 +115,7 @@ const onNodeContextMenu = (event) => {
     },
     { separator: true },
     {
-      label: 'Show Folder (Explorer)',
+      label: 'Show in Explorer',
       icon: 'pi pi-external-link',
       command: () => openInExplorer(node.data.path)
     },
@@ -213,61 +126,30 @@ const onNodeContextMenu = (event) => {
     }
   ];
 
-  // The context menu component needs to be shown manually with the original event
   if (cm.value) {
-      cm.value.show(event.originalEvent);
+    // Pass the native DOM event
+    cm.value.show(event.originalEvent);
+  } else {
+    console.error("FolderNav: ContextMenu ref (cm) is null");
   }
 };
 
-const pinFolder = async (path) => {
-  try {
-    await axios.post('/api/folders/pin', null, {params: {path}});
-    toast.add({severity: 'success', summary: 'Pinned', detail: 'Folder added to pinned list', life: 2000});
-    await loadTree();
-  } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to pin folder', life: 2000});
-  }
-};
-
-const unpinFolder = async (path) => {
-  try {
-    await axios.post('/api/folders/unpin', null, {params: {path}});
-    toast.add({severity: 'info', summary: 'Unpinned', detail: 'Folder removed from pinned list', life: 2000});
-    await loadTree();
-  } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to unpin folder', life: 2000});
-  }
-};
-
-const openInSpeedSorter = async (path) => {
-  try {
-    await axios.post('/api/speedsorter/config/input', null, {params: {path}});
-    await router.push('/speedsorter');
-    toast.add({severity: 'success', summary: 'Speed Sorter', detail: 'Folder loaded', life: 2000});
-  } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load in Speed Sorter', life: 2000});
-  }
-};
-
-const openInExplorer = async (path) => {
-  try {
-    await axios.post('/api/system/open-folder', null, {params: {path}});
-  } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to open OS explorer', life: 2000});
-  }
-};
+// Actions
+const pinFolder = async (path) => { await axios.post('/api/folders/pin', null, {params: {path}}); loadTree(); };
+const unpinFolder = async (path) => { await axios.post('/api/folders/unpin', null, {params: {path}}); loadTree(); };
+const openInSpeedSorter = async (path) => { await axios.post('/api/speedsorter/config/input', null, {params: {path}}); router.push('/speedsorter'); };
+const openInExplorer = async (path) => { await axios.post('/api/system/open-folder', null, {params: {path}}); };
 
 onMounted(loadTree);
 </script>
 
 <template>
-  <div class="folder-nav h-full flex flex-column surface-card border-right-1 surface-border"
+  <div class="folder-nav-glass h-full flex flex-column"
        style="width: 260px; min-width: 260px;">
     <Toast/>
-
-    <div class="p-3 font-bold text-lg border-bottom-1 surface-border flex align-items-center gap-2">
+    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center gap-2" style="background: rgba(255,255,255,0.02)">
       <img src="@/assets/icon.png" alt="Logo" style="width: 24px; height: 24px;">
-      Library
+      <span class="text-gradient">Library</span>
     </div>
 
     <div class="flex-grow-1 overflow-y-auto">
@@ -277,7 +159,6 @@ onMounted(loadTree);
           v-model:selectionKeys="selectedKey"
           v-model:contextMenuSelection="contextMenuSelection"
           v-model:expandedKeys="expandedKeys"
-          contextMenu
           :lazy="true"
           @node-expand="onNodeExpand"
           @node-select="onNodeSelect"
@@ -285,32 +166,33 @@ onMounted(loadTree);
       />
     </div>
 
-    <ContextMenu ref="cm" :model="menuModel" appendTo="body"/>
+    <CustomContextMenu ref="cm" :model="menuModel" />
   </div>
 </template>
 
-<style>
-/* Remove default PrimeVue Tree background to blend with sidebar */
-.p-tree {
-  background: transparent !important;
-  border: none !important;
-  padding: 0.5rem;
+<style scoped>
+.folder-nav-glass {
+  background: var(--app-bg-panel, rgba(0, 0, 0, 0.7));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 5px 0 30px rgba(0,0,0,0.3);
 }
 
-/* Compact tree nodes */
-.p-tree .p-tree-container .p-treenode .p-treenode-content {
-  padding: 0.2rem 0.2rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+.text-gradient {
+  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Better focus/hover states */
-.p-tree .p-tree-container .p-treenode .p-treenode-content:focus {
-  box-shadow: inset 0 0 0 1px var(--primary-color);
-}
-
-.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight {
-  background: var(--primary-100);
-  color: var(--primary-900);
+/* Force Tree Transparency */
+:deep(.p-tree) { background: transparent !important; border: none !important; padding: 0.5rem; }
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) { padding: 0.2rem; border-radius: 4px; color: var(--text-secondary); }
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover) { background: rgba(255, 255, 255, 0.05); color: white; }
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus) { box-shadow: inset 0 0 0 1px var(--primary-color); }
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
+  background: rgba(102, 252, 241, 0.1) !important;
+  color: var(--app-cyan-bright);
+  border-left: 2px solid var(--app-cyan-bright);
 }
 </style>
