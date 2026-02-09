@@ -64,8 +64,10 @@ onMounted(() => {
 
 .filmstrip-item {
   opacity: 0.7;
-  border: 2px solid transparent;
+  border: 2px solid transparent; /* Placeholder for spacing */
   background: rgba(255, 255, 255, 0.05); /* Slight box background */
+  position: relative;
+  z-index: 0;
 }
 
 .filmstrip-item:hover {
@@ -74,13 +76,33 @@ onMounted(() => {
   transform: scale(0.95);
 }
 
+/* Selected Item - Gradient Border Effect */
 .filmstrip-item.selected-item {
   opacity: 1;
-  /* Neon Cyan Highlight */
-  border-color: #66fcf1;
-  background: rgba(102, 252, 241, 0.1);
-  box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+  background: transparent; /* Let pseudo-elements handle background */
   transform: scale(1.05);
   z-index: 1;
+  border-color: transparent; /* Remove default border */
+}
+
+/* 1. Gradient Border/Glow (Deepest) */
+.filmstrip-item.selected-item::before {
+  content: '';
+  position: absolute;
+  inset: -2px; /* Creates the border width */
+  background: var(--app-grad-hover);
+  border-radius: inherit; /* Match parent radius */
+  z-index: -2; /* Behind everything */
+  filter: blur(2px); /* Slight glow */
+}
+
+/* 2. Black Background (Middle) */
+.filmstrip-item.selected-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000000; /* Opaque black to block center */
+  border-radius: inherit;
+  z-index: -1; /* Behind content, in front of glow */
 }
 </style>

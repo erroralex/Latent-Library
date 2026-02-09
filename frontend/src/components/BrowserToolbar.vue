@@ -66,22 +66,24 @@ const refreshFilters = () => {
 <template>
   <Toolbar class="browser-toolbar-glass border-none p-2">
     <template #start>
-      <div class="flex gap-1 mr-2">
-        <Button icon="pi pi-th-large"
-                class="p-button-sm"
-                :class="{ 'p-button-outlined': store.viewMode !== 'gallery' }"
-                @click="store.setViewMode('gallery')"
-                tooltip="Gallery View" />
-        <Button icon="pi pi-image"
-                class="p-button-sm"
-                :class="{ 'p-button-outlined': store.viewMode !== 'browser' }"
-                @click="store.setViewMode('browser')"
-                tooltip="Browser View" />
-      </div>
+      <!-- Empty start slot -->
     </template>
 
     <template #center>
       <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
+        <div class="flex gap-1 mr-2">
+          <Button icon="pi pi-th-large"
+                  class="p-button-sm"
+                  :class="{ 'p-button-outlined': store.viewMode !== 'gallery' }"
+                  @click="store.setViewMode('gallery')"
+                  tooltip="Gallery View" />
+          <Button icon="pi pi-image"
+                  class="p-button-sm"
+                  :class="{ 'p-button-outlined': store.viewMode !== 'browser' }"
+                  @click="store.setViewMode('browser')"
+                  tooltip="Browser View" />
+        </div>
+
         <span class="p-input-icon-left p-input-icon-right mr-2">
             <i class="pi pi-search" />
             <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input" @keyup.enter="onSearch" />

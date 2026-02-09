@@ -202,9 +202,17 @@ onMounted(loadTree);
   overflow: visible !important;
 }
 
-/* Remove default focus outline */
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus) {
+/* Remove default focus outline aggressively */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus),
+:deep(.p-tree .p-tree-container .p-treenode:focus),
+:deep(.p-tree:focus),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus-visible),
+:deep(.p-tree .p-tree-container .p-treenode:focus-visible),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight:focus),
+:deep(.p-tree *) {
   box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
 }
 
 /* 1. Gradient Glow Layer (Deepest) */
@@ -255,7 +263,7 @@ onMounted(loadTree);
 
 /* Selected State - Black Background + Gradient Text + Glow (Static) */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
-  /* Gradient Text applied to label and icon */
+  /* Ensure parent color doesn't override */
   color: transparent !important;
 }
 
@@ -267,6 +275,8 @@ onMounted(loadTree);
   -webkit-text-fill-color: transparent;
   color: transparent !important;
   display: inline-block; /* Ensure background-clip works */
+  position: relative; /* Ensure z-index works */
+  z-index: 2; /* Sit on top of everything */
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::before) {

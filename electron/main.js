@@ -21,8 +21,13 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         },
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+        show: false // Don't show until maximized
     });
+
+    // Maximize the window
+    mainWindow.maximize();
+    mainWindow.show();
 
     // Load the Spring Boot app
     mainWindow.loadURL(`http://localhost:${BACKEND_PORT}`);

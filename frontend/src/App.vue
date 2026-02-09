@@ -191,15 +191,55 @@ const closeWindow = () => {
   color: transparent !important;
 }
 
-/* Specific override for the close button to ensure red hover */
-.window-close-btn:hover {
-  background-color: var(--app-red-warning) !important;
-  color: white !important;
-  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6) !important;
-  background-image: none !important; /* Remove the global gradient */
+/* --- Close Button Override --- */
+.window-close-btn {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  overflow: visible !important;
 }
 
-/* Ensure close button icon doesn't get the gradient text effect */
+/* 1. Red Glow Layer */
+.window-close-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: var(--app-red-warning); /* Red Glow */
+  border-radius: 9px;
+  z-index: -2;
+  opacity: 0;
+  filter: blur(4px);
+  transition: opacity 0.3s ease;
+}
+
+/* 2. Background Layer */
+.window-close-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border-radius: 8px;
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+/* Hover State */
+.window-close-btn:hover {
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: none !important; /* Remove any direct shadow */
+  background: transparent !important;
+}
+
+.window-close-btn:hover::before {
+  opacity: 0.8; /* Show Red Glow */
+}
+
+.window-close-btn:hover::after {
+  background: #000000; /* Opaque Black Background */
+}
+
+/* Ensure icon stays white */
 :deep(.window-close-btn:hover .p-button-icon) {
   background: none !important;
   -webkit-text-fill-color: white !important;
