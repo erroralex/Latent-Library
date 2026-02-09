@@ -43,7 +43,12 @@ public class ImageController {
         if (model != null && !model.isEmpty() && !"All".equals(model)) filters.put("Model", model);
         if (sampler != null && !sampler.isEmpty() && !"All".equals(sampler)) filters.put("Sampler", sampler);
         if (lora != null && !lora.isEmpty() && !"All".equals(lora)) filters.put("Loras", lora);
-        if (rating != null && !rating.isEmpty() && !"Any Star Count".equals(rating)) filters.put("Rating", rating);
+        
+        // The repository layer correctly interprets "Any Star Count" as rating > 0.
+        // We just need to pass the filter along.
+        if (rating != null && !rating.isEmpty()) {
+            filters.put("Rating", rating);
+        }
 
         return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, limit).join().stream()
                 .map(File::getAbsolutePath)
