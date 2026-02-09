@@ -12,20 +12,19 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- <h2>ImageRepository</h2>
+ * Repository for managing image entities and their associated metadata.
+ * Handles CRUD operations for images, metadata, tags, and ratings.
+ * Provides search capabilities and manages the full-text search index.
  */
 @Repository
 public class ImageRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ImageRepository.class);
     private final DatabaseService db;
-    private static final int BATCH_SIZE = 500;
 
     public ImageRepository(DatabaseService db) {
         this.db = db;
     }
-
-    // --- Core Identity ---
 
     public int getIdByPath(String path) {
         String sql = "SELECT id FROM images WHERE file_path = ?";
@@ -115,8 +114,6 @@ public class ImageRepository {
         }
     }
 
-    // --- Search ---
-
     public List<String> findPaths(String query, Map<String, String> filters, int limit) {
         List<String> results = new ArrayList<>();
         try (Connection conn = db.connect()) {
@@ -175,8 +172,6 @@ public class ImageRepository {
         return results;
     }
 
-    // --- Attributes ---
-
     public int getRating(String path) {
         String sql = "SELECT rating FROM images WHERE file_path = ?";
         try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -190,10 +185,11 @@ public class ImageRepository {
     }
 
     public void setRating(int id, int rating) {
-        String sql = "UPDATE images SET rating = ? WHERE id = ?";
+        String sql = "UPDATE images SET rating = ?, is_starred = ? WHERE id = ?";
         try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, rating);
-            pstmt.setInt(2, id);
+            pstmt.setBoolean(2, rating > 0);
+            pstmt.setInt(3, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logger.error("Failed to set rating", e);
@@ -211,8 +207,6 @@ public class ImageRepository {
         }
         return results;
     }
-
-    // --- Metadata & Tags ---
 
     public boolean hasMetadata(String path) {
         String sql = "SELECT 1 FROM image_metadata m JOIN images i ON i.id = m.image_id WHERE i.file_path = ? LIMIT 1";
@@ -310,8 +304,6 @@ public class ImageRepository {
         return tags;
     }
 
-    // --- Pinned Folders ---
-
     public List<File> getPinnedFolders(java.util.function.Function<String, File> resolver) {
         List<File> result = new ArrayList<>();
         try (Connection conn = db.connect();
@@ -344,8 +336,6 @@ public class ImageRepository {
             logger.error("Failed to remove pinned folder: {}", path, e);
         }
     }
-
-    // --- Internal Helpers ---
 
     private void updateFtsIndex(int imageId) {
         String sql = """

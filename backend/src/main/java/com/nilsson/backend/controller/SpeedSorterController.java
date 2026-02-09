@@ -11,6 +11,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for the Speed Sorter tool.
+ * Facilitates rapid image organization by moving files between configured source and target directories.
+ */
 @RestController
 @RequestMapping("/api/speedsorter")
 public class SpeedSorterController {

@@ -10,22 +10,13 @@ import java.util.Map;
 
 /**
  * Metadata parsing strategy for SwarmUI-generated JSON.
- *
- * <p>This strategy extracts model information, prompts, and generation
- * parameters from SwarmUI metadata, supporting both textual and numeric
- * value formats.</p>
- *
- * <p>The implementation is designed to coexist with other strategies
- * and avoids overwriting higher-priority fields when already present.</p>
+ * Extracts model information, prompts, and generation parameters.
+ * Supports both textual and numeric value formats.
  */
 @Service
 public class SwarmUIStrategy implements MetadataStrategy {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    /* ============================================================
-       Public API
-       ============================================================ */
 
     @Override
     public Map<String, String> parse(String text) {
@@ -42,10 +33,6 @@ public class SwarmUIStrategy implements MetadataStrategy {
         }
         return results;
     }
-
-    /* ============================================================
-       MetadataStrategy Implementation
-       ============================================================ */
 
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {

@@ -10,53 +10,20 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- <h2>TextParamsParser</h2>
- <p>
- This class serves as a high-level orchestration layer for parsing text-based image generation
- metadata into structured key-value pairs. It acts as a central router that identifies the
- originating software or format and delegates processing to specific strategy implementations.
- </p>
-
- <h3>Parsing Logic:</h3>
- <ul>
- <li><b>JSON-Based Routing:</b> Detects ComfyUI workflows (both Web UI and API versions)
- by checking for JSON structures and specific node identifiers.</li>
- <li><b>Signature Detection:</b> Identifies string-based metadata blocks for popular
- generators like Automatic1111 (Common), InvokeAI, NovelAI, and SwarmUI.</li>
- <li><b>Strategy Pattern:</b> Utilizes a modular approach to extraction, allowing the
- parser to remain extensible as new AI generation tools emerge.</li>
- </ul>
-
- <h3>Supported Formats:</h3>
- <p>
- ComfyUI, Automatic1111, InvokeAI, NovelAI, and SwarmUI.
- </p>
+ * Orchestration layer for parsing text-based image generation metadata.
+ * Routes metadata to specific strategy implementations based on format detection.
+ * Supports JSON-based formats (ComfyUI) and string-based signatures (A1111, InvokeAI, NovelAI, SwarmUI).
  */
 @Service
 public class TextParamsParser {
 
-    // ------------------------------------------------------------------------
-    // Configuration
-    // ------------------------------------------------------------------------
-
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    // ------------------------------------------------------------------------
-    // Public API
-    // ------------------------------------------------------------------------
-
-    /**
-     Entry point for parsing metadata strings.
-     * @param text The raw metadata string extracted from an image header or sidecar file.
-
-     @return A {@link Map} containing the structured keys (e.g., "Seed", "Steps") and their values.
-     */
     public static Map<String, String> parse(String text) {
         if (text == null || text.trim().isEmpty()) {
             return new HashMap<>();
         }
 
-        // Handle JSON-based formats (ComfyUI)
         if (text.trim().startsWith("{")) {
             try {
                 JsonNode root = mapper.readTree(text);
@@ -98,7 +65,6 @@ public class TextParamsParser {
             }
         }
 
-        // Identify and delegate to specific string-based strategies
         if (text.contains("Steps: ") && text.contains("Sampler: ")) {
             return new CommonStrategy().parse(text);
         }
@@ -117,10 +83,6 @@ public class TextParamsParser {
 
         return new HashMap<>();
     }
-
-    // ------------------------------------------------------------------------
-    // Internal Helpers
-    // ------------------------------------------------------------------------
 
     private static void processComfyNode(
             JsonNode node,

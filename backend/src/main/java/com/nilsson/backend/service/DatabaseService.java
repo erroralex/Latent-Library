@@ -17,14 +17,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- Core infrastructure service handling database persistence, connection pooling, and schema migration.
+ * Core infrastructure service handling database persistence, connection pooling, and schema migration.
+ * Manages the SQLite database connection and ensures schema integrity.
  */
 @Service
 public class DatabaseService implements DisposableBean {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
-    private static final String DATA_DIR_NAME = "data";
+    private static final String DATA_DIR_NAME = ".aitoolbox";
     private static final String DB_FILE_NAME = "library.db";
     private static final int CURRENT_DB_VERSION = 1;
 
@@ -43,7 +44,6 @@ public class DatabaseService implements DisposableBean {
         config.setMinimumIdle(2);
         config.setPoolName("ImageToolboxPool");
 
-        // Optimizations for desktop application usage
         config.addDataSourceProperty("journal_mode", "WAL");
         config.addDataSourceProperty("foreign_keys", "ON");
         config.addDataSourceProperty("synchronous", "NORMAL");
@@ -55,21 +55,19 @@ public class DatabaseService implements DisposableBean {
 
     private static String resolvePortableDbUrl() {
         try {
-            // Use the current working directory (where the jar/app is running)
-            Path appDir = Paths.get(System.getProperty("user.dir"));
-            Path dataDir = appDir.resolve(DATA_DIR_NAME);
+            Path appDir = Paths.get(System.getProperty("user.home")).resolve(DATA_DIR_NAME);
 
-            if (!Files.exists(dataDir)) {
-                logger.info("Portable data directory missing. Creating: {}", dataDir.toAbsolutePath());
-                Files.createDirectories(dataDir);
+            if (!Files.exists(appDir)) {
+                logger.info("Data directory missing. Creating: {}", appDir.toAbsolutePath());
+                Files.createDirectories(appDir);
             }
 
-            Path dbPath = dataDir.resolve(DB_FILE_NAME);
+            Path dbPath = appDir.resolve(DB_FILE_NAME);
             return "jdbc:sqlite:" + dbPath.toAbsolutePath();
 
         } catch (IOException e) {
-            logger.error("Failed to initialize portable data directory.", e);
-            throw new RuntimeException("Fatal Error: Could not create portable data directory.", e);
+            logger.error("Failed to initialize data directory.", e);
+            throw new RuntimeException("Fatal Error: Could not create data directory.", e);
         }
     }
 
@@ -102,7 +100,6 @@ public class DatabaseService implements DisposableBean {
                     if (currentVersion == 0) {
                         applyInitialSchema(conn);
                     }
-                    // Future migrations: else if (currentVersion == 1) { applyV2(conn); }
 
                     setDatabaseVersion(conn, CURRENT_DB_VERSION);
                     conn.commit();
@@ -121,7 +118,6 @@ public class DatabaseService implements DisposableBean {
 
     private void applyInitialSchema(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            // Core Entities
             stmt.execute("""
                         CREATE TABLE IF NOT EXISTS images (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,7 +137,6 @@ public class DatabaseService implements DisposableBean {
                         )
                     """);
 
-            // Relations
             stmt.execute("""
                         CREATE TABLE IF NOT EXISTS image_metadata (
                             image_id INTEGER,
@@ -170,12 +165,10 @@ public class DatabaseService implements DisposableBean {
                         )
                     """);
 
-            // Virtual Tables & Configuration
             stmt.execute("CREATE VIRTUAL TABLE IF NOT EXISTS metadata_fts USING fts5(image_id UNINDEXED, global_text)");
             stmt.execute("CREATE TABLE IF NOT EXISTS pinned_folders (path TEXT UNIQUE NOT NULL)");
             stmt.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)");
 
-            // Indices
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_file_path ON images(file_path)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_file_hash ON images(file_hash)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_tags_text ON image_tags(tag)");

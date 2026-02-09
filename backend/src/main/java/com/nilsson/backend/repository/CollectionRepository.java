@@ -10,18 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- Repository class responsible for managing image collections and their associations
- within the local SQLite database.
- * <p>This class provides high-level abstractions for:
- <ul>
- <li>CRUD operations for collection entities (Create, Read, Delete).</li>
- <li>Managing many-to-many relationships between images and collections.</li>
- <li>Retrieving filesystem paths for images associated with specific collections.</li>
- </ul>
- * <p>It utilizes {@link DatabaseService} for connection management and follows
- standard JDBC practices with try-with-resources for automatic resource handling.</p>
-
- @version 1.0 */
+ * Repository for managing image collections and their associations.
+ * Handles CRUD operations for collections and manages the many-to-many relationship with images.
+ * Provides methods to retrieve image paths associated with specific collections.
+ */
 @Repository
 public class CollectionRepository {
 
@@ -31,8 +23,6 @@ public class CollectionRepository {
     public CollectionRepository(DatabaseService db) {
         this.db = db;
     }
-
-    // --- Collection Management ---
 
     public List<String> getAllNames() {
         List<String> names = new ArrayList<>();
@@ -68,8 +58,6 @@ public class CollectionRepository {
             logger.error("Error deleting collection: {}", name, e);
         }
     }
-
-    // --- Image Association ---
 
     public void addImage(String collectionName, int imageId) {
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at) SELECT id, ?, ? FROM collections WHERE name = ?";

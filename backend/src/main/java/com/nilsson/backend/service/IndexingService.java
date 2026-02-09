@@ -19,11 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- <h2>IndexingService</h2>
- <p>
- Service responsible for the background indexing and real-time monitoring of image folders.
- This service bridges the gap between the local file system and the application's data layer.
- </p>
+ * Service responsible for the background indexing and real-time monitoring of image folders.
+ * Bridges the gap between the local file system and the application's data layer.
+ * Handles file system events, batch processing, and library reconciliation.
  */
 @Service
 public class IndexingService {
@@ -32,17 +30,14 @@ public class IndexingService {
     private static final int BATCH_SIZE = 20;
     private static final long DEBOUNCE_DELAY_MS = 500;
 
-    // --- Dependencies ---
     private final ImageRepository imageRepo;
     private final MetadataService metaService;
     private final UserDataManager dataManager;
     private final ExecutorService executor;
 
-    // --- Task & Watcher State ---
     private WatchService watchService;
     private Thread watchThread;
     
-    // --- Debouncing State ---
     private final Map<String, Long> pendingEvents = new ConcurrentHashMap<>();
 
     public IndexingService(ImageRepository imageRepo,
@@ -54,13 +49,9 @@ public class IndexingService {
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    // --- Lifecycle Management ---
-
     public void cancel() {
         stopWatching();
     }
-
-    // --- Reconciliation Logic ---
 
     public void reconcileLibrary() {
         File lastFolder = dataManager.getLastFolder();
@@ -76,22 +67,10 @@ public class IndexingService {
             AtomicInteger removedCount = new AtomicInteger(0);
 
             imageRepo.forEachFilePath(path -> {
-                // Resolve path using DataManager to handle relative paths correctly
                 File file = dataManager.resolvePath(path);
                 
-                // Only delete if we are absolutely sure the file is gone.
-                // If resolvePath returns null (e.g. invalid path format), we should be careful.
-                // But if file object is created but !exists(), then it's truly missing.
                 if (file != null && !file.exists()) {
-                    // SAFEST FIX: Disable automatic deletion of "missing" files on startup.
-                    // This prevents data loss (stars/ratings) if a drive is temporarily disconnected
-                    // or if path resolution fails.
-                    
                     logger.warn("[Reconcile] File appears missing: {}. Skipping auto-deletion to preserve metadata.", path);
-                    
-                    // COMMENTED OUT TO PREVENT DATA LOSS:
-                    // imageRepo.deleteByPath(path);
-                    // removedCount.incrementAndGet();
                 }
             });
 
@@ -115,8 +94,6 @@ public class IndexingService {
         }
     }
 
-    // --- Batch Indexing ---
-
     public void startIndexing(List<File> files, Consumer<BatchResult> onBatchResult) {
         if (files == null || files.isEmpty()) return;
 
@@ -139,8 +116,6 @@ public class IndexingService {
         };
         executor.submit(task);
     }
-
-    // --- File System Watcher Logic ---
 
     public void startWatching(File directory, Consumer<FileChangeEvent> listener) {
         stopWatching();
@@ -245,8 +220,6 @@ public class IndexingService {
         }
     }
 
-    // --- Internal Event Handling ---
-
     private void handleFileCreation(File file) {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
@@ -259,26 +232,6 @@ public class IndexingService {
 
     private void handleFileDeletion(File file) {
         try {
-            // Use moveFileToTrash logic which handles relativization internally
-            // But here we just want to remove from DB, not move to trash physically
-            // We need to manually relativize or expose a method.
-            // Since we can't easily access relativizePath, let's rely on DataManager to expose a delete method
-            // or just try to delete by absolute path if that's what we have, but that's risky if DB has relative.
-            
-            // Best approach: We updated UserDataManager to have resolvePath public.
-            // But we need the reverse: file -> relative path.
-            // Let's just use the same logic as moveFileToTrash but without the physical move.
-            // Actually, let's just use the file object and let DataManager handle it if we add a method.
-            // For now, let's assume the file is gone, so we just need to clean up DB.
-            
-            // Since we don't have a clean delete method in DataManager yet, let's just log it for now
-            // and rely on the periodic reconciliation or add a method to DataManager.
-            // I'll add a deleteMetadata/deleteImage method to DataManager in the next step if needed.
-            // For now, let's just try to delete using the path we have, assuming absolute might work if not relative.
-            // Wait, I can't modify DataManager again in this turn.
-            
-            // Let's just leave it as is, but fix the ghost cleanup logic above which I did.
-            
             logger.debug("File deleted from disk: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing deleted file: {}", file.getName(), e);
@@ -290,14 +243,11 @@ public class IndexingService {
         return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".webp");
     }
 
-    // --- Core Processing Logic ---
-
     private BatchResult processBatch(List<File> batch) {
         Map<File, Map<String, String>> metadataMap = new HashMap<>();
         Map<File, Integer> ratingMap = new HashMap<>();
 
         for (File file : batch) {
-            // Use DataManager's getCachedMetadata which now handles on-demand extraction
             Map<String, String> meta = dataManager.getCachedMetadata(file);
             int rating = dataManager.getRating(file);
             
@@ -307,8 +257,6 @@ public class IndexingService {
 
         return new BatchResult(metadataMap, ratingMap);
     }
-
-    // --- Data Transfer Objects ---
 
     public record BatchResult(Map<File, Map<String, String>> metadata, Map<File, Integer> ratings) {
     }

@@ -11,20 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- Repository class responsible for persistent storage and retrieval of application-wide settings.
- * <p>This repository provides a simple key-value abstraction over the {@code settings}
- database table. It is used to store user preferences, application state, and configuration
- parameters that need to persist across sessions.</p>
- * <p>Key features include:
- <ul>
- <li><b>Default Value Handling:</b> Ensures the application has fallback values when a
- setting is not yet defined in the database.</li>
- <li><b>Upsert Logic:</b> Uses {@code INSERT OR REPLACE} to simplify the update/creation
- flow for setting keys.</li>
- <li><b>Thread Safety:</b> Relies on {@link DatabaseService} connection pooling for
- safe concurrent access.</li>
- </ul>
- </p>
+ * Repository for persistent storage and retrieval of application-wide settings.
+ * Provides a key-value abstraction over the settings database table.
+ * Handles user preferences, application state, and configuration parameters.
  */
 @Repository
 public class SettingsRepository {
@@ -35,8 +24,6 @@ public class SettingsRepository {
     public SettingsRepository(DatabaseService db) {
         this.db = db;
     }
-
-    // --- Data Access Operations ---
 
     public String get(String key, String defaultValue) {
         String sql = "SELECT value FROM settings WHERE key = ?";

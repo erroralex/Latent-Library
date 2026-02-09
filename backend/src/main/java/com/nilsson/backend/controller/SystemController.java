@@ -7,6 +7,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Controller for system-level operations.
+ * Handles interactions with the host operating system, such as opening folders in the native file explorer.
+ */
 @RestController
 @RequestMapping("/api/system")
 public class SystemController {

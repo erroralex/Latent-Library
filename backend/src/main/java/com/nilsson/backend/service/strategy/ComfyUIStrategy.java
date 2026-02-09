@@ -12,33 +12,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- <h2>ComfyUIStrategy</h2>
- <p>
- A robust extraction strategy designed to parse metadata from ComfyUI workflows.
- This class handles the dual-nature of ComfyUI data: the <b>UI Schema</b> (used by the web interface)
- and the <b>API Schema</b> (the prompt graph execution format).
- </p>
-
- <h3>Logic and Features:</h3>
- <ul>
- <li><b>Recursive Traversal:</b> Traces inputs back through the graph to find the source
- of samplers, models, and text prompts, handling reroutes and bus nodes.</li>
- <li><b>Heuristic Detection:</b> Uses weighted keywords and widget values to infer
- parameters (like Steps or CFG) when direct links are obscured or missing.</li>
- <li><b>Multi-Format Support:</b> Resolves "distilled" CFG for Flux models and handles
- Power LoRA loaders alongside standard ones.</li>
- <li><b>Resilience:</b> Filters out noise such as inactive nodes (muted/bypassed)
- and ignored preprocessor/detailer model calls.</li>
- </ul>
+ * Extraction strategy for ComfyUI workflows.
+ * Handles both UI Schema (web interface) and API Schema (execution graph).
+ * Recursively traces graph connections to resolve parameters like prompts, models, and samplers.
  */
 @Service
 public class ComfyUIStrategy implements MetadataStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(ComfyUIStrategy.class);
-
-    /* ======================================================================
-       Configuration & Constants
-       ====================================================================== */
 
     private static final Set<String> VALID_EXTENSIONS = Set.of(
             ".safetensors", ".ckpt", ".gguf", ".pt", ".pth", ".bin"
@@ -91,10 +72,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
     private static final Pattern LORA_TAG_PATTERN =
             Pattern.compile("<lora:([^:>]+)(?::([^:>]+))?.*?>");
 
-    /* ======================================================================
-       Core Entry Point
-       ====================================================================== */
-
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {
         try {
@@ -125,10 +102,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
     private boolean isNodeId(String key) {
         return key.matches("\\d+");
     }
-
-    /* ======================================================================
-       API Schema Workflow Processing
-       ===================================================================== */
 
     private void processApiWorkflow(JsonNode root, Map<String, String> results) {
         JsonNode bestSampler = null;
@@ -215,10 +188,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
         if (sampler != null) results.put("Sampler", sampler);
         if (scheduler != null) results.put("Scheduler", scheduler);
     }
-
-    /* ======================================================================
-       UI Graph Schema Processing
-       ====================================================================== */
 
     private void processNodes(JsonNode nodes, JsonNode links, Map<String, String> results) {
         Map<Integer, Integer> linkMap = buildLinkMap(links);
@@ -321,10 +290,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
             }
         }
     }
-
-    /* ======================================================================
-       Recursive Graph Traversal Logic
-       ====================================================================== */
 
     private JsonNode traceBackToSampler(JsonNode node, Map<Integer, JsonNode> nodeMap, Map<Integer, Integer> linkMap, int depth) {
         if (depth > 50) return null;
@@ -490,10 +455,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
         return resolveNodeText(node, nodeMap, linkMap, depth);
     }
 
-    /* ======================================================================
-       Heuristics & Extraction Helpers
-       ====================================================================== */
-
     private void processGlobalSeedMap(JsonNode seedWidgets, JsonNode nodes, Map<String, String> results) {
         String activeSamplerId = results.get("_active_sampler_id");
         if (activeSamplerId == null) return;
@@ -557,10 +518,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
             }
         }
     }
-
-    /* ======================================================================
-       Validation & Utility Methods
-       ====================================================================== */
 
     private boolean isNodeActive(JsonNode node) {
         if (!node.has("mode")) return true;
