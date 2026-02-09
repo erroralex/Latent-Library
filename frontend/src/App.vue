@@ -2,39 +2,42 @@
 /**
  * App.vue
  *
- * The root component of the application.
- * Defines the main layout structure, including the top navigation bar (Menubar)
- * and the router view container for displaying different pages.
+ * Root component of the application.
+ * Uses programmatic navigation (router.push) in the Menubar model
+ * to ensure reliable clicking and routing.
  */
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import Menubar from 'primevue/menubar';
 import { ref } from "vue";
 
+const router = useRouter();
+
+// Define menu items with explicit command handlers for navigation
 const items = ref([
     {
         label: 'Gallery',
         icon: 'pi pi-images',
-        route: '/'
+        command: () => router.push('/')
     },
     {
         label: 'Collections',
         icon: 'pi pi-folder',
-        route: '/collections'
+        command: () => router.push('/collections')
     },
     {
         label: 'Comparator',
         icon: 'pi pi-arrow-right-arrow-left',
-        route: '/comparator'
+        command: () => router.push('/comparator')
     },
     {
         label: 'Scrubber',
         icon: 'pi pi-shield',
-        route: '/scrub'
+        command: () => router.push('/scrub')
     },
     {
         label: 'Speed Sorter',
         icon: 'pi pi-bolt',
-        route: '/speedsorter'
+        command: () => router.push('/speedsorter')
     }
 ]);
 </script>
@@ -44,15 +47,10 @@ const items = ref([
     <header>
       <Menubar :model="items" class="border-none border-bottom-1 surface-border border-noround">
         <template #start>
-            <span class="text-xl font-bold mr-4 text-gradient">AI Toolbox</span>
-        </template>
-        <template #item="{ item, props }">
-            <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
-                <a :href="href" v-bind="props.action" @click="navigate">
-                    <span :class="item.icon" />
-                    <span class="ml-2">{{ item.label }}</span>
-                </a>
-            </router-link>
+            <div class="flex align-items-center gap-2 mr-4">
+                <img src="@/assets/icon.png" alt="AI Toolbox Logo" style="height: 32px;" />
+                <span class="text-xl font-bold text-gradient">AI Toolbox</span>
+            </div>
         </template>
       </Menubar>
     </header>

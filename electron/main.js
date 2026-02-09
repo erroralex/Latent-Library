@@ -93,9 +93,39 @@ app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('will-quit', () => {
+app.on('will-quit', async (event) => {
     if (backendProcess) {
-        console.log('Killing backend process...');
+        event.preventDefault(); // Prevent immediate quit
+        console.log('Requesting backend shutdown...');
+        
+        const req = http.request({
+            hostname: 'localhost',
+            port: BACKEND_PORT,
+            path: '/api/system/shutdown',
+            method: 'POST'
+        }, (res) => {
+            console.log(`Backend shutdown response: ${res.statusCode}`);
+            // Give it a moment to shut down gracefully
+            setTimeout(() => {
+                backendProcess = null;
+                app.quit();
+            }, 1000);
+        });
+
+        req.on('error', (e) => {
+            console.error(`Problem with shutdown request: ${e.message}`);
+            // If request fails, fall back to killing the process
+            killBackendProcess();
+            app.quit();
+        });
+
+        req.end();
+    }
+});
+
+function killBackendProcess() {
+    if (backendProcess) {
+        console.log('Force killing backend process...');
         if (process.platform === 'win32') {
             try {
                 const { execSync } = require('child_process');
@@ -106,5 +136,6 @@ app.on('will-quit', () => {
         } else {
             backendProcess.kill();
         }
+        backendProcess = null;
     }
-});
+}
