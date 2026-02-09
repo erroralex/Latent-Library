@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * BrowserToolbar.vue
+ *
+ * The top navigation bar for the Image Browser.
+ * Contains controls for view switching (Gallery/Browser), search input,
+ * filtering dropdowns (Model, Sampler, LoRA, Rating), and thumbnail size slider.
+ */
 import { useBrowserStore } from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -10,7 +17,6 @@ import { ref, computed } from 'vue';
 
 const store = useBrowserStore();
 
-// Menus
 const modelMenu = ref();
 const samplerMenu = ref();
 const loraMenu = ref();
@@ -24,7 +30,6 @@ const toggleSidebar = () => {
     store.toggleSidebar();
 };
 
-// Helper to convert list to menu items
 const createMenuItems = (items, type) => {
     return items.map(item => ({
         label: item,
@@ -49,7 +54,6 @@ const clearFilter = (type) => {
     store.setFilter(type, null);
 };
 
-// Helper to check if a filter is active
 const isFilterActive = (val) => val && val !== 'All' && val !== 'Any Star Count';
 
 const refreshFilters = () => {
@@ -62,7 +66,6 @@ const refreshFilters = () => {
     <Toolbar class="browser-toolbar border-none border-bottom-1 surface-border p-2">
         <template #start>
             <div class="flex gap-2 align-items-center flex-wrap">
-                <!-- View Toggles -->
                 <div class="flex gap-1 mr-2">
                     <Button icon="pi pi-th-large"
                             class="p-button-sm"
@@ -76,16 +79,13 @@ const refreshFilters = () => {
                             tooltip="Browser View" />
                 </div>
 
-                <!-- Search -->
                 <span class="p-input-icon-left mr-2">
                     <i class="pi pi-search" />
                     <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem" @keyup.enter="onSearch" />
                 </span>
 
-                <!-- Filters -->
                 <div class="flex gap-2 align-items-center">
 
-                    <!-- Model -->
                     <div class="flex align-items-center">
                         <Button label="Model" icon="pi pi-chevron-down" iconPos="right"
                                 class="p-button-text p-button-secondary p-button-sm"
@@ -98,7 +98,6 @@ const refreshFilters = () => {
                               class="ml-1 text-xs" />
                     </div>
 
-                    <!-- Sampler -->
                     <div class="flex align-items-center">
                         <Button label="Sampler" icon="pi pi-chevron-down" iconPos="right"
                                 class="p-button-text p-button-secondary p-button-sm"
@@ -111,7 +110,6 @@ const refreshFilters = () => {
                               class="ml-1 text-xs" />
                     </div>
 
-                    <!-- LoRA -->
                     <div class="flex align-items-center">
                         <Button label="LoRA" icon="pi pi-chevron-down" iconPos="right"
                                 class="p-button-text p-button-secondary p-button-sm"
@@ -124,7 +122,6 @@ const refreshFilters = () => {
                               class="ml-1 text-xs" />
                     </div>
 
-                    <!-- Rating -->
                     <div class="flex align-items-center">
                         <Button label="Stars" icon="pi pi-chevron-down" iconPos="right"
                                 class="p-button-text p-button-secondary p-button-sm"

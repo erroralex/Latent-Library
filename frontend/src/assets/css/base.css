@@ -51,3 +51,9 @@ body {
     border: var(--border-glass);
     box-shadow: var(--shadow-glass);
 }
+
+/* Ensure links are clickable */
+a {
+    text-decoration: none;
+    color: inherit;
+}

@@ -19,7 +19,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- Integration test suite for the {@link ImageRepository} layer.
+ * Integration test suite for the ImageRepository layer.
+ * Verifies database interactions using an in-memory SQLite database.
+ * Tests CRUD operations, metadata handling, search functionality, and path updates.
  */
 class RepositoryTest {
 

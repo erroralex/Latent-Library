@@ -17,7 +17,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- Integration tests for {@link ImageRepository} using an ephemeral SQLite instance.
+ * Integration tests for ImageRepository using an ephemeral SQLite instance.
+ * Verifies ID creation, consistency, and metadata search capabilities.
  */
 class ImageRepositoryTest {
 
@@ -48,11 +49,9 @@ class ImageRepositoryTest {
         String path = "/tmp/image1.png";
         String hash = "abc123hash";
 
-        // 1. Create
         int id1 = repository.getOrCreateId(path, hash);
         assertTrue(id1 > 0);
 
-        // 2. Retrieve existing
         int id2 = repository.getOrCreateId(path, hash);
         assertEquals(id1, id2, "ID should remain consistent for same path");
     }
@@ -67,7 +66,6 @@ class ImageRepositoryTest {
 
         repository.saveMetadata(id, meta);
 
-        // Test Filter Map search
         Map<String, String> filters = new HashMap<>();
         filters.put("Model", "Stable Diffusion XL");
 

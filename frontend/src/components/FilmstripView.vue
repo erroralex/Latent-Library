@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * FilmstripView.vue
+ *
+ * A horizontal scrollable list of image thumbnails.
+ * Used in the browser view to navigate between images in the current folder.
+ * Automatically scrolls to keep the selected image in view.
+ */
 import { useBrowserStore } from '@/stores/browser';
 import { ref, watch, nextTick, onMounted } from 'vue';
 

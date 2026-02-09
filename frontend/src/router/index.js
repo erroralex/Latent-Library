@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ImageBrowserView from '../views/ImageBrowserView.vue'
 
+/**
+ * Vue Router configuration.
+ * Defines the application's navigation structure and lazy-loads views for performance.
+ */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

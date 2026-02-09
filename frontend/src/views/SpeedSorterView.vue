@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * SpeedSorterView.vue
+ *
+ * A rapid image organization tool designed for efficiency.
+ * Allows users to quickly move, copy, or delete images using keyboard shortcuts
+ * and pre-configured target directories.
+ */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -7,19 +14,16 @@ import { useToast } from 'primevue/usetoast';
 
 const toast = useToast();
 
-// State
 const inputDir = ref(null);
 const targets = ref([]);
 const files = ref([]);
 const currentIndex = ref(0);
-const history = ref([]); // Stack for undo: { source, dest, isDelete }
+const history = ref([]);
 
-// Computed
 const currentFile = computed(() => files.value[currentIndex.value] || null);
 const currentImageUrl = computed(() => currentFile.value ? `http://localhost:8080/api/images/content?path=${encodeURIComponent(currentFile.value)}` : null);
 const progress = computed(() => `${currentIndex.value + 1} / ${files.value.length}`);
 
-// Actions
 const loadConfig = async () => {
     try {
         const res = await axios.get('/api/speedsorter/config');
@@ -49,7 +53,6 @@ const selectInput = async () => {
             await loadConfig();
         }
     } else {
-        // Fallback for browser-only mode (dev)
         const path = prompt("Enter absolute path to Input Folder:", inputDir.value || "");
         if (path) {
             await axios.post('/api/speedsorter/config/input', null, { params: { path } });
@@ -90,10 +93,8 @@ const moveFile = async (targetIndex) => {
             params: { source: fileToMove, targetIndex }
         });
 
-        // Add to history
         history.value.push({ source: fileToMove, dest: res.data, isDelete: false });
 
-        // Remove from list
         files.value.splice(currentIndex.value, 1);
 
         toast.add({ severity: 'success', summary: 'Moved', detail: `Moved to ${target.name || 'Target ' + (targetIndex+1)}`, life: 1000 });
@@ -132,7 +133,6 @@ const undo = async () => {
             params: { source: lastAction.dest, original: lastAction.source }
         });
 
-        // Restore to list
         files.value.splice(currentIndex.value, 0, lastAction.source);
         toast.add({ severity: 'info', summary: 'Undone', detail: 'File restored', life: 1000 });
     } catch (e) {
@@ -148,7 +148,6 @@ const prev = () => {
     if (currentIndex.value > 0) currentIndex.value--;
 };
 
-// Keyboard Handling
 const handleKeydown = (e) => {
     if (e.target.tagName === 'INPUT') return;
 
@@ -186,7 +185,6 @@ onUnmounted(() => {
     <div class="flex flex-column h-full overflow-hidden p-3">
         <Toast position="bottom-center" />
 
-        <!-- Top Bar -->
         <div class="flex align-items-center justify-content-between mb-3 glass-panel p-3 border-round">
             <div class="flex align-items-center gap-3">
                 <span class="text-xl font-bold text-gradient">Speed Sorter</span>
@@ -196,9 +194,7 @@ onUnmounted(() => {
             <span class="text-lg font-bold text-primary">{{ progress }}</span>
         </div>
 
-        <!-- Main Area -->
         <div class="flex-grow-1 flex gap-3 overflow-hidden">
-            <!-- Image View -->
             <div class="flex-grow-1 glass-panel border-round flex align-items-center justify-content-center relative overflow-hidden">
                 <img v-if="currentImageUrl" :src="currentImageUrl" class="max-w-full max-h-full shadow-8" style="object-fit: contain;" />
                 <div v-else class="text-2xl text-muted">
@@ -207,7 +203,6 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- Controls -->
         <div class="mt-3 glass-panel p-3 border-round flex justify-content-center gap-4">
             <div v-for="(target, i) in targets" :key="i" class="flex flex-column align-items-center gap-1">
                 <span class="text-cyan-400 font-bold">Key [{{ i + 1 }}]</span>

@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * GalleryView.vue
+ *
+ * Displays a searchable grid of images.
+ * Fetches image paths from the backend based on search queries and renders them using ImageCard components.
+ */
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import ImageCard from '../components/ImageCard.vue';

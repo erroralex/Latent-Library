@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * ImageBrowserView.vue
+ *
+ * The main interface for browsing and viewing images.
+ * Supports two modes: 'gallery' (grid view) and 'browser' (single image view).
+ * Handles keyboard navigation, folder selection, and integrates with the metadata sidebar.
+ */
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { useBrowserStore } from '@/stores/browser';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
@@ -14,20 +21,15 @@ const galleryContainer = ref(null);
 // Helper to calculate grid columns for Up/Down navigation
 const getGridColumns = () => {
     if (!galleryContainer.value) return 1;
-    // Find the first image card and get its width + gap
-    // This is an approximation. A more robust way is to check offsetLeft of children.
     const containerWidth = galleryContainer.value.clientWidth;
-    // Card width is store.cardSize + padding/margin. Let's assume a gap of ~8px (0.5rem)
     const cardWidth = store.cardSize + 16;
     return Math.floor(containerWidth / cardWidth) || 1;
 };
 
 // Keyboard navigation
 const handleKeydown = (e) => {
-    // Ignore if typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-    // Prevent default scrolling for navigation keys
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault();
     }
@@ -35,7 +37,6 @@ const handleKeydown = (e) => {
     const cols = store.viewMode === 'gallery' ? getGridColumns() : 1;
 
     switch(e.key) {
-        // Horizontal Navigation (Prev/Next)
         case 'ArrowLeft':
         case 'a':
         case 'A':
@@ -48,7 +49,6 @@ const handleKeydown = (e) => {
             store.navigate(1);
             break;
 
-        // Vertical Navigation (Grid Jump)
         case 'ArrowUp':
         case 'w':
         case 'W':
@@ -61,7 +61,6 @@ const handleKeydown = (e) => {
             if (store.viewMode === 'gallery') store.navigate(cols);
             break;
 
-        // View Modes
         case 'g':
         case 'G':
             store.setViewMode('gallery');
@@ -88,7 +87,6 @@ const handleKeydown = (e) => {
 onMounted(async () => {
     window.addEventListener('keydown', handleKeydown);
     await store.initialize();
-    // Initial load if empty
     if (store.files.length === 0) {
         store.search('');
     }
@@ -113,7 +111,6 @@ const handleGalleryItemDoubleClick = (file) => {
     store.setSidebarOpen(true);
 };
 
-// Watch view mode to hide sidebar in gallery view
 watch(() => store.viewMode, (newMode) => {
     if (newMode === 'gallery') {
         store.setSidebarOpen(false);
@@ -124,19 +121,14 @@ watch(() => store.viewMode, (newMode) => {
 
 <template>
     <div class="flex flex-column h-screen overflow-hidden">
-        <!-- Toolbar -->
         <BrowserToolbar />
 
-        <!-- Main Content Area -->
         <div class="flex flex-grow-1 overflow-hidden relative">
 
-            <!-- Folder Nav -->
             <FolderNav />
 
-            <!-- Center View -->
             <div class="flex-grow-1 flex flex-column overflow-hidden relative" ref="containerRef">
 
-                <!-- Gallery Mode -->
                 <div v-if="store.viewMode === 'gallery'" class="h-full overflow-y-auto p-3" ref="galleryContainer">
                     <div class="flex flex-wrap gap-2 justify-content-center">
                         <div v-for="file in store.files" :key="file"
@@ -150,9 +142,7 @@ watch(() => store.viewMode, (newMode) => {
                     </div>
                 </div>
 
-                <!-- Browser Mode (Single Image) -->
                 <div v-else class="flex flex-column h-full">
-                    <!-- Main Image Area -->
                     <div class="flex-grow-1 flex align-items-center justify-content-center bg-black-alpha-90 relative overflow-hidden">
                         <img v-if="mainImageUrl" :src="mainImageUrl"
                              class="max-w-full max-h-full object-contain shadow-8 cursor-pointer"
@@ -161,7 +151,6 @@ watch(() => store.viewMode, (newMode) => {
 
                         <div v-else class="text-white text-xl">No image selected</div>
 
-                        <!-- Navigation Overlays -->
                         <div class="absolute left-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200"
                              @click="store.navigate(-1)">
                             <i class="pi pi-chevron-left text-4xl text-white-alpha-50"></i>
@@ -172,12 +161,10 @@ watch(() => store.viewMode, (newMode) => {
                         </div>
                     </div>
 
-                    <!-- Filmstrip -->
                     <FilmstripView />
                 </div>
             </div>
 
-            <!-- Sidebar -->
             <MetadataSidebar v-if="store.isSidebarOpen" />
         </div>
     </div>

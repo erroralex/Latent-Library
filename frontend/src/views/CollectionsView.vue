@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * CollectionsView.vue
+ *
+ * Manages user-defined image collections.
+ * Allows users to view existing collections and create new ones via a dialog.
+ */
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';

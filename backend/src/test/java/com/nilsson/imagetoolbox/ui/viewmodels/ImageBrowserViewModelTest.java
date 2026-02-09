@@ -16,8 +16,6 @@ class ImageBrowserViewModelTest {
 
     @Test
     void testPlaceholder() {
-        // This test is a placeholder because the original test was designed for a JavaFX application,
-        // but this project is a Spring Boot backend for a Web application.
         assertTrue(true, "Placeholder test passed");
     }
 }
