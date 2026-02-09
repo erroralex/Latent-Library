@@ -3,52 +3,86 @@
  * App.vue
  * Root Navigation & Layout
  */
-import { RouterView, useRouter } from 'vue-router'
-import Menubar from 'primevue/menubar';
-import { ref } from "vue";
+import { RouterView, useRouter, useRoute } from 'vue-router'
+import Button from 'primevue/button';
+import { ref, computed } from "vue";
 
 const router = useRouter();
+const route = useRoute();
 
 const items = ref([
   {
     label: 'Gallery',
     icon: 'pi pi-images',
-    command: () => router.push('/')
+    path: '/'
   },
   {
     label: 'Collections',
     icon: 'pi pi-folder',
-    command: () => router.push('/collections')
+    path: '/collections'
   },
   {
     label: 'Comparator',
     icon: 'pi pi-arrow-right-arrow-left',
-    command: () => router.push('/comparator')
+    path: '/comparator'
   },
   {
     label: 'Scrubber',
     icon: 'pi pi-shield',
-    command: () => router.push('/scrub')
+    path: '/scrub'
   },
   {
     label: 'Speed Sorter',
     icon: 'pi pi-bolt',
-    command: () => router.push('/speedsorter')
+    path: '/speedsorter'
   }
 ]);
+
+const navigate = (path) => {
+  router.push(path);
+};
+
+const isActive = (path) => {
+  if (path === '/' && route.path === '/') return true;
+  if (path !== '/' && route.path.startsWith(path)) return true;
+  return false;
+};
+
+const minimizeWindow = () => {
+  if (window.windowAPI) window.windowAPI.minimize();
+};
+
+const maximizeWindow = () => {
+  if (window.windowAPI) window.windowAPI.maximize();
+};
+
+const closeWindow = () => {
+  if (window.windowAPI) window.windowAPI.close();
+};
 </script>
 
 <template>
   <div class="layout-wrapper h-screen flex flex-column overflow-hidden">
-    <header>
-      <Menubar :model="items" class="menubar-glass border-none border-noround">
-        <template #start>
-          <div class="flex align-items-center gap-2 mr-4">
-            <img src="@/assets/icon.png" alt="Logo" style="height: 32px;" />
-            <span class="text-xl font-bold text-gradient">AI Toolbox</span>
-          </div>
-        </template>
-      </Menubar>
+    <header class="menubar-glass flex align-items-center px-5 py-3 gap-5 draggable-header">
+      <div class="flex align-items-center gap-3 mr-5 no-drag">
+        <img src="@/assets/icon.png" alt="Logo" style="height: 42px;" />
+        <span class="text-2xl font-bold text-gradient">AI Toolbox</span>
+      </div>
+
+      <div class="flex gap-2 flex-grow-1 no-drag">
+        <Button v-for="item in items" :key="item.path"
+                :label="item.label"
+                :icon="item.icon"
+                class="p-button-text font-semibold text-lg px-4 py-2 transition-colors transition-duration-200"
+                :class="[ isActive(item.path) ? 'text-cyan-400 bg-white-alpha-10' : 'text-gray-400 hover:text-white hover:bg-white-alpha-10' ]"
+                @click="navigate(item.path)" />
+      </div>
+
+      <div class="flex gap-2 no-drag">
+        <Button icon="pi pi-minus" class="p-button-text text-gray-400 hover:text-white hover:bg-white-alpha-10 w-3rem h-3rem" @click="minimizeWindow" />
+        <Button icon="pi pi-window-maximize" class="p-button-text text-gray-400 hover:text-white hover:bg-white-alpha-10 w-3rem h-3rem" @click="maximizeWindow" />
+        <Button icon="pi pi-times" class="window-close-btn p-button-text text-gray-400 w-3rem h-3rem" @click="closeWindow" />
+      </div>
     </header>
 
     <main class="flex-grow-1 overflow-hidden relative">
@@ -74,32 +108,19 @@ const items = ref([
   -webkit-text-fill-color: transparent;
 }
 
-/* PrimeVue Menubar Override for Transparency */
-:deep(.p-menubar) {
-  background: transparent !important;
-  border: none !important;
-  padding: 0.5rem 1rem;
+.draggable-header {
+  -webkit-app-region: drag;
 }
 
-:deep(.p-menubar .p-menuitem-link .p-menuitem-text) {
-  color: var(--text-secondary) !important;
-  font-weight: 500;
-}
-:deep(.p-menubar .p-menuitem-link .p-menuitem-icon) {
-  color: var(--app-cyan) !important;
+.no-drag {
+  -webkit-app-region: no-drag;
 }
 
-/* Hover Effects */
-:deep(.p-menubar .p-menuitem-link:hover) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-radius: 6px;
-}
-:deep(.p-menubar .p-menuitem-link:hover .p-menuitem-text) {
-  color: var(--text-primary) !important;
-}
-
-/* Active Focus */
-:deep(.p-menubar .p-menuitem-link:focus) {
-  box-shadow: inset 0 0 0 1px var(--app-cyan) !important;
+/* Specific override for the close button to ensure red hover */
+.window-close-btn:hover {
+  background-color: var(--app-red-warning) !important;
+  color: white !important;
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6) !important;
+  background-image: none !important; /* Remove the global gradient */
 }
 </style>

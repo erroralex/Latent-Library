@@ -55,4 +55,29 @@ public class SystemController {
         }
         return ResponseEntity.internalServerError().body("Desktop API not supported");
     }
+
+    @PostMapping("/show-in-explorer")
+    public ResponseEntity<String> showInExplorer(@RequestParam("path") String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            return ResponseEntity.badRequest().body("File does not exist");
+        }
+
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                // For Windows, "explorer.exe /select," is the command to highlight a file.
+                new ProcessBuilder("explorer.exe", "/select,", file.getAbsolutePath()).start();
+            } else if (os.contains("mac")) {
+                // For macOS, "open -R" reveals the file in Finder.
+                new ProcessBuilder("open", "-R", file.getAbsolutePath()).start();
+            } else {
+                // For Linux/other, fall back to opening the parent directory.
+                Desktop.getDesktop().open(file.getParentFile());
+            }
+            return ResponseEntity.ok("Command sent");
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("Failed to show file: " + e.getMessage());
+        }
+    }
 }

@@ -93,11 +93,15 @@ public class ImageController {
             if (!file.exists()) return ResponseEntity.notFound().build();
 
             Resource resource = new UrlResource(file.toURI());
-            String contentType = "image/jpeg";
+            String contentType = null;
             try {
                 contentType = Files.probeContentType(file.toPath());
             } catch (Exception e) {
                 // ignore
+            }
+            
+            if (contentType == null) {
+                contentType = "image/jpeg";
             }
 
             return ResponseEntity.ok()
