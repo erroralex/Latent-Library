@@ -10,22 +10,13 @@ import java.util.Map;
 
 /**
  * Metadata parsing strategy for NovelAI-generated JSON.
- *
- * <p>This strategy extracts prompts, generation parameters, and basic
- * model identification from NovelAI metadata, handling both textual
- * and numeric configuration values.</p>
- *
- * <p>The implementation avoids overwriting higher-priority data that
- * may already have been resolved by other strategies.</p>
+ * Extracts prompts, generation parameters, and basic model identification.
+ * Handles both textual and numeric configuration values.
  */
 @Service
 public class NovelAIStrategy implements MetadataStrategy {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    /* ============================================================
-       Public API
-       ============================================================ */
 
     @Override
     public Map<String, String> parse(String text) {
@@ -42,10 +33,6 @@ public class NovelAIStrategy implements MetadataStrategy {
         }
         return results;
     }
-
-    /* ============================================================
-       MetadataStrategy Implementation
-       ============================================================ */
 
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {

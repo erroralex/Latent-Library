@@ -15,9 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for image-related operations.
+ * Handles image search, metadata retrieval, rating updates, and serving image content.
+ */
 @RestController
 @RequestMapping("/api/images")
-@CrossOrigin(origins = "http://localhost:5173") // Allow Vue dev server
+@CrossOrigin(origins = "http://localhost:5173")
 public class ImageController {
 
     private final UserDataManager dataManager;
@@ -35,7 +39,6 @@ public class ImageController {
             @RequestParam(required = false) String rating,
             @RequestParam(defaultValue = "1000") int limit) {
         
-        // Construct filters map manually to avoid Spring confusing query params
         Map<String, String> filters = new HashMap<>();
         if (model != null && !model.isEmpty() && !"All".equals(model)) filters.put("Model", model);
         if (sampler != null && !sampler.isEmpty() && !"All".equals(sampler)) filters.put("Sampler", sampler);
@@ -85,7 +88,7 @@ public class ImageController {
             if (!file.exists()) return ResponseEntity.notFound().build();
 
             Resource resource = new UrlResource(file.toURI());
-            String contentType = "image/jpeg"; // Default
+            String contentType = "image/jpeg";
             try {
                 contentType = Files.probeContentType(file.toPath());
             } catch (Exception e) {

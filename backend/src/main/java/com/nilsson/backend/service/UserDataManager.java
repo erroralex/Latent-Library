@@ -20,37 +20,21 @@ import java.util.stream.Collectors;
 import java.util.HashMap;
 
 /**
- <h2>UserDataManager</h2>
- <p>
- Acts as the central Facade between the UI/ViewModels and the underlying data repositories.
- This class abstracts the complexity of data persistence, file system interactions, and
- path normalization.
- </p>
- * <h3>Key Responsibilities:</h3>
- <ul>
- <li><b>Path Normalization:</b> Manages the conversion between absolute system paths used by
- the UI and relative paths stored in the database to ensure library portability.</li>
- <li><b>Concurrency Control:</b> Relies on the underlying {@link DatabaseService} (HikariCP + SQLite WAL)
- to handle concurrent access safely, avoiding application-level locking bottlenecks.</li>
- <li><b>File Identity & Integrity:</b> Handles SHA-256 hashing for file tracking and
- delegates metadata extraction/caching.</li>
- <li><b>Domain Delegation:</b> Orchestrates operations across {@link ImageRepository},
- {@link CollectionRepository}, and {@link SettingsRepository}.</li>
- </ul>
+ * Facade service managing data persistence, file system interactions, and path normalization.
+ * Abstracts the complexity of repositories and ensures consistent data access.
+ * Handles path relativization, file hashing, metadata caching, and domain delegation.
  */
 @Service
 public class UserDataManager {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDataManager.class);
 
-    // --- Repositories & Services ---
     private final DatabaseService db;
     private final SettingsRepository settingsRepo;
     private final CollectionRepository collectionRepo;
     private final ImageRepository imageRepo;
     private final MetadataService metaService;
 
-    // --- Environment ---
     private final File libraryRoot;
 
     public UserDataManager(DatabaseService db,
@@ -67,15 +51,10 @@ public class UserDataManager {
         logger.info("UserDataManager initialized. Library root: {}", libraryRoot);
     }
 
-    /**
-     Gracefully shuts down the underlying database services.
-     */
     public void shutdown() {
         logger.info("Shutting down data services...");
         db.shutdown();
     }
-
-    // --- Path Normalization Logic ---
 
     public File resolvePath(String dbPath) {
         if (dbPath == null) return null;
@@ -101,12 +80,9 @@ public class UserDataManager {
         return file.getAbsolutePath().replace("\\", "/");
     }
 
-    // --- Search & Attributes ---
-
     public List<String> getDistinctMetadataValues(String key) {
         List<String> raw = imageRepo.getDistinctValues(key);
         if ("Loras".equals(key)) {
-            // Special handling for Loras: split comma-separated values and clean them
             return raw.stream()
                     .filter(s -> s != null && !s.isBlank())
                     .flatMap(s -> java.util.Arrays.stream(s.split(",")))
@@ -148,8 +124,6 @@ public class UserDataManager {
         });
     }
 
-    // --- File Operations & Identity ---
-
     public boolean moveFileToTrash(File file) {
         if (file == null || !file.exists()) return false;
 
@@ -174,22 +148,17 @@ public class UserDataManager {
             String path = relativizePath(file);
             String hash = calculateHash(file);
             
-            // Check if file exists at path
             int id = imageRepo.getIdByPath(path);
             if (id != -1) return id;
 
-            // Check if file was moved (same hash, different path)
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
             if (!existingPaths.isEmpty()) {
-                // Found a match by hash. Assume it's a move/rename.
-                // Update the old path to the new path.
                 String oldPath = existingPaths.get(0);
                 logger.info("Detected file move: {} -> {}", oldPath, path);
                 imageRepo.updatePath(oldPath, path);
                 return imageRepo.getIdByPath(path);
             }
 
-            // New file
             return imageRepo.getOrCreateId(path, hash);
         } catch (Exception e) {
             logger.error("Failed to get ID for file: {}", file, e);
@@ -215,8 +184,6 @@ public class UserDataManager {
         }
     }
 
-    // --- Metadata & Tags ---
-
     public void cacheMetadata(File file, Map<String, String> meta) {
         if (file == null || meta == null || meta.isEmpty()) return;
         int id = getOrCreateImageIdInternal(file);
@@ -229,7 +196,6 @@ public class UserDataManager {
             return imageRepo.getMetadata(relPath);
         }
 
-        // On-demand extraction if missing
         logger.debug("Metadata missing in DB for {}, extracting on-demand.", file.getName());
         Map<String, String> meta = metaService.getExtractedData(file);
         cacheMetadata(file, meta);
@@ -255,8 +221,6 @@ public class UserDataManager {
     public Set<String> getTags(File file) {
         return imageRepo.getTags(relativizePath(file));
     }
-
-    // --- Ratings & Folders ---
 
     public int getRating(File file) {
         return imageRepo.getRating(relativizePath(file));
@@ -294,8 +258,6 @@ public class UserDataManager {
         }
     }
 
-    // --- Collections ---
-
     public List<String> getCollections() {
         return collectionRepo.getAllNames();
     }
@@ -325,8 +287,6 @@ public class UserDataManager {
         }
         return files;
     }
-
-    // --- Settings ---
 
     public String getSetting(String key, String defaultValue) {
         return settingsRepo.get(key, defaultValue);

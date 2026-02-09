@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Map;
 
+/**
+ * Strategy interface for extracting metadata from different AI generation tool outputs.
+ * Implementations define how to parse specific JSON structures or raw text formats.
+ */
 public interface MetadataStrategy {
     /**
      * Inspects a single JSON node and extracts relevant metadata.

@@ -10,6 +10,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for file system navigation and folder management.
+ * Provides endpoints for listing drives, browsing directories, and managing pinned folders.
+ */
 @RestController
 @RequestMapping("/api/folders")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -70,7 +74,6 @@ public class FolderController {
         return ResponseEntity.ok().build();
     }
 
-    // DTO for frontend consumption
     public record FileDTO(String name, String path, boolean isDirectory, boolean isPinned, String key, String label, String icon, boolean leaf) {
         public FileDTO(String name, String path, boolean isDirectory, boolean isPinned) {
             this(name, path, isDirectory, isPinned, path, name, isDirectory ? "pi pi-folder" : "pi pi-file", !isDirectory);

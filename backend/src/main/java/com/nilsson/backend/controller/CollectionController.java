@@ -8,6 +8,10 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for managing user collections.
+ * Allows creating, deleting, and modifying collections of images.
+ */
 @RestController
 @RequestMapping("/api/collections")
 @CrossOrigin(origins = "http://localhost:5173")

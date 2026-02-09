@@ -18,6 +18,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Controller for the Metadata Scrubber tool.
+ * Handles image uploads, preview generation, and metadata stripping (scrubbing).
+ */
 @RestController
 @RequestMapping("/api/scrub")
 public class ScrubController {
@@ -52,7 +56,7 @@ public class ScrubController {
 
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
-                        .contentType(MediaType.IMAGE_JPEG) // Or detect type dynamically
+                        .contentType(MediaType.IMAGE_JPEG)
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();
@@ -70,21 +74,14 @@ public class ScrubController {
                 return ResponseEntity.notFound().build();
             }
 
-            // Read image (this strips metadata as BufferedImage doesn't keep it by default)
             BufferedImage image = ImageIO.read(sourcePath.toFile());
 
-            // Create output file
             String cleanFilename = "clean_" + filename;
             Path targetPath = tempDir.resolve(cleanFilename);
             
-            // Determine format
             String format = "png";
             if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
                 format = "jpg";
-            } else if (filename.toLowerCase().endsWith(".webp")) {
-                // ImageIO might need a plugin for webp, falling back to png if needed or assuming plugin exists
-                // For standard JDK, PNG is safest for lossless "scrubbing"
-                format = "png"; 
             }
 
             ImageIO.write(image, format, targetPath.toFile());
