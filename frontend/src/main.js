@@ -1,13 +1,14 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
-import ToastService from 'primevue/toastservice'; // Import ToastService
+import ToastService from 'primevue/toastservice';
+import Tooltip from 'primevue/tooltip'; // Import Tooltip directive
 
 import 'primevue/resources/themes/aura-dark-green/theme.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
 
-import './assets/css/main.css' // Import our custom CSS
+import './assets/css/main.css'
 
 import App from './App.vue'
 import router from './router'
@@ -17,6 +18,8 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
-app.use(ToastService) // Use ToastService
+app.use(ToastService)
+
+app.directive('tooltip', Tooltip); // Register Tooltip directive globally
 
 app.mount('#app')

@@ -8,16 +8,21 @@
  * Includes copy-to-clipboard functionality for prompts.
  */
 import { useBrowserStore } from '@/stores/browser';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import axios from 'axios';
 import Sidebar from 'primevue/sidebar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Chip from 'primevue/chip';
 import Divider from 'primevue/divider';
+import Dialog from 'primevue/dialog';
+import { useToast } from 'primevue/usetoast';
 
 const store = useBrowserStore();
+const toast = useToast();
 const meta = computed(() => store.currentMetadata);
+const isRawVisible = ref(false);
 
 const fileName = computed(() => {
   if (!store.selectedFile) return 'No Selection';
@@ -26,12 +31,35 @@ const fileName = computed(() => {
 
 const copyToClipboard = (text) => {
   navigator.clipboard.writeText(text);
+  toast.add({ severity: 'info', summary: 'Copied', detail: 'Text copied to clipboard', life: 1500 });
 };
 
 const loras = computed(() => {
   if (meta.value.Loras) return meta.value.Loras.split(',').map(s => s.trim());
   return [];
 });
+
+const openFileLocation = async () => {
+  if (!store.selectedFile) return;
+  try {
+    await axios.post('/api/system/show-in-explorer', null, { params: { path: store.selectedFile } });
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not open file location.', life: 3000 });
+  }
+};
+
+const formattedRawMeta = computed(() => {
+  if (!meta.value.Raw) return 'No raw data available.';
+  try {
+    // Attempt to parse and prettify if it's a JSON string
+    const parsed = JSON.parse(meta.value.Raw);
+    return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    // If it's not valid JSON, return the raw text as is
+    return meta.value.Raw;
+  }
+});
+
 </script>
 
 <template>
@@ -41,8 +69,8 @@ const loras = computed(() => {
         {{ fileName }}
       </div>
       <div class="flex gap-2">
-        <Button icon="pi pi-folder-open" class="p-button-sm p-button-text text-white" tooltip="Open Location" />
-        <Button icon="pi pi-code" class="p-button-sm p-button-text text-white" tooltip="Raw Metadata" />
+        <Button icon="pi pi-folder-open" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'Open File Location'" @click="openFileLocation" />
+        <Button icon="pi pi-code" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'View Raw Metadata'" @click="isRawVisible = true" />
       </div>
     </div>
 
@@ -111,6 +139,15 @@ const loras = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Raw Metadata Dialog -->
+    <Dialog v-model:visible="isRawVisible" modal header="Raw Metadata" class="glass-dialog w-6" :style="{ width: '50vw' }">
+        <pre class="raw-meta-pre">{{ formattedRawMeta }}</pre>
+        <template #footer>
+            <Button label="Copy Text" icon="pi pi-copy" @click="copyToClipboard(formattedRawMeta)" class="p-button-secondary" />
+            <Button label="Close" icon="pi pi-times" @click="isRawVisible = false" autofocus />
+        </template>
+    </Dialog>
   </div>
 </template>
 
@@ -139,5 +176,53 @@ const loras = computed(() => {
   background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.raw-meta-pre {
+    background-color: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 1rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 60vh;
+    overflow-y: auto;
+    color: #e0e0e0;
+}
+
+/* Deep selectors to override PrimeVue Dialog styles */
+:deep(.glass-dialog) {
+    background: rgba(15, 15, 15, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    color: white !important;
+}
+
+:deep(.glass-dialog .p-dialog-header) {
+    background: transparent !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.5rem !important;
+}
+
+:deep(.glass-dialog .p-dialog-content) {
+    background: transparent !important;
+    color: white !important;
+    padding: 1.5rem !important;
+}
+
+:deep(.glass-dialog .p-dialog-footer) {
+    background: transparent !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.5rem !important;
+}
+
+:deep(.glass-dialog .p-dialog-header-icon) {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+:deep(.glass-dialog .p-dialog-header-icon:hover) {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
 }
 </style>

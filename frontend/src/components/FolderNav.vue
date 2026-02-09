@@ -91,15 +91,11 @@ const onNodeSelect = async (node) => {
 
 // --- Context Menu Handlers ---
 const onNodeContextMenu = (event) => {
-  // PrimeVue Tree returns { originalEvent, node }
   const node = event.node;
-  console.log("FolderNav: Right Click detected on", node.label);
-
   if (!node) return;
 
   contextMenuSelection.value = node;
 
-  // Build model
   menuModel.value = [
     {
       label: 'Pin Folder',
@@ -127,7 +123,6 @@ const onNodeContextMenu = (event) => {
   ];
 
   if (cm.value) {
-    // Pass the native DOM event
     cm.value.show(event.originalEvent);
   } else {
     console.error("FolderNav: ContextMenu ref (cm) is null");
@@ -152,7 +147,7 @@ onMounted(loadTree);
       <span class="text-gradient">Library</span>
     </div>
 
-    <div class="flex-grow-1 overflow-y-auto">
+    <div class="flex-grow-1 overflow-y-auto" style="padding-bottom: 20px;">
       <Tree
           :value="nodes"
           selectionMode="single"
@@ -185,14 +180,41 @@ onMounted(loadTree);
   -webkit-text-fill-color: transparent;
 }
 
-/* Force Tree Transparency */
-:deep(.p-tree) { background: transparent !important; border: none !important; padding: 0.5rem; }
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) { padding: 0.2rem; border-radius: 4px; color: var(--text-secondary); }
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover) { background: rgba(255, 255, 255, 0.05); color: white; }
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus) { box-shadow: inset 0 0 0 1px var(--primary-color); }
+/* Force Tree Container Transparency */
+:deep(.p-tree) {
+  background: transparent !important;
+  border: none !important;
+  padding: 0.5rem;
+}
+
+/* Base Node Style */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
+  padding: 0.6rem 0.8rem;
+  margin: 6px 12px;
+  border-radius: 6px;
+  color: #9ca3af;
+  transition: all 0.2s ease-out;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+/* Hover & Selected State - Black Square + Neon Glow (No Outline) */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover),
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
-  background: rgba(102, 252, 241, 0.1) !important;
-  color: var(--app-cyan-bright);
-  border-left: 2px solid var(--app-cyan-bright);
+  background: #000000 !important;
+  border: 1px solid transparent !important; /* Transparent Border */
+  color: #66fcf1 !important;
+
+  /* Strong Cyan Glow */
+  box-shadow: 0 0 20px rgba(102, 252, 241, 0.5) !important;
+
+  z-index: 10;
+  transform: translateY(-1px);
+}
+
+/* Icons inherit color */
+:deep(.p-tree .p-treenode-icon) {
+  color: inherit !important;
+  transition: color 0.2s;
 }
 </style>

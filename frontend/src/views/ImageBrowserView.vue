@@ -198,7 +198,7 @@ watch(() => store.imageFocusRequested, (requested) => {
 
 /* New Glass Class for the Single Image Viewer */
 .image-viewer-glass {
-  /* Semi-transparent black allowing background blobs to show through */
-  background: rgba(0, 0, 0, 0.5);
+  /* Reduced opacity to let the background shine through more */
+  background: rgba(0, 0, 0, 0.2);
 }
 </style>
