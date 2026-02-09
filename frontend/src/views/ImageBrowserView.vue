@@ -182,7 +182,11 @@ watch(() => store.imageFocusRequested, (requested) => {
         </div>
       </div>
 
-      <MetadataSidebar v-if="store.isSidebarOpen" />
+      <Transition name="slide-sidebar">
+        <div v-if="store.isSidebarOpen" class="absolute top-0 right-0 bottom-0 z-5 shadow-8">
+          <MetadataSidebar />
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -223,5 +227,21 @@ watch(() => store.imageFocusRequested, (requested) => {
 .image-viewer-glass {
   /* Reduced opacity to let the background shine through more */
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* Sidebar Slide Transition */
+.slide-sidebar-enter-active,
+.slide-sidebar-leave-active {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.slide-sidebar-enter-from,
+.slide-sidebar-leave-to {
+  transform: translateX(100%);
+}
+
+.slide-sidebar-enter-to,
+.slide-sidebar-leave-from {
+  transform: translateX(0);
 }
 </style>
