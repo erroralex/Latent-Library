@@ -188,12 +188,35 @@ watch(() => store.imageFocusRequested, (requested) => {
 </template>
 
 <style scoped>
+/* Selected Item - Gradient Border Effect */
 .outline-active {
-  /* Neon Highlight */
-  outline: 3px solid #66fcf1;
-  outline-offset: 2px;
-  box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
+  position: relative;
   z-index: 1;
+  background: transparent;
+  /* Remove old outline styles */
+  outline: none;
+  box-shadow: none;
+}
+
+/* 1. Gradient Border/Glow (Deepest) */
+.outline-active::before {
+  content: '';
+  position: absolute;
+  inset: -2px; /* Creates the border width */
+  background: var(--app-grad-hover);
+  border-radius: inherit; /* Match parent radius */
+  z-index: -2; /* Behind everything */
+  filter: blur(2px); /* Slight glow */
+}
+
+/* 2. Black Background (Middle) */
+.outline-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000000; /* Opaque black to block center */
+  border-radius: inherit;
+  z-index: -1; /* Behind content, in front of glow */
 }
 
 /* New Glass Class for the Single Image Viewer */
