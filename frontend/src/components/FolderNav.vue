@@ -38,6 +38,9 @@ const loadTree = async () => {
     rootNodes.push({ key: 'collections', label: 'Collections', icon: 'pi pi-list', children: colChildren, type: 'root', leaf: false });
   } catch (e) { console.error("Error loading collections", e); }
 
+  // Separator 1
+  rootNodes.push({ key: 'sep-1', type: 'separator', selectable: false });
+
   // 2. Pinned
   try {
     const pinRes = await axios.get('/api/folders/pinned');
@@ -46,6 +49,9 @@ const loadTree = async () => {
     }));
     rootNodes.push({ key: 'pinned', label: 'Pinned', icon: 'pi pi-bookmark', children: pinChildren, type: 'root', leaf: false });
   } catch (e) { console.error("Error loading pinned", e); }
+
+  // Separator 2
+  rootNodes.push({ key: 'sep-2', type: 'separator', selectable: false });
 
   // 3. Drives
   try {
@@ -89,10 +95,11 @@ const onNodeSelect = async (node) => {
   }
 };
 
-// --- Context Menu Handlers ---
-const onNodeContextMenu = (event) => {
-  const node = event.node;
-  if (!node) return;
+// --- Custom Context Menu Handler (Bypassing Tree Event) ---
+const onCustomContextMenu = (event, node) => {
+  console.log("FolderNav: Custom context menu triggered", node.label);
+
+  if (!node || node.type === 'separator') return;
 
   contextMenuSelection.value = node;
 
@@ -101,7 +108,7 @@ const onNodeContextMenu = (event) => {
       label: 'Pin Folder',
       icon: 'pi pi-bookmark',
       command: () => pinFolder(node.data.path),
-      visible: node.type !== 'pinned'
+      visible: node.type !== 'pinned' && node.data?.path
     },
     {
       label: 'Unpin Folder',
@@ -113,19 +120,19 @@ const onNodeContextMenu = (event) => {
     {
       label: 'Show in Explorer',
       icon: 'pi pi-external-link',
-      command: () => openInExplorer(node.data.path)
+      command: () => openInExplorer(node.data.path),
+      visible: !!node.data?.path
     },
     {
       label: 'Open in Speed Sorter',
       icon: 'pi pi-bolt',
-      command: () => openInSpeedSorter(node.data.path)
+      command: () => openInSpeedSorter(node.data.path),
+      visible: !!node.data?.path
     }
   ];
 
   if (cm.value) {
-    cm.value.show(event.originalEvent);
-  } else {
-    console.error("FolderNav: ContextMenu ref (cm) is null");
+    cm.value.show(event);
   }
 };
 
@@ -152,13 +159,19 @@ onMounted(loadTree);
           :value="nodes"
           selectionMode="single"
           v-model:selectionKeys="selectedKey"
-          v-model:contextMenuSelection="contextMenuSelection"
           v-model:expandedKeys="expandedKeys"
           :lazy="true"
           @node-expand="onNodeExpand"
           @node-select="onNodeSelect"
-          @node-contextmenu="onNodeContextMenu"
-      />
+      >
+        <template #default="slotProps">
+            <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
+            <div v-else class="w-full h-full flex align-items-center" @contextmenu.prevent.stop="onCustomContextMenu($event, slotProps.node)">
+                <!-- Icon removed to prevent duplication -->
+                <span class="p-treenode-label">{{ slotProps.node.label }}</span>
+            </div>
+        </template>
+      </Tree>
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel" />
@@ -178,6 +191,13 @@ onMounted(loadTree);
   background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.separator-line {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+  width: 100%;
 }
 
 /* Force Tree Transparency & Styling */

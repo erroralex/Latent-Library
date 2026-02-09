@@ -83,16 +83,16 @@ const clear = () => {
 
         <div class="text-center mb-5">
             <h1 class="text-4xl font-bold text-gradient mb-2">Metadata Scrubber</h1>
-            <p class="text-secondary">Remove hidden metadata (EXIF, Prompts, Workflow) for privacy.</p>
+            <p class="text-gray-400">Remove hidden metadata (EXIF, Prompts, Workflow) for privacy.</p>
         </div>
 
         <Card class="w-full max-w-30rem glass-panel">
             <template #content>
                 <div v-if="!previewUrl" class="flex flex-column align-items-center gap-4 py-5">
-                    <i class="pi pi-shield text-6xl text-primary opacity-50"></i>
+                    <i class="pi pi-shield text-6xl text-gradient opacity-80"></i>
                     <FileUpload mode="basic" name="file" :auto="true" customUpload @uploader="onUpload" accept="image/*"
                                 chooseLabel="Select Image" class="p-button-outlined" />
-                    <span class="text-sm text-muted">Supports PNG, JPG, WEBP</span>
+                    <span class="text-sm text-gray-500">Supports PNG, JPG, WEBP</span>
                 </div>
 
                 <div v-else class="flex flex-column align-items-center gap-4">
@@ -103,7 +103,7 @@ const clear = () => {
                     <div class="flex gap-2 w-full">
                         <Button label="Export Clean Copy" icon="pi pi-download"
                                 @click="scrubAndDownload" :loading="isProcessing"
-                                class="flex-grow-1 p-button-success" />
+                                class="flex-grow-1" />
                         <Button icon="pi pi-times" @click="clear"
                                 class="p-button-secondary p-button-outlined" tooltip="Clear" />
                     </div>
@@ -114,5 +114,21 @@ const clear = () => {
 </template>
 
 <style scoped>
-/* Scoped styles if needed, mostly using utility classes */
+.text-gradient {
+    background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-panel {
+    background: rgba(20, 20, 20, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+
+/* Override PrimeVue Card body padding if needed */
+:deep(.p-card-body) {
+    padding: 1.5rem;
+}
 </style>
