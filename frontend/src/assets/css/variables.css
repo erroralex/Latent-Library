@@ -1,0 +1,55 @@
+:root {
+    /* -------- Color Palette -------- */
+    --app-bg-deepest: #050507; /* Darker, deeper black for contrast */
+    --app-bg-surface: #0a0b10;
+    --app-bg-panel: rgba(18, 20, 26, 0.7); /* Glassy panel base */
+    --app-bg-card: rgba(21, 24, 32, 0.6); /* Glassy card base */
+    --app-bg-input: rgba(0, 0, 0, 0.4);
+
+    /* -------- Accents -------- */
+    --app-cyan: #45a29e;
+    --app-cyan-bright: #66fcf1;
+    --app-purple: #c45dec;
+    --app-red-warning: #ff4d4d;
+
+    /* Standard Blue for consistency */
+    --app-blue: #0096C9;
+    --app-blue-hover: rgba(0, 150, 201, 0.15);
+
+    /* -------- Gradients -------- */
+    --app-grad-primary: linear-gradient(135deg, #00d4ff 0%, #7a2aff 100%);
+    --app-grad-hover: linear-gradient(135deg, #66fcf1 0%, #d870ff 100%);
+    --app-grad-text: linear-gradient(90deg, #00d4ff 0%, #7a2aff 100%);
+    --app-grad-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
+
+    /* -------- Glow & Shadows -------- */
+    --glow-soft: 0 0 10px rgba(102, 252, 241, 0.2);
+    --glow-strong: 0 0 20px rgba(102, 252, 241, 0.4);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+    --border-glass-highlight: 1px solid rgba(255, 255, 255, 0.15);
+
+    /* -------- Typography -------- */
+    --text-primary: #eef2f7;
+    --text-secondary: #a1a8b3;
+    --text-muted: #6b7280;
+
+    /* -------- PrimeVue Overrides -------- */
+    --surface-ground: var(--app-bg-deepest);
+    --surface-section: var(--app-bg-surface);
+    --surface-card: var(--app-bg-panel);
+    --surface-overlay: var(--app-bg-panel);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --surface-hover: rgba(255, 255, 255, 0.05);
+
+    --primary-color: var(--app-cyan);
+    --primary-color-text: #ffffff;
+
+    --text-color: var(--text-primary);
+    --text-color-secondary: var(--text-secondary);
+
+    --font-family: "Inter", "Segoe UI", sans-serif;
+
+    /* -------- Glass Effect Mixin (Usage: backdrop-filter: blur(10px);) -------- */
+    --glass-blur: 12px;
+}

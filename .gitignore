@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+*.iml
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+node_modules/
+dist/
+build/
+out/
+target/
+electron/dist/
+electron/node_modules/

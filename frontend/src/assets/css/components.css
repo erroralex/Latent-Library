@@ -1,0 +1,134 @@
+/* Buttons */
+.p-button {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: var(--border-glass) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.p-button:enabled:hover {
+    background: var(--app-grad-hover) !important;
+    border-color: transparent !important;
+    box-shadow: var(--glow-strong) !important;
+    color: #0b0c10 !important;
+    transform: translateY(-1px) !important;
+}
+
+.p-button:enabled:active {
+    transform: translateY(0) !important;
+    box-shadow: var(--glow-soft) !important;
+}
+
+.p-button.p-button-text {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--text-secondary) !important;
+    backdrop-filter: none !important;
+}
+
+.p-button.p-button-text:enabled:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Inputs */
+.p-inputtext {
+    background: var(--app-bg-input) !important;
+    border: var(--border-glass) !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease !important;
+    border-radius: 6px !important;
+}
+
+.p-inputtext:enabled:hover {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.p-inputtext:enabled:focus {
+    border-color: var(--app-cyan) !important;
+    box-shadow: var(--glow-soft) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Cards */
+.p-card {
+    background: var(--app-bg-card) !important;
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+    border: var(--border-glass) !important;
+    box-shadow: var(--shadow-glass) !important;
+    border-radius: 12px !important;
+}
+
+/* Menubar */
+.p-menubar {
+    background: rgba(14, 16, 21, 0.85) !important; /* Semi-transparent surface */
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+    border: none !important;
+    border-bottom: var(--border-glass) !important;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 6px !important;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link:hover .p-menuitem-text,
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link:hover .p-menuitem-icon {
+    color: var(--app-cyan-bright) !important;
+    text-shadow: 0 0 8px rgba(102, 252, 241, 0.4) !important;
+}
+
+/* Toolbar */
+.p-toolbar {
+    background: rgba(18, 20, 26, 0.6) !important;
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+    border: none !important;
+    border-bottom: var(--border-glass) !important;
+}
+
+/* Sidebar / Drawer */
+.p-sidebar {
+    background: rgba(18, 20, 26, 0.95) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-left: var(--border-glass) !important;
+    box-shadow: -5px 0 30px rgba(0,0,0,0.5) !important;
+}
+
+.p-sidebar .p-sidebar-header {
+    background: transparent !important;
+    border-bottom: var(--border-glass) !important;
+}
+
+.p-sidebar .p-sidebar-content {
+    background: transparent !important;
+}
+
+/* Slider */
+.p-slider .p-slider-range {
+    background: var(--app-grad-primary) !important;
+}
+
+.p-slider .p-slider-handle {
+    border: 2px solid var(--app-cyan-bright) !important;
+    background: #0b0c10 !important;
+    box-shadow: var(--glow-soft) !important;
+    transition: transform 0.2s !important;
+}
+
+.p-slider .p-slider-handle:hover {
+    transform: scale(1.2) !important;
+    box-shadow: var(--glow-strong) !important;
+}
