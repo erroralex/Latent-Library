@@ -26,15 +26,18 @@ export const useBrowserStore = defineStore('browser', {
         selectedModel: null,
         selectedSampler: null,
         selectedLora: null,
-        selectedRating: null
+        selectedRating: null,
+
+        // To restore view after clearing filters
+        lastFolderPath: null,
     }),
 
     actions: {
         async initialize() {
             await this.loadFilters();
-            const lastFolder = localStorage.getItem('lastFolder');
-            if (lastFolder) {
-                await this.loadFolder(lastFolder);
+            this.lastFolderPath = localStorage.getItem('lastFolder');
+            if (this.lastFolderPath) {
+                await this.loadFolder(this.lastFolderPath);
             }
         },
         
@@ -59,6 +62,7 @@ export const useBrowserStore = defineStore('browser', {
                 this.searchQuery = ''; // Clear search when loading new folder
                 
                 // Persist last folder
+                this.lastFolderPath = path;
                 localStorage.setItem('lastFolder', path);
 
                 if (this.files.length > 0) {
@@ -74,7 +78,7 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
-        async search(query) {
+        async search(query, focusImage = false) {
             this.isLoading = true;
             this.searchQuery = query;
             try {
@@ -88,24 +92,64 @@ export const useBrowserStore = defineStore('browser', {
                     }
                 });
                 this.files = response.data;
-                // If we have files and none selected, select the first one
-                if (this.files.length > 0 && !this.selectedFile) {
+                
+                // Always select the first file if results are found
+                if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
+                } else {
+                    this.selectedFile = null;
+                    this.currentMetadata = {};
                 }
+
+                if (focusImage) {
+                    // This is a placeholder for the actual focus logic
+                    // which will be handled in the component.
+                    // We can emit an event or use a state property.
+                    this.imageFocusRequested = true;
+                }
+
             } catch (error) {
                 console.error('Search failed:', error);
             } finally {
                 this.isLoading = false;
             }
         },
+
+        clearSearch() {
+            this.searchQuery = '';
+            // Restore the last folder view if no other filters are active
+            const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating;
+            if (!isAnyFilterActive && this.lastFolderPath) {
+                this.loadFolder(this.lastFolderPath);
+            }
+        },
         
         setFilter(type, value) {
-            if (type === 'model') this.selectedModel = value;
-            if (type === 'sampler') this.selectedSampler = value;
-            if (type === 'lora') this.selectedLora = value;
-            if (type === 'rating') this.selectedRating = value;
-            
-            this.search(this.searchQuery);
+            // If value is null, it means we are clearing the filter
+            if (value === null) {
+                if (type === 'model') this.selectedModel = null;
+                if (type === 'sampler') this.selectedSampler = null;
+                if (type === 'lora') this.selectedLora = null;
+                if (type === 'rating') this.selectedRating = null;
+
+                // Check if any other filters are active
+                const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.searchQuery;
+
+                if (!isAnyFilterActive && this.lastFolderPath) {
+                    // If no filters are active, restore the last folder view
+                    this.loadFolder(this.lastFolderPath);
+                } else {
+                    // Otherwise, just re-run the search with the remaining filters
+                    this.search(this.searchQuery);
+                }
+            } else {
+                if (type === 'model') this.selectedModel = value;
+                if (type === 'sampler') this.selectedSampler = value;
+                if (type === 'lora') this.selectedLora = value;
+                if (type === 'rating') this.selectedRating = value;
+                
+                this.search(this.searchQuery);
+            }
         },
 
         async selectFile(path) {

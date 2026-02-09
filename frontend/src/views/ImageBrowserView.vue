@@ -117,6 +117,23 @@ watch(() => store.viewMode, (newMode) => {
   }
 });
 
+// Watch for focus requests from the store (e.g., after search)
+watch(() => store.imageFocusRequested, (requested) => {
+  if (requested) {
+    // Reset the flag
+    store.imageFocusRequested = false;
+
+    // Switch to browser view to "focus" the image
+    store.setViewMode('browser');
+    store.setSidebarOpen(true);
+
+    // Ensure the container is focused so keyboard nav works immediately
+    if (containerRef.value) {
+      containerRef.value.focus();
+    }
+  }
+});
+
 </script>
 
 <template>
@@ -127,7 +144,7 @@ watch(() => store.viewMode, (newMode) => {
 
       <FolderNav />
 
-      <div class="flex-grow-1 flex flex-column overflow-hidden relative" ref="containerRef">
+      <div class="flex-grow-1 flex flex-column overflow-hidden relative" ref="containerRef" tabindex="0" style="outline: none;">
 
         <div v-if="store.viewMode === 'gallery'" class="h-full overflow-y-auto p-3" ref="galleryContainer">
           <div class="flex flex-wrap gap-2 justify-content-center">
