@@ -65,7 +65,7 @@ const formattedRawMeta = computed(() => {
 <template>
   <div class="metadata-sidebar-glass h-full flex flex-column" style="width: 380px; min-width: 380px;">
     <div class="p-3 border-bottom-1 border-white-alpha-10" style="background: rgba(255,255,255,0.02)">
-      <div class="font-bold text-lg mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap text-gradient" :title="fileName">
+      <div class="font-bold text-base mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap text-gradient" :title="fileName">
         {{ fileName }}
       </div>
       <div class="flex gap-2">
@@ -79,15 +79,18 @@ const formattedRawMeta = computed(() => {
         <Button v-for="i in 5" :key="i"
                 :icon="i <= store.currentRating ? 'pi pi-star-fill' : 'pi pi-star'"
                 class="p-button-text p-button-warning p-0 w-2rem h-2rem"
+                :class="{ 'text-yellow-500': i <= store.currentRating }"
                 @click="store.setRating(i)" />
       </div>
+
+      <div class="text-gradient font-bold text-xl mb-3 text-center">Metadata</div>
 
       <Divider class="border-white-alpha-10" />
 
       <div class="mb-3">
         <div class="flex justify-content-between align-items-center mb-1">
           <span class="font-bold text-sm text-500">PROMPT</span>
-          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500" @click="copyToClipboard(meta.Prompt)" />
+          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500" v-tooltip.left="'Copy Prompt'" @click="copyToClipboard(meta.Prompt)" />
         </div>
         <div class="glass-box p-2 border-round text-sm line-height-3 select-text text-gray-200" style="max-height: 150px; overflow-y: auto;">
           {{ meta.Prompt || 'No prompt found' }}
@@ -97,7 +100,7 @@ const formattedRawMeta = computed(() => {
       <div class="mb-3">
         <div class="flex justify-content-between align-items-center mb-1">
           <span class="font-bold text-sm text-red-400">NEGATIVE PROMPT</span>
-          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500" @click="copyToClipboard(meta.Negative)" />
+          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500" v-tooltip.left="'Copy Negative Prompt'" @click="copyToClipboard(meta.Negative)" />
         </div>
         <div class="glass-box p-2 border-round text-sm line-height-3 select-text text-gray-400" style="max-height: 100px; overflow-y: auto;">
           {{ meta.Negative || 'No negative prompt' }}
@@ -119,22 +122,26 @@ const formattedRawMeta = computed(() => {
           <label class="block text-xs text-500 mb-1">Scheduler</label>
           <InputText :value="meta.Scheduler || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
-        <div class="col-6">
+        <div class="col-12">
           <label class="block text-xs text-500 mb-1">Seed</label>
           <InputText :value="meta.Seed || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
-        <div class="col-6">
-          <label class="block text-xs text-500 mb-1">CFG / Steps</label>
-          <InputText :value="`${meta.CFG || '-'} / ${meta.Steps || '-'}`" readonly class="w-full p-inputtext-sm glass-input" />
+        <div class="col-3">
+          <label class="block text-xs text-500 mb-1">CFG</label>
+          <InputText :value="meta.CFG || '-'" readonly class="w-full p-inputtext-sm glass-input" />
+        </div>
+        <div class="col-3">
+          <label class="block text-xs text-500 mb-1">Steps</label>
+          <InputText :value="meta.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
       </div>
 
       <Divider class="border-white-alpha-10" />
 
       <div class="mb-3">
-        <span class="block font-bold text-sm text-500 mb-2">RESOURCES / LoRAs</span>
+        <span class="block font-bold text-sm text-500 mb-2">LoRAs</span>
         <div class="flex flex-wrap gap-2">
-          <Chip v-for="lora in loras" :key="lora" :label="lora" class="text-xs bg-primary-reverse border-1 border-white-alpha-20" />
+          <Chip v-for="lora in loras" :key="lora" :label="lora" class="lora-chip text-sm" />
           <span v-if="loras.length === 0" class="text-500 text-sm italic">None</span>
         </div>
       </div>
@@ -172,6 +179,15 @@ const formattedRawMeta = computed(() => {
   color: var(--text-primary);
 }
 
+/* Remove default focus shadow to kill the green outline */
+.glass-input:enabled:focus {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: transparent !important;
+  /* Keep the gradient border from components.css */
+  border-image: var(--app-grad-hover) 1 !important;
+}
+
 .text-gradient {
   background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
   -webkit-background-clip: text;
@@ -188,6 +204,36 @@ const formattedRawMeta = computed(() => {
     max-height: 60vh;
     overflow-y: auto;
     color: #e0e0e0;
+}
+
+/* LoRA Chip Styling */
+.lora-chip {
+  background: transparent !important;
+  color: white !important;
+  border: none !important;
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
+}
+
+/* Gradient Border for Chip */
+.lora-chip::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: var(--app-grad-hover);
+  border-radius: 16px; /* Chip radius */
+  z-index: -2;
+}
+
+/* Black Background for Chip */
+.lora-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+  border-radius: 16px;
+  z-index: -1;
 }
 
 /* Deep selectors to override PrimeVue Dialog styles */
@@ -224,5 +270,10 @@ const formattedRawMeta = computed(() => {
 :deep(.glass-dialog .p-dialog-header-icon:hover) {
     background: rgba(255, 255, 255, 0.1) !important;
     color: white !important;
+}
+
+/* Force yellow color for active stars */
+.text-yellow-500 {
+  color: #eab308 !important;
 }
 </style>

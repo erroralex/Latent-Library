@@ -73,13 +73,13 @@ const refreshFilters = () => {
       <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
         <div class="flex gap-1 mr-2">
           <Button icon="pi pi-th-large"
-                  class="p-button-sm"
-                  :class="{ 'p-button-outlined': store.viewMode !== 'gallery' }"
+                  class="p-button-sm nav-btn"
+                  :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"
                   @click="store.setViewMode('gallery')"
                   tooltip="Gallery View" />
           <Button icon="pi pi-image"
-                  class="p-button-sm"
-                  :class="{ 'p-button-outlined': store.viewMode !== 'browser' }"
+                  class="p-button-sm nav-btn"
+                  :class="{ 'active-nav-btn': store.viewMode === 'browser' }"
                   @click="store.setViewMode('browser')"
                   tooltip="Browser View" />
         </div>
@@ -203,5 +203,77 @@ const refreshFilters = () => {
 :deep(.p-toolbar) {
   background: transparent !important;
   border: none !important;
+}
+
+/* Ensure nav-btn styles from App.vue are available or duplicated here */
+/* Since styles are scoped in App.vue, we need to redefine them or make them global. */
+/* For now, I'll duplicate the relevant parts of .nav-btn here to ensure it works */
+
+.nav-btn {
+  color: #9ca3af !important;
+  border-radius: 8px;
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: var(--app-grad-hover);
+  border-radius: 9px;
+  z-index: -2;
+  opacity: 0;
+  filter: blur(4px);
+  transition: opacity 0.3s ease;
+}
+
+.nav-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border-radius: 8px;
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+.nav-btn:hover {
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+.nav-btn:hover::before {
+  opacity: 0.8;
+}
+
+.nav-btn:hover::after {
+  background: #000000;
+}
+
+:deep(.nav-btn:hover .p-button-label),
+:deep(.nav-btn:hover .p-button-icon) {
+  background: none !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+}
+
+.active-nav-btn::before {
+  opacity: 0.8;
+}
+
+.active-nav-btn::after {
+  background: #000000;
+}
+
+:deep(.active-nav-btn .p-button-label),
+:deep(.active-nav-btn .p-button-icon) {
+  background: var(--app-grad-hover);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent !important;
 }
 </style>
