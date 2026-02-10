@@ -1,10 +1,9 @@
 <script setup>
 /**
- * SpeedSorterView.vue
- *
- * A rapid image organization tool designed for efficiency.
- * Allows users to quickly move, copy, or delete images using keyboard shortcuts
- * and pre-configured target directories.
+ * @file SpeedSorterView.vue
+ * @description A high-efficiency tool for rapid image organization. It allows users to
+ * quickly move, copy, or delete images using keyboard shortcuts and pre-configured
+ * source and target directories, designed for sorting large batches of files.
  */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';

@@ -1,7 +1,9 @@
 <script setup>
 /**
- * FolderNav.vue
- * Sidebar navigation for file system and collections.
+ * @file FolderNav.vue
+ * @description A sidebar component for navigating the file system and user collections.
+ * It provides a hierarchical tree view of drives, pinned folders, and collections,
+ * with lazy-loading for directory contents and context menu actions.
  */
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -21,15 +23,12 @@ const expandedKeys = ref({});
 const selectedKey = ref({});
 const contextMenuSelection = ref(null);
 
-// Ref for the custom menu
 const cm = ref();
 const menuModel = ref([]);
 
-// --- Data Loading ---
 const loadTree = async () => {
   const rootNodes = [];
 
-  // 1. Collections
   try {
     const colRes = await axios.get('/api/collections');
     const colChildren = colRes.data.map(c => ({
@@ -38,10 +37,8 @@ const loadTree = async () => {
     rootNodes.push({ key: 'collections', label: 'Collections', icon: 'pi pi-list', children: colChildren, type: 'root', leaf: false });
   } catch (e) { console.error("Error loading collections", e); }
 
-  // Separator 1
   rootNodes.push({ key: 'sep-1', type: 'separator', selectable: false });
 
-  // 2. Pinned
   try {
     const pinRes = await axios.get('/api/folders/pinned');
     const pinChildren = pinRes.data.map(p => ({
@@ -50,10 +47,8 @@ const loadTree = async () => {
     rootNodes.push({ key: 'pinned', label: 'Pinned', icon: 'pi pi-bookmark', children: pinChildren, type: 'root', leaf: false });
   } catch (e) { console.error("Error loading pinned", e); }
 
-  // Separator 2
   rootNodes.push({ key: 'sep-2', type: 'separator', selectable: false });
 
-  // 3. Drives
   try {
     const driveRes = await axios.get('/api/folders/roots');
     const driveChildren = driveRes.data.map(d => ({
@@ -95,10 +90,7 @@ const onNodeSelect = async (node) => {
   }
 };
 
-// --- Custom Context Menu Handler (Bypassing Tree Event) ---
 const onCustomContextMenu = (event, node) => {
-  console.log("FolderNav: Custom context menu triggered", node.label);
-
   if (!node || node.type === 'separator') return;
 
   contextMenuSelection.value = node;
@@ -136,7 +128,6 @@ const onCustomContextMenu = (event, node) => {
   }
 };
 
-// Actions
 const pinFolder = async (path) => { await axios.post('/api/folders/pin', null, {params: {path}}); loadTree(); };
 const unpinFolder = async (path) => { await axios.post('/api/folders/unpin', null, {params: {path}}); loadTree(); };
 const openInSpeedSorter = async (path) => { await axios.post('/api/speedsorter/config/input', null, {params: {path}}); router.push('/speedsorter'); };
@@ -147,7 +138,7 @@ onMounted(loadTree);
 
 <template>
   <div class="folder-nav-glass h-full flex flex-column"
-       style="width: 260px; min-width: 260px;">
+       style="width: 290px; min-width: 300px;">
     <Toast/>
     <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center gap-2" style="background: rgba(255,255,255,0.02)">
       <img src="@/assets/icon.png" alt="Logo" style="width: 24px; height: 24px;">
@@ -167,11 +158,14 @@ onMounted(loadTree);
         <template #default="slotProps">
             <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
             <div v-else class="w-full h-full flex align-items-center" @contextmenu.prevent.stop="onCustomContextMenu($event, slotProps.node)">
-                <!-- Icon removed to prevent duplication -->
                 <span class="p-treenode-label">{{ slotProps.node.label }}</span>
             </div>
         </template>
       </Tree>
+    </div>
+
+    <div class="p-2 mt-auto border-top-1 border-white-alpha-10 flex justify-content-center">
+        <img src="@/assets/alx_logo.png" alt="ALX Logo" style="height: 60px; opacity: 0.9;">
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel" />
@@ -200,29 +194,26 @@ onMounted(loadTree);
   width: 100%;
 }
 
-/* Force Tree Transparency & Styling */
 :deep(.p-tree) {
   background: transparent !important;
   border: none !important;
   padding: 0.5rem;
 }
 
-/* Base Node Style */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
   padding: 0.5rem 0.75rem;
   margin: 4px 0;
   border-radius: 6px;
-  color: #9ca3af; /* text-gray-400 */
+  color: #9ca3af;
   transition: all 0.2s ease;
   border: none;
-  font-weight: 600; /* font-semibold */
+  font-weight: 600;
   position: relative;
   z-index: 1;
   background: transparent !important;
   overflow: visible !important;
 }
 
-/* Remove default focus outline aggressively */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus),
 :deep(.p-tree .p-tree-container .p-treenode:focus),
 :deep(.p-tree:focus),
@@ -235,20 +226,18 @@ onMounted(loadTree);
   border: none !important;
 }
 
-/* 1. Gradient Glow Layer (Deepest) */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::before) {
   content: '';
   position: absolute;
-  inset: -1px; /* Tighter inset */
+  inset: -1px;
   background: var(--app-grad-hover);
   border-radius: 6px;
   z-index: -2;
   opacity: 0;
-  filter: blur(4px); /* Tighter glow */
+  filter: blur(4px);
   transition: opacity 0.3s ease;
 }
 
-/* 2. Background Layer (Middle) */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::after) {
   content: '';
   position: absolute;
@@ -259,7 +248,6 @@ onMounted(loadTree);
   transition: background 0.3s ease;
 }
 
-/* Hover State - Black Background + White Text + Glow */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover) {
   color: white !important;
   transform: translateY(-1px);
@@ -270,10 +258,9 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::after) {
-  background: #000000; /* Opaque black */
+  background: #000000;
 }
 
-/* Reset gradient text on hover */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-label),
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-icon) {
   background: none !important;
@@ -281,9 +268,7 @@ onMounted(loadTree);
   color: white !important;
 }
 
-/* Selected State - Black Background + Gradient Text + Glow (Static) */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
-  /* Ensure parent color doesn't override */
   color: transparent !important;
 }
 
@@ -294,9 +279,9 @@ onMounted(loadTree);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent !important;
-  display: inline-block; /* Ensure background-clip works */
-  position: relative; /* Ensure z-index works */
-  z-index: 2; /* Sit on top of everything */
+  display: inline-block;
+  position: relative;
+  z-index: 2;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::before) {
@@ -304,23 +289,20 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::after) {
-  background: #000000; /* Opaque black */
+  background: #000000;
 }
 
-/* Selected Hover - Keep selected style */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight:hover) {
-  background: transparent !important; /* Let pseudo handle it */
+  background: transparent !important;
 }
 
-/* Icon Colors - Inherit from text to match gradient behavior */
 :deep(.p-tree .p-treenode-icon) {
   color: inherit !important;
   transition: color 0.2s;
 }
 
-/* Toggler (Arrow) Styling */
 :deep(.p-tree .p-tree-toggler) {
-  color: #6b7280; /* text-gray-500 */
+  color: #6b7280;
   margin-right: 0.25rem;
 }
 :deep(.p-tree .p-tree-toggler:hover) {

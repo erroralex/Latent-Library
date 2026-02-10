@@ -1,10 +1,8 @@
 <script setup>
 /**
- * BrowserToolbar.vue
- *
- * The top navigation bar for the Image Browser.
- * Contains controls for view switching (Gallery/Browser), search input,
- * filtering dropdowns (Model, Sampler, LoRA, Rating), and thumbnail size slider.
+ * @file BrowserToolbar.vue
+ * @description The top navigation bar for the Image Browser. Contains controls for view switching,
+ * search, filtering, and thumbnail size adjustment.
  */
 import { useBrowserStore } from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
@@ -24,7 +22,7 @@ const ratingMenu = ref();
 
 const onSearch = (event) => {
   store.search(store.searchQuery, true);
-  event.target.blur(); // Remove focus from input
+  event.target.blur();
 };
 
 const toggleSidebar = () => {
@@ -66,7 +64,6 @@ const refreshFilters = () => {
 <template>
   <Toolbar class="browser-toolbar-glass border-none p-2">
     <template #start>
-      <!-- Empty start slot -->
     </template>
 
     <template #center>
@@ -179,7 +176,6 @@ const refreshFilters = () => {
 </template>
 
 <style scoped>
-/* Glass Toolbar */
 .browser-toolbar-glass {
   background: var(--app-bg-header, rgba(10, 10, 10, 0.75));
   backdrop-filter: blur(20px);
@@ -191,7 +187,6 @@ const refreshFilters = () => {
   z-index: 10;
 }
 
-/* Force Input to be glass */
 .glass-input {
   background: rgba(0, 0, 0, 0.5) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -199,15 +194,10 @@ const refreshFilters = () => {
   backdrop-filter: blur(10px);
 }
 
-/* Override PrimeVue Toolbar internal background */
 :deep(.p-toolbar) {
   background: transparent !important;
   border: none !important;
 }
-
-/* Ensure nav-btn styles from App.vue are available or duplicated here */
-/* Since styles are scoped in App.vue, we need to redefine them or make them global. */
-/* For now, I'll duplicate the relevant parts of .nav-btn here to ensure it works */
 
 .nav-btn {
   color: #9ca3af !important;

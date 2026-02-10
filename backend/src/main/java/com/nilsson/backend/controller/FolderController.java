@@ -13,6 +13,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for file system navigation and folder management.
+ * Handles listing of root drives, directory contents, and pinned folder operations.
+ * Provides the data structure for the frontend file tree navigation.
+ */
 @RestController
 @RequestMapping("/api/folders")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -52,7 +57,7 @@ public class FolderController {
             return ResponseEntity.badRequest().build();
         }
 
-        File[] files = folder.listFiles(); // Raw list first
+        File[] files = folder.listFiles();
 
         if (files == null) {
             logger.warn("Access denied or IO error reading: {}", path);
@@ -63,7 +68,6 @@ public class FolderController {
         List<FileDTO> dtos = Arrays.stream(files)
                 // Filter out hidden/system files to keep the tree clean
                 .filter(f -> !f.isHidden())
-                // Only show directories in the navigation tree
                 .filter(File::isDirectory)
                 .sorted(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER))
                 .map(f -> new FileDTO(

@@ -1,10 +1,10 @@
 <script setup>
 /**
- * ImageBrowserView.vue
- *
- * The main interface for browsing and viewing images.
- * Supports two modes: 'gallery' (grid view) and 'browser' (single image view).
- * Handles keyboard navigation, folder selection, and integrates with the metadata sidebar.
+ * @file ImageBrowserView.vue
+ * @description The main user interface for browsing and viewing images. This component
+ * orchestrates the entire browser experience, supporting two primary modes: 'gallery' for a
+ * grid-based overview and 'browser' for a focused, single-image view with a filmstrip.
+ * It handles keyboard navigation, folder selection, and integrates the metadata sidebar.
  */
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { useBrowserStore } from '@/stores/browser';
@@ -18,7 +18,6 @@ const store = useBrowserStore();
 const containerRef = ref(null);
 const galleryContainer = ref(null);
 
-// Helper to calculate grid columns for Up/Down navigation
 const getGridColumns = () => {
   if (!galleryContainer.value) return 1;
   const containerWidth = galleryContainer.value.clientWidth;
@@ -26,7 +25,6 @@ const getGridColumns = () => {
   return Math.floor(containerWidth / cardWidth) || 1;
 };
 
-// Keyboard navigation
 const handleKeydown = (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -117,17 +115,11 @@ watch(() => store.viewMode, (newMode) => {
   }
 });
 
-// Watch for focus requests from the store (e.g., after search)
 watch(() => store.imageFocusRequested, (requested) => {
   if (requested) {
-    // Reset the flag
     store.imageFocusRequested = false;
-
-    // Switch to browser view to "focus" the image
     store.setViewMode('browser');
     store.setSidebarOpen(true);
-
-    // Ensure the container is focused so keyboard nav works immediately
     if (containerRef.value) {
       containerRef.value.focus();
     }
@@ -192,44 +184,37 @@ watch(() => store.imageFocusRequested, (requested) => {
 </template>
 
 <style scoped>
-/* Selected Item - Gradient Border Effect */
 .outline-active {
   position: relative;
   z-index: 1;
   background: transparent;
-  /* Remove old outline styles */
   outline: none;
   box-shadow: none;
 }
 
-/* 1. Gradient Border/Glow (Deepest) */
 .outline-active::before {
   content: '';
   position: absolute;
-  inset: -2px; /* Creates the border width */
+  inset: -2px;
   background: var(--app-grad-hover);
-  border-radius: inherit; /* Match parent radius */
-  z-index: -2; /* Behind everything */
-  filter: blur(2px); /* Slight glow */
+  border-radius: inherit;
+  z-index: -2;
+  filter: blur(2px);
 }
 
-/* 2. Black Background (Middle) */
 .outline-active::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000000; /* Opaque black to block center */
+  background: #000000;
   border-radius: inherit;
-  z-index: -1; /* Behind content, in front of glow */
+  z-index: -1;
 }
 
-/* New Glass Class for the Single Image Viewer */
 .image-viewer-glass {
-  /* Reduced opacity to let the background shine through more */
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* Sidebar Slide Transition */
 .slide-sidebar-enter-active,
 .slide-sidebar-leave-active {
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);

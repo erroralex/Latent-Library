@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * @file CustomContextMenu.vue
+ * @description A custom, themeable context menu component that teleports to the body.
+ * It is controlled programmatically via `show` and `hide` methods exposed to the parent.
+ */
 import { ref, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
@@ -13,11 +18,7 @@ const x = ref(0);
 const y = ref(0);
 const menuRef = ref(null);
 
-// --- Public Methods ---
-
 const show = (event) => {
-  console.log("CustomContextMenu: Show triggered", event);
-
   if (!event) {
     console.error("CustomContextMenu: No event passed to show()");
     return;
@@ -26,19 +27,14 @@ const show = (event) => {
   event.preventDefault();
   event.stopPropagation();
 
-  // 1. Position immediately at mouse cursor
   x.value = event.clientX;
   y.value = event.clientY;
-
-  // 2. Show menu
   visible.value = true;
 
-  // 3. Add global click listener to close it
-  // Delay slightly to prevent the current click from closing it immediately
   setTimeout(() => {
     window.addEventListener('click', closeMenu);
     window.addEventListener('contextmenu', closeMenu);
-    window.addEventListener('scroll', hide, { capture: true }); // Close on scroll
+    window.addEventListener('scroll', hide, { capture: true });
   }, 50);
 };
 
@@ -48,8 +44,6 @@ const hide = () => {
   window.removeEventListener('contextmenu', closeMenu);
   window.removeEventListener('scroll', hide, { capture: true });
 };
-
-// --- Internal Logic ---
 
 const closeMenu = () => {
   hide();
@@ -102,9 +96,9 @@ defineExpose({ show, hide });
 /* Global Styles (Not Scoped) for Teleported Content */
 .custom-context-menu {
   position: fixed;
-  z-index: 999999 !important; /* Ensure it's on top of everything */
+  z-index: 999999 !important;
   min-width: 200px;
-  background: rgba(10, 12, 16, 0.95); /* Deep dark background */
+  background: rgba(10, 12, 16, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -132,7 +126,6 @@ defineExpose({ show, hide });
   align-items: center;
 }
 
-/* Hover: Gradient Background + Black Text */
 .menu-item:hover {
   background: var(--app-grad-hover);
   color: #000000;
@@ -153,13 +146,12 @@ defineExpose({ show, hide });
 .menu-icon {
   margin-right: 12px;
   font-size: 14px;
-  color: #66fcf1; /* Neon Cyan Default */
+  color: #66fcf1;
   width: 16px;
   text-align: center;
   transition: color 0.1s;
 }
 
-/* Icon turns black on hover to match text */
 .menu-item:hover .menu-icon {
   color: #000000;
 }

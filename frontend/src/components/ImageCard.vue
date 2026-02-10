@@ -1,10 +1,9 @@
 <script setup>
 /**
- * ImageCard.vue
- *
- * A reusable component for displaying a single image thumbnail.
- * Emits a contextmenu event for the parent to handle.
- * Uses a blurred background effect for aspect ratio filling.
+ * @file ImageCard.vue
+ * @description A reusable component for displaying a single image thumbnail in a card format.
+ * It features a blurred background effect to fill the aspect ratio and emits a contextmenu
+ * event for parent components to handle right-click actions.
  */
 import { computed } from 'vue';
 import Card from 'primevue/card';
@@ -18,7 +17,6 @@ const imageUrl = computed(() => `http://localhost:8080/api/images/content?path=$
 const emit = defineEmits(['contextmenu']);
 
 const onRightClick = (event) => {
-  // Emit the native event and the path
   emit('contextmenu', { event, path: props.path });
 };
 </script>

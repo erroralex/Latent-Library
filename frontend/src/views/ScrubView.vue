@@ -1,10 +1,9 @@
 <script setup>
 /**
- * ScrubView.vue
- *
- * Provides a user interface for the Metadata Scrubber tool.
- * Allows users to upload an image, preview it, and download a "clean" version
- * with all metadata (EXIF, prompts, workflow data) stripped out.
+ * @file ScrubView.vue
+ * @description A user interface for the Metadata Scrubber tool. This component allows users
+ * to upload an image, see a preview, and then download a "clean" version of the image
+ * with all embedded metadata (like EXIF, prompts, and workflow data) removed for privacy.
  */
 import { ref } from 'vue';
 import axios from 'axios';
@@ -26,7 +25,7 @@ const onUpload = async (event) => {
 
     try {
         const response = await axios.post('/api/scrub/upload', formData);
-        uploadedFile.value = response.data; // Filename
+        uploadedFile.value = response.data;
         previewUrl.value = `http://localhost:8080/api/scrub/preview/${uploadedFile.value}`;
         toast.add({ severity: 'success', summary: 'Uploaded', detail: 'Image ready to scrub', life: 3000 });
     } catch (error) {
@@ -44,12 +43,10 @@ const scrubAndDownload = async () => {
             responseType: 'blob'
         });
 
-        // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
 
-        // Extract filename from header or default
         const contentDisposition = response.headers['content-disposition'];
         let fileName = 'clean_image.png';
         if (contentDisposition) {
@@ -127,7 +124,6 @@ const clear = () => {
     box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
 }
 
-/* Override PrimeVue Card body padding if needed */
 :deep(.p-card-body) {
     padding: 1.5rem;
 }
