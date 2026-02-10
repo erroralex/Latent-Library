@@ -9,9 +9,6 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,36 +23,10 @@ public class CollectionRepository {
     private static final Logger logger = LoggerFactory.getLogger(CollectionRepository.class);
     private final JdbcClient jdbcClient;
     private final ObjectMapper objectMapper;
-    private final DataSource dataSource;
 
     public CollectionRepository(DataSource dataSource, ObjectMapper objectMapper) {
-        this.dataSource = dataSource;
         this.jdbcClient = JdbcClient.create(dataSource);
         this.objectMapper = objectMapper;
-        initializeTable();
-    }
-
-    private void initializeTable() {
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            // Add is_smart and filters_json columns if they don't exist
-            try {
-                stmt.execute("ALTER TABLE collections ADD COLUMN is_smart BOOLEAN DEFAULT FALSE");
-            } catch (SQLException e) {
-                if (!e.getMessage().contains("duplicate column name")) {
-                    logger.error("Error adding is_smart column", e);
-                }
-            }
-            try {
-                stmt.execute("ALTER TABLE collections ADD COLUMN filters_json TEXT");
-            } catch (SQLException e) {
-                if (!e.getMessage().contains("duplicate column name")) {
-                    logger.error("Error adding filters_json column", e);
-                }
-            }
-        } catch (SQLException e) {
-            logger.error("Error initializing collections table schema", e);
-        }
     }
 
     public List<String> getAllNames() {
