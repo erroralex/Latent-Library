@@ -33,19 +33,22 @@ public class IndexingService {
     private final ImageRepository imageRepo;
     private final MetadataService metaService;
     private final UserDataManager dataManager;
+    private final PathService pathService;
     private final ExecutorService executor;
 
     private WatchService watchService;
     private Thread watchThread;
-    
+
     private final Map<String, Long> pendingEvents = new ConcurrentHashMap<>();
 
     public IndexingService(ImageRepository imageRepo,
                            MetadataService metaService,
-                           UserDataManager dataManager) {
+                           UserDataManager dataManager,
+                           PathService pathService) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
+        this.pathService = pathService;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -66,10 +69,20 @@ public class IndexingService {
             AtomicInteger removedCount = new AtomicInteger(0);
 
             imageRepo.forEachFilePath(path -> {
-                File file = dataManager.resolvePath(path);
-                
+                File file = null;
+                try {
+                    file = pathService.resolve(path);
+                } catch (InvalidPathException e) {
+                    logger.warn("[Reconcile] Invalid path found in DB: {}. Deleting record.", path);
+                    imageRepo.deleteByPath(path);
+                    removedCount.incrementAndGet();
+                    return;
+                }
+
                 if (file != null && !file.exists()) {
-                    logger.warn("[Reconcile] File appears missing: {}. Skipping auto-deletion to preserve metadata.", path);
+                    logger.info("[Reconcile] File missing: {}. Deleting record from DB.", path);
+                    imageRepo.deleteByPath(path);
+                    removedCount.incrementAndGet();
                 }
             });
 
@@ -166,7 +179,7 @@ public class IndexingService {
                 }
 
                 long now = System.currentTimeMillis();
-                
+
                 for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent.Kind<?> kind = event.kind();
 
@@ -178,16 +191,16 @@ public class IndexingService {
                     if (!isImageFile(file)) continue;
 
                     String eventKey = file.getAbsolutePath() + "_" + kind.name();
-                    
+
                     if (pendingEvents.containsKey(eventKey)) {
                         long lastTime = pendingEvents.get(eventKey);
                         if (now - lastTime < DEBOUNCE_DELAY_MS) {
                             continue;
                         }
                     }
-                    
+
                     pendingEvents.put(eventKey, now);
-                    
+
                     executor.submit(() -> {
                         try {
                             Thread.sleep(DEBOUNCE_DELAY_MS);
@@ -208,7 +221,7 @@ public class IndexingService {
             logger.debug("WatchService loop ended: {}", e.getMessage());
         }
     }
-    
+
     private void processFileSystemEvent(WatchEvent.Kind<?> kind, File file, Consumer<FileChangeEvent> listener) {
         if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
             if (file.exists() && file.canRead() && file.length() > 0) {
@@ -223,8 +236,9 @@ public class IndexingService {
 
     private void handleFileCreation(File file) {
         try {
+            // Explicitly extract and cache metadata for new/modified files
             Map<String, String> meta = metaService.getExtractedData(file);
-            dataManager.cacheMetadata(file, meta);
+            dataManager.cacheMetadata(file, meta); // This will now correctly save metadata and update FTS
             logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing new file: {}", file.getName(), e);
@@ -233,7 +247,9 @@ public class IndexingService {
 
     private void handleFileDeletion(File file) {
         try {
-            logger.debug("File deleted from disk: {}", file.getName());
+            String path = pathService.getNormalizedAbsolutePath(file);
+            imageRepo.deleteByPath(path);
+            logger.debug("Deleted file from disk and DB: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing deleted file: {}", file.getName(), e);
         }
@@ -249,10 +265,13 @@ public class IndexingService {
         Map<File, Integer> ratingMap = new HashMap<>();
 
         for (File file : batch) {
-            // This triggers metadata extraction if missing
-            Map<String, String> meta = dataManager.getCachedMetadata(file);
+            // Explicitly extract and cache metadata for each file in the batch
+            Map<String, String> meta = metaService.getExtractedData(file);
+            dataManager.cacheMetadata(file, meta); // This will now correctly save metadata and update FTS
+
+            // After caching, retrieve the rating (which might have been set previously or is default 0)
             int rating = dataManager.getRating(file);
-            
+
             metadataMap.put(file, meta);
             ratingMap.put(file, rating);
         }

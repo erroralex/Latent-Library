@@ -79,19 +79,6 @@
             <version>21</version>
             <scope>test</scope>
         </dependency>
-        <!-- TestFX for UI Testing -->
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-junit5</artifactId>
-            <version>4.0.18</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-core</artifactId>
-            <version>4.0.18</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

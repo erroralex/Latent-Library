@@ -1,11 +1,13 @@
 package com.nilsson.backend.controller;
 
 import com.nilsson.backend.model.CreateCollectionRequest;
+import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +19,11 @@ import java.util.stream.Collectors;
 public class CollectionController {
 
     private final UserDataManager dataManager;
+    private final PathService pathService;
 
-    public CollectionController(UserDataManager dataManager) {
+    public CollectionController(UserDataManager dataManager, PathService pathService) {
         this.dataManager = dataManager;
+        this.pathService = pathService;
     }
 
     @GetMapping
@@ -54,10 +58,16 @@ public class CollectionController {
 
     @PostMapping("/{name}/images")
     public ResponseEntity<Void> addImageToCollection(@PathVariable String name, @RequestParam String path) {
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        dataManager.addImageToCollection(name, file);
-        return ResponseEntity.ok().build();
+        try {
+            File file = pathService.resolve(path);
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+            dataManager.addImageToCollection(name, file);
+            return ResponseEntity.ok().build();
+        } catch (InvalidPathException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/static-images")

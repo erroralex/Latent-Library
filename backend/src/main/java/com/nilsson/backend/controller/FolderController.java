@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -25,9 +25,11 @@ public class FolderController {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderController.class);
     private final UserDataManager dataManager;
+    private final PathService pathService;
 
-    public FolderController(UserDataManager dataManager) {
+    public FolderController(UserDataManager dataManager, PathService pathService) {
         this.dataManager = dataManager;
+        this.pathService = pathService;
     }
 
     @GetMapping("/roots")
@@ -45,13 +47,8 @@ public class FolderController {
     public ResponseEntity<List<FileDTO>> getChildren(@RequestParam String path) {
         logger.info("Requesting children for path: {}", path);
 
-        if (path == null || path.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
+        File folder = pathService.resolve(path);
 
-        File folder = new File(path);
-
-        // Security/Robustness: Check existence before canonicalization to avoid IO errors on bad paths
         if (!folder.exists() || !folder.isDirectory()) {
             logger.warn("Path does not exist or is not directory: {}", path);
             return ResponseEntity.badRequest().build();
@@ -61,20 +58,18 @@ public class FolderController {
 
         if (files == null) {
             logger.warn("Access denied or IO error reading: {}", path);
-            // Return empty list instead of error so the UI just shows an empty folder
             return ResponseEntity.ok(List.of());
         }
 
         List<FileDTO> dtos = Arrays.stream(files)
-                // Filter out hidden/system files to keep the tree clean
                 .filter(f -> !f.isHidden())
                 .filter(File::isDirectory)
                 .sorted(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER))
                 .map(f -> new FileDTO(
-                        f.getName().isEmpty() ? f.getAbsolutePath() : f.getName(), // Handle root drives appearing as children
-                        f.getAbsolutePath(),
+                        f.getName().isEmpty() ? f.getAbsolutePath() : f.getName(),
+                        pathService.getNormalizedAbsolutePath(f),
                         f.isDirectory(),
-                        false // "pinned" status calculation can be expensive, skip for general browse
+                        false
                 ))
                 .collect(Collectors.toList());
 
@@ -84,13 +79,13 @@ public class FolderController {
     @GetMapping("/pinned")
     public ResponseEntity<List<FileDTO>> getPinnedFolders() {
         return ResponseEntity.ok(dataManager.getPinnedFolders().stream()
-                .map(f -> new FileDTO(f.getName(), f.getAbsolutePath(), true, true))
+                .map(f -> new FileDTO(f.getName(), pathService.getNormalizedAbsolutePath(f), true, true))
                 .collect(Collectors.toList()));
     }
 
     @PostMapping("/pin")
     public ResponseEntity<Void> pinFolder(@RequestParam String path) {
-        File folder = new File(path);
+        File folder = pathService.resolve(path);
         if (folder.exists() && folder.isDirectory()) {
             dataManager.addPinnedFolder(folder);
             return ResponseEntity.ok().build();
@@ -100,14 +95,13 @@ public class FolderController {
 
     @PostMapping("/unpin")
     public ResponseEntity<Void> unpinFolder(@RequestParam String path) {
-        File folder = new File(path);
+        File folder = pathService.resolve(path);
         dataManager.removePinnedFolder(folder);
         return ResponseEntity.ok().build();
     }
 
     public record FileDTO(String name, String path, boolean isDirectory, boolean isPinned, String key, String label, String icon, boolean leaf) {
         public FileDTO(String name, String path, boolean isDirectory, boolean isPinned) {
-            // Logic: If it is a directory, it is NOT a leaf.
             this(name, path, isDirectory, isPinned, path, name, isDirectory ? "pi pi-folder" : "pi pi-file", !isDirectory);
         }
     }

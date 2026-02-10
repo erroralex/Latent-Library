@@ -1,5 +1,7 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.service.FtsService;
+import com.nilsson.backend.service.PathService;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,12 +17,17 @@ import java.io.IOException;
  */
 @RestController
 @RequestMapping("/api/system")
+@CrossOrigin(origins = "http://localhost:5173")
 public class SystemController {
 
     private final ConfigurableApplicationContext context;
+    private final FtsService ftsService;
+    private final PathService pathService;
 
-    public SystemController(ConfigurableApplicationContext context) {
+    public SystemController(ConfigurableApplicationContext context, FtsService ftsService, PathService pathService) {
         this.context = context;
+        this.ftsService = ftsService;
+        this.pathService = pathService;
     }
 
     @PostMapping("/shutdown")
@@ -40,9 +47,9 @@ public class SystemController {
 
     @PostMapping("/open-folder")
     public ResponseEntity<String> openFolder(@RequestParam("path") String path) {
-        File folder = new File(path);
+        File folder = pathService.resolve(path);
         if (!folder.exists() || !folder.isDirectory()) {
-            return ResponseEntity.badRequest().body("Folder does not exist");
+            return ResponseEntity.badRequest().body("Folder does not exist or is not a directory.");
         }
 
         if (Desktop.isDesktopSupported()) {
@@ -58,7 +65,7 @@ public class SystemController {
 
     @PostMapping("/show-in-explorer")
     public ResponseEntity<String> showInExplorer(@RequestParam("path") String path) {
-        File file = new File(path);
+        File file = pathService.resolve(path);
         if (!file.exists()) {
             return ResponseEntity.badRequest().body("File does not exist");
         }
@@ -79,5 +86,12 @@ public class SystemController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Failed to show file: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/rebuild-fts-index")
+    public ResponseEntity<String> rebuildFtsIndex() {
+        // Run in a background thread to not block the HTTP request
+        new Thread(ftsService::rebuildFtsIndex).start();
+        return ResponseEntity.accepted().body("FTS index rebuild initiated.");
     }
 }
