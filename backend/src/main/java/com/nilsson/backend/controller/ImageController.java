@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -25,9 +26,11 @@ import java.util.stream.Collectors;
 public class ImageController {
 
     private final UserDataManager dataManager;
+    private final PathService pathService;
 
-    public ImageController(UserDataManager dataManager) {
+    public ImageController(UserDataManager dataManager, PathService pathService) {
         this.dataManager = dataManager;
+        this.pathService = pathService;
     }
 
     @GetMapping("/search")
@@ -38,21 +41,21 @@ public class ImageController {
             @RequestParam(required = false) String lora,
             @RequestParam(required = false) String rating,
             @RequestParam(defaultValue = "1000") int limit) {
-        
+
         Map<String, String> filters = new HashMap<>();
         if (model != null && !model.isEmpty() && !"All".equals(model)) filters.put("Model", model);
         if (sampler != null && !sampler.isEmpty() && !"All".equals(sampler)) filters.put("Sampler", sampler);
         if (lora != null && !lora.isEmpty() && !"All".equals(lora)) filters.put("Loras", lora);
-        
+
         if (rating != null && !rating.isEmpty()) {
             filters.put("Rating", rating);
         }
 
         return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, limit).join().stream()
-                .map(File::getAbsolutePath)
+                .map(pathService::getNormalizedAbsolutePath)
                 .collect(Collectors.toList()));
     }
-    
+
     @GetMapping("/filters")
     public ResponseEntity<Map<String, List<String>>> getFilters() {
         Map<String, List<String>> filters = new HashMap<>();
@@ -64,21 +67,21 @@ public class ImageController {
 
     @GetMapping("/metadata")
     public ResponseEntity<Map<String, Object>> getMetadata(@RequestParam String path) {
-        File file = new File(path);
+        File file = pathService.resolve(path);
         if (!file.exists()) return ResponseEntity.notFound().build();
-        
+
         Map<String, String> meta = dataManager.getCachedMetadata(file);
         int rating = dataManager.getRating(file);
-        
+
         Map<String, Object> response = new HashMap<>(meta);
         response.put("rating", rating);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @PostMapping("/rating")
     public ResponseEntity<Void> setRating(@RequestParam String path, @RequestParam int rating) {
-        File file = new File(path);
+        File file = pathService.resolve(path);
         if (!file.exists()) return ResponseEntity.notFound().build();
         dataManager.setRating(file, rating);
         return ResponseEntity.ok().build();
@@ -87,7 +90,7 @@ public class ImageController {
     @GetMapping("/content")
     public ResponseEntity<Resource> getImageContent(@RequestParam String path) {
         try {
-            File file = new File(path);
+            File file = pathService.resolve(path);
             if (!file.exists()) return ResponseEntity.notFound().build();
 
             Resource resource = new UrlResource(file.toURI());
@@ -97,7 +100,7 @@ public class ImageController {
             } catch (Exception e) {
                 // ignore
             }
-            
+
             if (contentType == null) {
                 contentType = "image/jpeg";
             }

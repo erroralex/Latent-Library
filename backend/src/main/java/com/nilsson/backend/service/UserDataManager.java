@@ -1,8 +1,10 @@
 package com.nilsson.backend.service;
 
 import com.nilsson.backend.model.CreateCollectionRequest;
-import com.nilsson.backend.repository.CollectionRepository;
+import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
+import com.nilsson.backend.repository.PinnedFolderRepository;
+import com.nilsson.backend.repository.SearchRepository;
 import com.nilsson.backend.repository.SettingsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +14,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
-import java.util.ArrayList;
+import java.nio.file.InvalidPathException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,24 +30,37 @@ public class UserDataManager {
 
     private final DatabaseService db;
     private final SettingsRepository settingsRepo;
-    private final CollectionRepository collectionRepo;
     private final ImageRepository imageRepo;
-    private final MetadataService metaService;
-
-    private final File libraryRoot;
+    private final ImageMetadataRepository imageMetadataRepository;
+    private final PinnedFolderRepository pinnedFolderRepository;
+    private final CollectionService collectionService;
+    private final ImageMetadataService imageMetadataService;
+    private final TagService tagService;
+    private final PathService pathService;
+    private final SearchRepository searchRepository;
+    private final FtsService ftsService;
 
     public UserDataManager(DatabaseService db,
                            SettingsRepository settingsRepo,
-                           CollectionRepository collectionRepo,
                            ImageRepository imageRepo,
-                           MetadataService metaService) {
+                           ImageMetadataRepository imageMetadataRepository, PinnedFolderRepository pinnedFolderRepository,
+                           CollectionService collectionService,
+                           ImageMetadataService imageMetadataService,
+                           TagService tagService,
+                           PathService pathService,
+                           SearchRepository searchRepository,
+                           FtsService ftsService) {
         this.db = db;
         this.settingsRepo = settingsRepo;
-        this.collectionRepo = collectionRepo;
         this.imageRepo = imageRepo;
-        this.metaService = metaService;
-        this.libraryRoot = new File(System.getProperty("user.dir")).getAbsoluteFile();
-        logger.info("UserDataManager initialized. Library root: {}", libraryRoot);
+        this.imageMetadataRepository = imageMetadataRepository;
+        this.pinnedFolderRepository = pinnedFolderRepository;
+        this.collectionService = collectionService;
+        this.imageMetadataService = imageMetadataService;
+        this.tagService = tagService;
+        this.pathService = pathService;
+        this.searchRepository = searchRepository;
+        this.ftsService = ftsService;
     }
 
     public void shutdown() {
@@ -55,31 +69,16 @@ public class UserDataManager {
     }
 
     public File resolvePath(String dbPath) {
-        if (dbPath == null) return null;
-        File potentiallyAbsolute = new File(dbPath);
-        if (potentiallyAbsolute.isAbsolute()) {
-            return potentiallyAbsolute;
-        }
-        String systemPath = dbPath.replace("/", File.separator);
-        return new File(libraryRoot, systemPath);
-    }
-
-    private String relativizePath(File file) {
-        if (file == null) return null;
         try {
-            java.nio.file.Path rootPath = libraryRoot.toPath();
-            java.nio.file.Path filePath = file.getAbsoluteFile().toPath();
-            if (filePath.startsWith(rootPath)) {
-                return rootPath.relativize(filePath).toString().replace("\\", "/");
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to relativize path: {}", file, e);
+            return pathService.resolve(dbPath);
+        } catch (InvalidPathException e) {
+            logger.warn("Could not resolve path: {}", dbPath, e);
+            return null;
         }
-        return file.getAbsolutePath().replace("\\", "/");
     }
 
     public List<String> getDistinctMetadataValues(String key) {
-        List<String> raw = imageRepo.getDistinctValues(key);
+        List<String> raw = imageMetadataRepository.getDistinctValues(key);
         if ("Loras".equals(key)) {
             return raw.stream()
                     .filter(s -> s != null && !s.isBlank())
@@ -91,13 +90,25 @@ public class UserDataManager {
                     .sorted(String.CASE_INSENSITIVE_ORDER)
                     .collect(Collectors.toList());
         }
+        if ("Sampler".equals(key)) {
+            return raw.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(s -> "Euler a".equalsIgnoreCase(s.trim()) ? "Euler a" : s)
+                    .collect(Collectors.groupingBy(String::toLowerCase, Collectors.minBy(String::compareTo)))
+                    .values()
+                    .stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .collect(Collectors.toList());
+        }
         return raw.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .distinct()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(Collectors.toList());
     }
-    
+
     private String cleanLoraName(String raw) {
         if (raw.toLowerCase().startsWith("<lora:")) raw = raw.substring(6);
         if (raw.endsWith(">")) raw = raw.substring(0, raw.length() - 1);
@@ -111,20 +122,15 @@ public class UserDataManager {
     public CompletableFuture<List<File>> findFilesWithFilters(String query, Map<String, String> filters, int limit) {
         return CompletableFuture.supplyAsync(() -> {
             long start = System.currentTimeMillis();
-            // Convert Map<String, String> to Map<String, List<String>> for the new repository method
-            Map<String, List<String>> listFilters = new HashMap<>();
+            Map<String, List<String>> listFilters = new java.util.HashMap<>();
             if (filters != null) {
                 filters.forEach((k, v) -> listFilters.put(k, Collections.singletonList(v)));
             }
-            
-            List<String> paths = imageRepo.findPaths(query, listFilters, limit);
-            List<File> files = new ArrayList<>();
-            for (String path : paths) {
-                File f = resolvePath(path);
-                if (f != null) files.add(f);
-            }
-            logger.debug("Search found {} files in {}ms", files.size(), System.currentTimeMillis() - start);
-            return files;
+
+            List<String> paths = searchRepository.findPaths(query, listFilters, limit);
+            return paths.stream()
+                    .map(pathService::resolve)
+                    .collect(Collectors.toList());
         });
     }
 
@@ -142,15 +148,14 @@ public class UserDataManager {
         }
 
         if (success) {
-            imageRepo.deleteByPath(relativizePath(file));
+            imageRepo.deleteByPath(pathService.getNormalizedAbsolutePath(file));
         }
         return success;
     }
 
     private int getOrCreateImageIdInternal(File file) {
         try {
-            String path = relativizePath(file);
-            // Optimization: check existence first to avoid expensive hash
+            String path = pathService.getNormalizedAbsolutePath(file);
             int id = imageRepo.getIdByPath(path);
             if (id != -1) return id;
 
@@ -189,168 +194,100 @@ public class UserDataManager {
     }
 
     public void cacheMetadata(File file, Map<String, String> meta) {
-        if (file == null || meta == null || meta.isEmpty()) return;
         int id = getOrCreateImageIdInternal(file);
-        if (id > 0) imageRepo.saveMetadata(id, meta);
+        imageMetadataService.cacheMetadata(id, meta);
     }
 
     public Map<String, String> getCachedMetadata(File file) {
-        String relPath = relativizePath(file);
-        if (imageRepo.hasMetadata(relPath)) {
-            return imageRepo.getMetadata(relPath);
-        }
-
-        logger.debug("Metadata missing in DB for {}, extracting on-demand.", file.getName());
-        Map<String, String> meta = metaService.getExtractedData(file);
-        cacheMetadata(file, meta);
-        return meta;
+        String path = pathService.getNormalizedAbsolutePath(file);
+        return imageMetadataService.getCachedMetadata(file, path);
     }
 
     public boolean hasCachedMetadata(File file) {
-        return imageRepo.hasMetadata(relativizePath(file));
+        String path = pathService.getNormalizedAbsolutePath(file);
+        return imageMetadataService.hasCachedMetadata(path);
     }
 
     public void addTag(File file, String tag) {
-        if (file == null || tag == null || tag.isBlank()) return;
         int id = getOrCreateImageIdInternal(file);
-        if (id > 0) imageRepo.addTag(id, tag.trim());
+        tagService.addTag(id, tag);
     }
 
     public void removeTag(File file, String tag) {
-        if (file == null || tag == null || tag.isBlank()) return;
         int id = getOrCreateImageIdInternal(file);
-        if (id > 0) imageRepo.removeTag(id, tag.trim());
+        tagService.removeTag(id, tag);
     }
 
     public Set<String> getTags(File file) {
-        return imageRepo.getTags(relativizePath(file));
+        int id = getOrCreateImageIdInternal(file);
+        return tagService.getTags(id);
     }
 
     public int getRating(File file) {
-        return imageRepo.getRating(relativizePath(file));
+        return imageRepo.getRating(pathService.getNormalizedAbsolutePath(file));
     }
 
     public void setRating(File file, int rating) {
-        if (file == null) return;
         int id = getOrCreateImageIdInternal(file);
         if (id > 0) imageRepo.setRating(id, rating);
     }
 
     public List<File> getStarredFilesList() {
-        List<String> paths = imageRepo.getStarredPaths();
-        List<File> files = new ArrayList<>();
-        for (String p : paths) {
-            File f = resolvePath(p);
-            if (f != null && f.exists()) files.add(f);
-        }
-        return files;
+        return imageRepo.getStarredPaths().stream()
+                .map(pathService::resolve)
+                .filter(f -> f != null && f.exists())
+                .collect(Collectors.toList());
     }
 
     public List<File> getPinnedFolders() {
-        return imageRepo.getPinnedFolders(this::resolvePath);
+        return pinnedFolderRepository.getPinnedFolders().stream()
+                .map(pathService::resolve)
+                .filter(f -> f != null && f.exists())
+                .collect(Collectors.toList());
     }
 
     public void addPinnedFolder(File folder) {
         if (folder != null && folder.isDirectory()) {
-            imageRepo.addPinnedFolder(relativizePath(folder));
+            pinnedFolderRepository.addPinnedFolder(pathService.getNormalizedAbsolutePath(folder));
         }
     }
 
     public void removePinnedFolder(File folder) {
         if (folder != null) {
-            imageRepo.removePinnedFolder(relativizePath(folder));
+            pinnedFolderRepository.removePinnedFolder(pathService.getNormalizedAbsolutePath(folder));
         }
     }
 
     public List<String> getCollections() {
-        return collectionRepo.getAllNames();
+        return collectionService.getCollections();
     }
 
     public Optional<CreateCollectionRequest> getCollectionDetails(String name) {
-        return collectionRepo.get(name);
+        return collectionService.getCollectionDetails(name);
     }
 
     public void createCollection(CreateCollectionRequest request) {
-        collectionRepo.create(request.name(), request.isSmart(), request.filters());
-        populateSmartCollection(request);
+        collectionService.createCollection(request);
     }
 
     public void updateCollection(CreateCollectionRequest request) {
-        collectionRepo.update(request.name(), request.isSmart(), request.filters());
-        // If it's smart, re-populate (clear and add)
-        // For now, if it's smart, we clear and re-populate to ensure it matches filters.
-        if (request.isSmart()) {
-            collectionRepo.removeAllImages(request.name());
-            populateSmartCollection(request);
-        }
-    }
-
-    private void populateSmartCollection(CreateCollectionRequest request) {
-        if (request.isSmart() && request.filters() != null) {
-            Map<String, List<String>> searchFilters = new HashMap<>();
-            CreateCollectionRequest.CollectionFilters f = request.filters();
-            
-            if (f.models() != null && !f.models().isEmpty()) {
-                searchFilters.put("Model", f.models());
-            }
-            if (f.samplers() != null && !f.samplers().isEmpty()) {
-                searchFilters.put("Sampler", f.samplers());
-            }
-            if (f.loras() != null && !f.loras().isEmpty()) {
-                searchFilters.put("Loras", f.loras());
-            }
-            // Strict type handling: f.rating() is now a String
-            if (f.rating() != null && !f.rating().isBlank()) {
-                searchFilters.put("Rating", Collections.singletonList(f.rating()));
-            }
-            
-            String query = null;
-            // Strict type handling: f.prompt() is now List<String>
-            if (f.prompt() != null && !f.prompt().isEmpty()) {
-                query = String.join(" ", f.prompt());
-            }
-            
-            // Find matching files
-            List<String> matchingPaths = imageRepo.findPaths(query, searchFilters, 2000); 
-            
-            for (String path : matchingPaths) {
-                // We know these files are in the DB, so we can get ID directly
-                // This avoids re-hashing the file via getOrCreateImageIdInternal
-                int id = imageRepo.getIdByPath(path);
-                if (id > 0) {
-                     collectionRepo.addImage(request.name(), id);
-                }
-            }
-        }
+        collectionService.updateCollection(request);
     }
 
     public void deleteCollection(String name) {
-        collectionRepo.delete(name);
+        collectionService.deleteCollection(name);
     }
 
     public void addImageToCollection(String collectionName, File file) {
-        if (collectionName == null || file == null) return;
         int id = getOrCreateImageIdInternal(file);
-        if (id > 0) {
-            collectionRepo.addImage(collectionName, id);
-        }
+        collectionService.addImageToCollection(collectionName, id);
     }
 
     public List<File> getFilesFromCollection(String collectionName) {
-        // If it's a smart collection, refresh it before returning files
-        Optional<CreateCollectionRequest> details = collectionRepo.get(collectionName);
-        if (details.isPresent() && details.get().isSmart()) {
-            collectionRepo.removeAllImages(collectionName);
-            populateSmartCollection(details.get());
-        }
-
-        List<String> paths = collectionRepo.getFilePaths(collectionName);
-        List<File> files = new ArrayList<>();
-        for (String p : paths) {
-            File f = resolvePath(p);
-            if (f != null && f.exists()) files.add(f);
-        }
-        return files;
+        return collectionService.getFilePathsFromCollection(collectionName).stream()
+                .map(pathService::resolve)
+                .filter(f -> f != null && f.exists())
+                .collect(Collectors.toList());
     }
 
     public String getSetting(String key, String defaultValue) {
@@ -361,15 +298,14 @@ public class UserDataManager {
         settingsRepo.set(key, value);
     }
 
-
     public File getLastFolder() {
         String path = settingsRepo.get("last_folder", null);
-        return path != null ? resolvePath(path) : null;
+        return path != null ? pathService.resolve(path) : null;
     }
 
     public void setLastFolder(File folder) {
         if (folder != null) {
-            settingsRepo.set("last_folder", relativizePath(folder));
+            settingsRepo.set("last_folder", pathService.getNormalizedAbsolutePath(folder));
         }
     }
 }
