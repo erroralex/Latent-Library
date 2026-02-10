@@ -2,24 +2,24 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 
 /**
- * Pinia store for managing the state of the Image Browser.
- * Handles file lists, selection, metadata fetching, filtering, and view modes.
- * Acts as the central data source for the browser UI components.
+ * @file browser.js
+ * @description Pinia store for managing the state of the Image Browser. This store handles
+ * file lists, selection, metadata fetching, filtering, and view modes. It acts as the
+ * central data hub for all browser-related UI components.
  */
 export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],
         selectedFile: null,
-        viewMode: 'browser', // Default to browser view
+        viewMode: 'browser',
         searchQuery: '',
         isLoading: false,
         currentMetadata: {},
         currentRating: 0,
         currentTags: [],
         cardSize: 160,
-        isSidebarOpen: false, // Control sidebar visibility
+        isSidebarOpen: false,
         
-        // Filters
         availableModels: [],
         availableSamplers: [],
         availableLoras: [],
@@ -28,7 +28,6 @@ export const useBrowserStore = defineStore('browser', {
         selectedLora: null,
         selectedRating: null,
 
-        // To restore view after clearing filters
         lastFolderPath: null,
     }),
 
@@ -59,9 +58,8 @@ export const useBrowserStore = defineStore('browser', {
                     params: { path }
                 });
                 this.files = response.data;
-                this.searchQuery = ''; // Clear search when loading new folder
+                this.searchQuery = '';
                 
-                // Persist last folder
                 this.lastFolderPath = path;
                 localStorage.setItem('lastFolder', path);
 
@@ -93,7 +91,6 @@ export const useBrowserStore = defineStore('browser', {
                 });
                 this.files = response.data;
                 
-                // Always select the first file if results are found
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
                 } else {
@@ -102,9 +99,6 @@ export const useBrowserStore = defineStore('browser', {
                 }
 
                 if (focusImage) {
-                    // This is a placeholder for the actual focus logic
-                    // which will be handled in the component.
-                    // We can emit an event or use a state property.
                     this.imageFocusRequested = true;
                 }
 
@@ -117,7 +111,6 @@ export const useBrowserStore = defineStore('browser', {
 
         clearSearch() {
             this.searchQuery = '';
-            // Restore the last folder view if no other filters are active
             const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating;
             if (!isAnyFilterActive && this.lastFolderPath) {
                 this.loadFolder(this.lastFolderPath);
@@ -125,21 +118,17 @@ export const useBrowserStore = defineStore('browser', {
         },
         
         setFilter(type, value) {
-            // If value is null, it means we are clearing the filter
             if (value === null) {
                 if (type === 'model') this.selectedModel = null;
                 if (type === 'sampler') this.selectedSampler = null;
                 if (type === 'lora') this.selectedLora = null;
                 if (type === 'rating') this.selectedRating = null;
 
-                // Check if any other filters are active
                 const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.searchQuery;
 
                 if (!isAnyFilterActive && this.lastFolderPath) {
-                    // If no filters are active, restore the last folder view
                     this.loadFolder(this.lastFolderPath);
                 } else {
-                    // Otherwise, just re-run the search with the remaining filters
                     this.search(this.searchQuery);
                 }
             } else {
@@ -169,7 +158,6 @@ export const useBrowserStore = defineStore('browser', {
                     params: { path }
                 });
                 this.currentMetadata = response.data;
-                // Extract rating from response if present, otherwise default to 0
                 this.currentRating = response.data.rating || 0;
             } catch (error) {
                 console.error('Metadata fetch failed:', error);
@@ -212,13 +200,10 @@ export const useBrowserStore = defineStore('browser', {
             
             let newIndex = currentIndex + direction;
             
-            // Handle wrapping and clamping
             if (Math.abs(direction) === 1) {
-                // Simple wrap for single step
                 if (newIndex < 0) newIndex = this.files.length - 1;
                 if (newIndex >= this.files.length) newIndex = 0;
             } else {
-                // Clamp for jumps (like grid navigation)
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= this.files.length) newIndex = this.files.length - 1;
             }

@@ -1,6 +1,9 @@
 <script setup>
 /**
- * GalleryView.vue
+ * @file GalleryView.vue
+ * @description A simple gallery view that displays a grid of images based on a search query.
+ * This component is a legacy or simplified browser, primarily used for demonstrating
+ * basic search and context menu functionality.
  */
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -26,7 +29,6 @@ const search = async () => {
 
 const showContextMenu = (payload) => {
   const { event, path } = payload;
-  console.log("GalleryView: Context Menu requested for", path);
 
   if (!event) {
     console.error("GalleryView: No event received");

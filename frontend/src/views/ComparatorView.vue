@@ -1,19 +1,18 @@
 <script setup>
 /**
- * ComparatorView.vue
- *
- * Provides a side-by-side image comparison tool with a draggable slider.
- * Users can drop two images into slots A and B to visually compare differences.
+ * @file ComparatorView.vue
+ * @description A side-by-side image comparison tool featuring a draggable slider.
+ * Users can drop two images into designated slots (A and B) to visually inspect
+ * differences between them.
  */
 import { ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 
 const imageA = ref(null);
 const imageB = ref(null);
-const sliderPosition = ref(50); // Percentage
+const sliderPosition = ref(50);
 const containerRef = ref(null);
 
-// Cleanup ObjectURLs to avoid memory leaks
 onUnmounted(() => {
     if (imageA.value?.startsWith('blob:')) URL.revokeObjectURL(imageA.value);
     if (imageB.value?.startsWith('blob:')) URL.revokeObjectURL(imageB.value);
@@ -71,25 +70,21 @@ const reset = () => {
             <p class="text-gray-400 m-0">Compare images by dropping them into the slots below.</p>
         </div>
 
-        <!-- Comparison Area -->
         <div v-if="imageA && imageB" class="flex-grow-1 flex flex-column overflow-hidden relative">
             <div class="relative flex-grow-1 bg-black-alpha-90 border-round overflow-hidden select-none cursor-crosshair shadow-8"
                  ref="containerRef"
                  @mousemove="updateSlider"
                  @touchmove="updateSlider">
 
-                <!-- Image B (Background/Right) -->
                 <img :src="imageB"
                      class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
                      style="object-fit: contain;" />
 
-                <!-- Image A (Foreground/Left) - Clipped via CSS clip-path -->
                 <img :src="imageA"
                      class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
                      style="object-fit: contain;"
                      :style="{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }" />
 
-                <!-- Slider Handle -->
                 <div class="absolute top-0 bottom-0 w-2px bg-white shadow-4 pointer-events-none"
                      :style="{ left: sliderPosition + '%' }">
                      <div class="slider-handle absolute top-50 left-50 -ml-2 -mt-2 w-2rem h-2rem border-circle flex align-items-center justify-content-center shadow-4">
@@ -103,9 +98,7 @@ const reset = () => {
             </div>
         </div>
 
-        <!-- Drop Zones -->
         <div v-else class="flex-grow-1 flex align-items-center justify-content-center gap-4">
-            <!-- Slot A -->
             <div class="drop-zone p-4 flex flex-column align-items-center justify-content-center cursor-pointer transition-all transition-duration-300 relative border-round"
                  @click="$refs.fileInputA.click()"
                  @dragover.prevent
@@ -123,7 +116,6 @@ const reset = () => {
                 </div>
             </div>
 
-            <!-- Slot B -->
             <div class="drop-zone p-4 flex flex-column align-items-center justify-content-center cursor-pointer transition-all transition-duration-300 relative border-round"
                  @click="$refs.fileInputB.click()"
                  @dragover.prevent
@@ -161,7 +153,6 @@ const reset = () => {
     z-index: 1;
 }
 
-/* Gradient Border on Hover */
 .drop-zone::before {
     content: '';
     position: absolute;
@@ -198,7 +189,6 @@ const reset = () => {
     opacity: 1;
 }
 
-/* Slider Handle */
 .slider-handle {
     background: linear-gradient(#000, #000) padding-box,
                 var(--app-grad-hover) border-box;

@@ -1,10 +1,9 @@
 <script setup>
 /**
- * FilmstripView.vue
- *
- * A horizontal scrollable list of image thumbnails.
- * Used in the browser view to navigate between images in the current folder.
- * Automatically scrolls to keep the selected image in view.
+ * @file FilmstripView.vue
+ * @description A horizontal, scrollable list of image thumbnails. This component is used in the
+ * browser view to provide quick navigation between images in the current folder. It automatically
+ * scrolls to keep the currently selected image centered and in view.
  */
 import { useBrowserStore } from '@/stores/browser';
 import { ref, watch, nextTick, onMounted } from 'vue';
@@ -54,7 +53,6 @@ onMounted(() => {
 
 <style scoped>
 .filmstrip-glass {
-  /* Dark Glass Theme */
   background: var(--app-bg-panel, rgba(20, 25, 35, 0.6));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -64,8 +62,8 @@ onMounted(() => {
 
 .filmstrip-item {
   opacity: 0.7;
-  border: 2px solid transparent; /* Placeholder for spacing */
-  background: rgba(255, 255, 255, 0.05); /* Slight box background */
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
   position: relative;
   z-index: 0;
 }
@@ -76,33 +74,30 @@ onMounted(() => {
   transform: scale(0.95);
 }
 
-/* Selected Item - Gradient Border Effect */
 .filmstrip-item.selected-item {
   opacity: 1;
-  background: transparent; /* Let pseudo-elements handle background */
+  background: transparent;
   transform: scale(1.05);
   z-index: 1;
-  border-color: transparent; /* Remove default border */
+  border-color: transparent;
 }
 
-/* 1. Gradient Border/Glow (Deepest) */
 .filmstrip-item.selected-item::before {
   content: '';
   position: absolute;
-  inset: -2px; /* Creates the border width */
+  inset: -2px;
   background: var(--app-grad-hover);
-  border-radius: inherit; /* Match parent radius */
-  z-index: -2; /* Behind everything */
-  filter: blur(2px); /* Slight glow */
+  border-radius: inherit;
+  z-index: -2;
+  filter: blur(2px);
 }
 
-/* 2. Black Background (Middle) */
 .filmstrip-item.selected-item::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000000; /* Opaque black to block center */
+  background: #000000;
   border-radius: inherit;
-  z-index: -1; /* Behind content, in front of glow */
+  z-index: -1;
 }
 </style>

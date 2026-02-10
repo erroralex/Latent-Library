@@ -44,8 +44,6 @@ public class ImageController {
         if (sampler != null && !sampler.isEmpty() && !"All".equals(sampler)) filters.put("Sampler", sampler);
         if (lora != null && !lora.isEmpty() && !"All".equals(lora)) filters.put("Loras", lora);
         
-        // The repository layer correctly interprets "Any Star Count" as rating > 0.
-        // We just need to pass the filter along.
         if (rating != null && !rating.isEmpty()) {
             filters.put("Rating", rating);
         }

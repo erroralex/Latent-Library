@@ -2,12 +2,9 @@ body {
     margin: 0;
     font-family: var(--font-family);
     background-color: var(--app-bg-deepest);
-
-    /* Subtle dark ambiance instead of bright blobs */
     background-image:
             radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
             radial-gradient(circle at 85% 75%, rgba(216, 112, 255, 0.08) 0%, transparent 40%);
-
     background-attachment: fixed;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -15,7 +12,6 @@ body {
     overflow: hidden;
 }
 
-/* Scrollbars - Dark & Minimal */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -34,7 +30,6 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* Text Utilities */
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
@@ -46,7 +41,6 @@ body {
     font-weight: 800;
 }
 
-/* Glass Panel Utility - The "Black Glass" Look */
 .glass-panel {
     background: var(--app-bg-panel);
     backdrop-filter: blur(20px);
@@ -57,7 +51,6 @@ body {
     overflow: hidden;
 }
 
-/* Add a gloss shine to panels */
 .glass-panel::after {
     content: "";
     position: absolute;

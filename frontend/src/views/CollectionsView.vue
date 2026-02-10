@@ -1,9 +1,8 @@
 <script setup>
 /**
- * CollectionsView.vue
- *
- * Manages user-defined image collections.
- * Allows users to view existing collections and create new ones via a dialog.
+ * @file CollectionsView.vue
+ * @description A view for managing user-defined image collections. It allows users to see
+ * a list of their existing collections and provides an interface to create new ones.
  */
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -52,7 +51,7 @@ onMounted(fetchCollections);
             <div v-for="col in collections" :key="col" class="col-12 md:col-6 lg:col-4 xl:col-3">
                 <div class="collection-card p-4 border-round cursor-pointer transition-all transition-duration-300 relative overflow-hidden">
                     <div class="text-xl font-bold mb-2 text-white">{{ col }}</div>
-                    <div class="text-gray-400">0 items</div> <!-- Placeholder for count -->
+                    <div class="text-gray-400">0 items</div>
                     <i class="pi pi-folder absolute bottom-0 right-0 text-8xl text-white-alpha-5" style="transform: translate(20%, 20%);"></i>
                 </div>
             </div>
@@ -78,7 +77,6 @@ onMounted(fetchCollections);
     -webkit-text-fill-color: transparent;
 }
 
-/* Collection Card - Dark Glass */
 .collection-card {
     background: rgba(20, 20, 20, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -86,7 +84,6 @@ onMounted(fetchCollections);
     z-index: 1;
 }
 
-/* Hover Effect - Gradient Border & Glow */
 .collection-card:hover {
     transform: translateY(-5px);
     border-color: transparent;
@@ -108,7 +105,7 @@ onMounted(fetchCollections);
     content: '';
     position: absolute;
     inset: 0;
-    background: #000000; /* Opaque black on hover to block fill */
+    background: #000000;
     border-radius: inherit;
     z-index: -1;
     opacity: 0;
@@ -123,7 +120,6 @@ onMounted(fetchCollections);
     opacity: 1;
 }
 
-/* Dialog Styling (Duplicated from MetadataSidebar for consistency) */
 :deep(.glass-dialog) {
     background: rgba(15, 15, 15, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -151,7 +147,6 @@ onMounted(fetchCollections);
     padding: 1.5rem !important;
 }
 
-/* Input Styling */
 .glass-input {
     background: rgba(0,0,0,0.3) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;

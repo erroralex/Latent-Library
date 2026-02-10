@@ -1,11 +1,8 @@
 <script setup>
 /**
- * MetadataSidebar.vue
- *
- * Displays detailed metadata for the currently selected image.
- * Shows prompts, negative prompts, generation parameters (Model, Seed, CFG, etc.),
- * and allows users to rate the image.
- * Includes copy-to-clipboard functionality for prompts.
+ * @file MetadataSidebar.vue
+ * @description A sidebar component that displays detailed metadata for the currently selected image.
+ * It shows prompts, generation parameters, and allows users to rate the image and copy data.
  */
 import { useBrowserStore } from '@/stores/browser';
 import { computed, ref } from 'vue';
@@ -51,11 +48,9 @@ const openFileLocation = async () => {
 const formattedRawMeta = computed(() => {
   if (!meta.value.Raw) return 'No raw data available.';
   try {
-    // Attempt to parse and prettify if it's a JSON string
     const parsed = JSON.parse(meta.value.Raw);
     return JSON.stringify(parsed, null, 2);
   } catch (e) {
-    // If it's not valid JSON, return the raw text as is
     return meta.value.Raw;
   }
 });
@@ -147,7 +142,6 @@ const formattedRawMeta = computed(() => {
       </div>
     </div>
 
-    <!-- Raw Metadata Dialog -->
     <Dialog v-model:visible="isRawVisible" modal header="Raw Metadata" class="glass-dialog w-6" :style="{ width: '50vw' }">
         <pre class="raw-meta-pre">{{ formattedRawMeta }}</pre>
         <template #footer>
@@ -172,19 +166,16 @@ const formattedRawMeta = computed(() => {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Helper for inputs inside sidebar */
 .glass-input {
   background: rgba(0,0,0,0.3) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
   color: var(--text-primary);
 }
 
-/* Remove default focus shadow to kill the green outline */
 .glass-input:enabled:focus {
   box-shadow: none !important;
   outline: none !important;
   border-color: transparent !important;
-  /* Keep the gradient border from components.css */
   border-image: var(--app-grad-hover) 1 !important;
 }
 
@@ -206,7 +197,6 @@ const formattedRawMeta = computed(() => {
     color: #e0e0e0;
 }
 
-/* LoRA Chip Styling */
 .lora-chip {
   background: transparent !important;
   color: white !important;
@@ -216,17 +206,15 @@ const formattedRawMeta = computed(() => {
   overflow: visible !important;
 }
 
-/* Gradient Border for Chip */
 .lora-chip::before {
   content: '';
   position: absolute;
   inset: -1px;
   background: var(--app-grad-hover);
-  border-radius: 16px; /* Chip radius */
+  border-radius: 16px;
   z-index: -2;
 }
 
-/* Black Background for Chip */
 .lora-chip::after {
   content: '';
   position: absolute;
@@ -236,7 +224,6 @@ const formattedRawMeta = computed(() => {
   z-index: -1;
 }
 
-/* Deep selectors to override PrimeVue Dialog styles */
 :deep(.glass-dialog) {
     background: rgba(15, 15, 15, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -272,7 +259,6 @@ const formattedRawMeta = computed(() => {
     color: white !important;
 }
 
-/* Force yellow color for active stars */
 .text-yellow-500 {
   color: #eab308 !important;
 }
