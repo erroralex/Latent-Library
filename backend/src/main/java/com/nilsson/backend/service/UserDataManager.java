@@ -150,11 +150,11 @@ public class UserDataManager {
     private int getOrCreateImageIdInternal(File file) {
         try {
             String path = relativizePath(file);
-            String hash = calculateHash(file);
-            
+            // Optimization: check existence first to avoid expensive hash
             int id = imageRepo.getIdByPath(path);
             if (id != -1) return id;
 
+            String hash = calculateHash(file);
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
             if (!existingPaths.isEmpty()) {
                 String oldPath = existingPaths.get(0);
@@ -278,7 +278,6 @@ public class UserDataManager {
     public void updateCollection(CreateCollectionRequest request) {
         collectionRepo.update(request.name(), request.isSmart(), request.filters());
         // If it's smart, re-populate (clear and add)
-        // If it was smart and is now not, we might want to keep images or clear them.
         // For now, if it's smart, we clear and re-populate to ensure it matches filters.
         if (request.isSmart()) {
             collectionRepo.removeAllImages(request.name());
@@ -300,23 +299,26 @@ public class UserDataManager {
             if (f.loras() != null && !f.loras().isEmpty()) {
                 searchFilters.put("Loras", f.loras());
             }
-            if (f.rating() != null) {
-                searchFilters.put("Rating", Collections.singletonList(String.valueOf(f.rating())));
+            // Strict type handling: f.rating() is now a String
+            if (f.rating() != null && !f.rating().isBlank()) {
+                searchFilters.put("Rating", Collections.singletonList(f.rating()));
             }
             
             String query = null;
+            // Strict type handling: f.prompt() is now List<String>
             if (f.prompt() != null && !f.prompt().isEmpty()) {
                 query = String.join(" ", f.prompt());
             }
             
             // Find matching files
-            List<String> matchingPaths = imageRepo.findPaths(query, searchFilters, 1000); // Limit to 1000 for now
+            List<String> matchingPaths = imageRepo.findPaths(query, searchFilters, 2000); 
             
-            // Add them to the collection
             for (String path : matchingPaths) {
-                File file = resolvePath(path);
-                if (file != null && file.exists()) {
-                    addImageToCollection(request.name(), file);
+                // We know these files are in the DB, so we can get ID directly
+                // This avoids re-hashing the file via getOrCreateImageIdInternal
+                int id = imageRepo.getIdByPath(path);
+                if (id > 0) {
+                     collectionRepo.addImage(request.name(), id);
                 }
             }
         }
@@ -335,6 +337,13 @@ public class UserDataManager {
     }
 
     public List<File> getFilesFromCollection(String collectionName) {
+        // If it's a smart collection, refresh it before returning files
+        Optional<CreateCollectionRequest> details = collectionRepo.get(collectionName);
+        if (details.isPresent() && details.get().isSmart()) {
+            collectionRepo.removeAllImages(collectionName);
+            populateSmartCollection(details.get());
+        }
+
         List<String> paths = collectionRepo.getFilePaths(collectionName);
         List<File> files = new ArrayList<>();
         for (String p : paths) {

@@ -81,14 +81,18 @@ public class ImageRepository {
         List<Object> params = new ArrayList<>();
 
         if (query != null && !query.isBlank()) {
-            sql.append("AND (");
-            sql.append("EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.value LIKE ?) ");
-            sql.append("OR ");
-            sql.append("EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND t.tag LIKE ?) ");
-            sql.append(") ");
-            String likeQuery = "%" + query + "%";
-            params.add(likeQuery);
-            params.add(likeQuery);
+            // Split query into tokens for AND-based search
+            String[] tokens = query.trim().split("\\s+");
+            for (String token : tokens) {
+                sql.append("AND (");
+                sql.append("EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.value LIKE ?) ");
+                sql.append("OR ");
+                sql.append("EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND t.tag LIKE ?) ");
+                sql.append(") ");
+                String likeQuery = "%" + token + "%";
+                params.add(likeQuery);
+                params.add(likeQuery);
+            }
         }
 
         if (filters != null) {
@@ -108,15 +112,27 @@ public class ImageRepository {
                 if ("Rating".equals(entry.getKey())) {
                     // Special handling for Rating: usually single value, but if list, treat as OR
                     sql.append("AND (");
-                    for (int j = 0; j < validValues.size(); j++) {
-                        if (j > 0) sql.append(" OR ");
-                        String val = validValues.get(j);
+                    boolean first = true;
+                    for (String val : validValues) {
                         if ("Any Star Count".equals(val)) {
+                            if (!first) sql.append(" OR ");
                             sql.append("i.rating > 0");
+                            first = false;
                         } else {
-                            sql.append("i.rating = ?");
-                            params.add(val);
+                            try {
+                                int ratingVal = Integer.parseInt(val);
+                                if (!first) sql.append(" OR ");
+                                sql.append("i.rating = ?");
+                                params.add(ratingVal);
+                                first = false;
+                            } catch (NumberFormatException e) {
+                                logger.warn("Invalid rating value: {}", val);
+                            }
                         }
+                    }
+                    if (first) {
+                        // If no valid ratings were added (e.g. all parse errors), add a false condition to avoid syntax error
+                        sql.append("1=0");
                     }
                     sql.append(") ");
 

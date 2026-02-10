@@ -1,46 +1,81 @@
 <script setup>
 /**
  * @file FilmstripView.vue
- * @description A horizontal, scrollable list of image thumbnails. This component is used in the
- * browser view to provide quick navigation between images in the current folder. It automatically
- * scrolls to keep the currently selected image centered and in view.
+ * @description A horizontal, carousel-style list of image thumbnails. This component
+ * keeps the currently selected image centered in the view, with other images scrolling
+ * horizontally around it.
  */
 import { useBrowserStore } from '@/stores/browser';
-import { ref, watch, nextTick, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const store = useBrowserStore();
-const container = ref(null);
+const containerRef = ref(null);
+const containerWidth = ref(0);
 
-const scrollToSelected = () => {
-  if (!container.value || !store.selectedFile) return;
+// --- Carousel Logic ---
+const ITEM_WIDTH = 120; // From CSS width
+const ITEM_GAP = 8;    // From `gap-2` class (0.5rem)
+const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_GAP;
 
-  const index = store.files.indexOf(store.selectedFile);
-  if (index === -1) return;
-
-  const element = container.value.children[index];
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+// This computed property is the core of the carousel logic.
+// It calculates the exact `translateX` offset needed to center the selected item.
+const carouselOffset = computed(() => {
+  if (!store.selectedFile || containerWidth.value === 0) {
+    return 0;
   }
-};
 
-watch(() => store.selectedFile, () => {
-  nextTick(scrollToSelected);
+  const selectedIndex = store.files.indexOf(store.selectedFile);
+  if (selectedIndex === -1) {
+    return 0;
+  }
+
+  // Calculate the position of the center of the selected item
+  const selectedItemCenter = (selectedIndex * TOTAL_ITEM_WIDTH) + (TOTAL_ITEM_WIDTH / 2);
+
+  // Calculate the position of the center of the filmstrip container
+  const containerCenter = containerWidth.value / 2;
+
+  // The offset is the difference, which will shift the items container
+  // so that the two centers align.
+  return containerCenter - selectedItemCenter;
 });
 
+// We need to know the width of the container to center things correctly.
+// A ResizeObserver is the most robust way to do this.
+let resizeObserver;
 onMounted(() => {
-  scrollToSelected();
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(entries => {
+      if (entries[0]) {
+        containerWidth.value = entries[0].contentRect.width;
+      }
+    });
+    resizeObserver.observe(containerRef.value);
+  }
 });
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
 </script>
 
 <template>
-  <div class="filmstrip-view filmstrip-glass h-10rem flex flex-column">
-    <div ref="container" class="flex-grow-1 overflow-x-auto overflow-y-hidden flex flex-nowrap gap-2 p-2 align-items-center">
+  <!-- The outer container clips the content -->
+  <div ref="containerRef" class="filmstrip-view filmstrip-glass h-10rem flex align-items-center overflow-hidden">
+    <!-- The inner container is moved with a CSS transform -->
+    <div
+        class="flex flex-nowrap gap-2 px-2 transition-transform duration-500 ease-in-out"
+        :style="{ transform: `translateX(${carouselOffset}px)` }"
+    >
       <div v-for="file in store.files" :key="file"
-           class="filmstrip-item flex-shrink-0 cursor-pointer border-round transition-all transition-duration-200"
+           class="filmstrip-item flex-shrink-0 cursor-pointer border-round"
            :class="{ 'selected-item': store.selectedFile === file }"
            @click="store.selectFile(file)">
 
-        <div class="relative border-round overflow-hidden flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+        <div class="relative border-round overflow-hidden flex align-items-center justify-content-center" :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
           <img :src="`http://localhost:8080/api/images/content?path=${encodeURIComponent(file)}`"
                loading="lazy"
                class="w-full h-full"
@@ -66,6 +101,7 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.05);
   position: relative;
   z-index: 0;
+  transition: all 0.3s ease;
 }
 
 .filmstrip-item:hover {
@@ -99,5 +135,16 @@ onMounted(() => {
   background: #000000;
   border-radius: inherit;
   z-index: -1;
+}
+
+/* Helper for smooth transitions on the transform property */
+.transition-transform {
+    transition-property: transform;
+}
+.duration-500 {
+    transition-duration: 500ms;
+}
+.ease-in-out {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

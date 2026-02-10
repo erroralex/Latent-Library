@@ -65,8 +65,9 @@ public class CollectionRepository {
     }
 
     public Optional<CreateCollectionRequest> get(String name) {
+        if (name == null) return Optional.empty();
         return jdbcClient.sql("SELECT name, is_smart, filters_json FROM collections WHERE name = ?")
-                .param(name)
+                .param(name.trim())
                 .query((rs, rowNum) -> {
                     String colName = rs.getString("name");
                     boolean isSmart = rs.getBoolean("is_smart");
@@ -117,37 +118,40 @@ public class CollectionRepository {
         jdbcClient.sql("UPDATE collections SET is_smart = ?, filters_json = ? WHERE name = ?")
                 .param(isSmart)
                 .param(filtersJson)
-                .param(name)
+                .param(name.trim())
                 .update();
     }
 
     public void delete(String name) {
         if (name == null) return;
         jdbcClient.sql("DELETE FROM collections WHERE name = ?")
-                .param(name)
+                .param(name.trim())
                 .update();
     }
 
     public void addImage(String collectionName, int imageId) {
+        if (collectionName == null) return;
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at) SELECT id, ?, ? FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)
                 .param(System.currentTimeMillis())
-                .param(collectionName)
+                .param(collectionName.trim())
                 .update();
     }
 
     public void removeAllImages(String collectionName) {
+        if (collectionName == null) return;
         String sql = "DELETE FROM collection_images WHERE collection_id = (SELECT id FROM collections WHERE name = ?)";
         jdbcClient.sql(sql)
-                .param(collectionName)
+                .param(collectionName.trim())
                 .update();
     }
 
     public List<String> getFilePaths(String collectionName) {
+        if (collectionName == null) return List.of();
         String sql = "SELECT i.file_path FROM images i JOIN collection_images ci ON i.id = ci.image_id JOIN collections c ON ci.collection_id = c.id WHERE c.name = ? ORDER BY ci.added_at DESC";
         return jdbcClient.sql(sql)
-                .param(collectionName)
+                .param(collectionName.trim())
                 .query(String.class)
                 .list();
     }
