@@ -119,15 +119,25 @@ public class UserDataManager {
         return raw.trim();
     }
 
-    public CompletableFuture<List<File>> findFilesWithFilters(String query, Map<String, String> filters, int limit) {
+    public CompletableFuture<List<File>> findFilesWithFilters(String query, Map<String, String> filters, int offset, int limit) {
         return CompletableFuture.supplyAsync(() -> {
             long start = System.currentTimeMillis();
             Map<String, List<String>> listFilters = new java.util.HashMap<>();
             if (filters != null) {
-                filters.forEach((k, v) -> listFilters.put(k, Collections.singletonList(v)));
+                filters.forEach((k, v) -> {
+                    // Special handling for Loras to support partial matching
+                    if ("Loras".equals(k)) {
+                        // We don't change the key here, but the repository needs to know how to handle it
+                        // For now, we just pass it through. The repository logic for FTS should handle partial matches
+                        // if we format the token correctly.
+                        listFilters.put(k, Collections.singletonList(v));
+                    } else {
+                        listFilters.put(k, Collections.singletonList(v));
+                    }
+                });
             }
 
-            List<String> paths = searchRepository.findPaths(query, listFilters, limit);
+            List<String> paths = searchRepository.findPaths(query, listFilters, offset, limit);
             return paths.stream()
                     .map(pathService::resolve)
                     .collect(Collectors.toList());

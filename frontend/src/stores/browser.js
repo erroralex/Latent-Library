@@ -31,6 +31,12 @@ export const useBrowserStore = defineStore('browser', {
         lastFolderPath: null,
         navRefreshKey: 0,
         collectionToEdit: null,
+
+        // Pagination state
+        page: 0,
+        pageSize: 50,
+        hasMore: true,
+        isFetchingMore: false
     }),
 
     actions: {
@@ -59,6 +65,10 @@ export const useBrowserStore = defineStore('browser', {
 
         async loadFolder(path) {
             this.isLoading = true;
+            this.files = []; // Clear existing files
+            this.page = 0;
+            this.hasMore = false; // Disable pagination for folder view as scan returns all files
+            
             try {
                 const response = await axios.post('/api/library/scan', null, {
                     params: { path }
@@ -85,6 +95,10 @@ export const useBrowserStore = defineStore('browser', {
         async loadCollection(collectionName) {
             this.isLoading = true;
             this.searchQuery = `collection: ${collectionName}`; // Update search query to reflect context
+            this.files = [];
+            this.page = 0;
+            this.hasMore = false; // Disable pagination for collection view
+
             try {
                 // Use the new POST endpoint that correctly handles smart filters
                 const response = await axios.post('/api/collections/images', { name: collectionName });
@@ -108,17 +122,12 @@ export const useBrowserStore = defineStore('browser', {
         async search(query, focusImage = false) {
             this.isLoading = true;
             this.searchQuery = query;
+            this.page = 0;
+            this.files = [];
+            this.hasMore = true;
+
             try {
-                const response = await axios.get('/api/images/search', {
-                    params: { 
-                        query: query,
-                        model: this.selectedModel,
-                        sampler: this.selectedSampler,
-                        lora: this.selectedLora,
-                        rating: this.selectedRating
-                    }
-                });
-                this.files = response.data;
+                await this.fetchPage();
                 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
@@ -138,11 +147,53 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
+        async loadMore() {
+            if (this.isFetchingMore || !this.hasMore) return;
+            this.isFetchingMore = true;
+            this.page++;
+            try {
+                await this.fetchPage();
+            } catch (error) {
+                console.error('Load more failed:', error);
+                this.page--; // Revert page increment on failure
+            } finally {
+                this.isFetchingMore = false;
+            }
+        },
+
+        async fetchPage() {
+             const response = await axios.get('/api/images/search', {
+                params: { 
+                    query: this.searchQuery,
+                    model: this.selectedModel,
+                    sampler: this.selectedSampler,
+                    lora: this.selectedLora,
+                    rating: this.selectedRating,
+                    page: this.page,
+                    size: this.pageSize
+                }
+            });
+            
+            const newFiles = response.data;
+            if (newFiles.length < this.pageSize) {
+                this.hasMore = false;
+            }
+            
+            if (this.page === 0) {
+                this.files = newFiles;
+            } else {
+                this.files = [...this.files, ...newFiles];
+            }
+        },
+
         clearSearch() {
             this.searchQuery = '';
             const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating;
             if (!isAnyFilterActive && this.lastFolderPath) {
                 this.loadFolder(this.lastFolderPath);
+            } else {
+                // If filters are active, just re-search with empty query
+                this.search('');
             }
         },
         
