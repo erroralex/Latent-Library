@@ -1,8 +1,17 @@
 <script setup>
 /**
  * @file MetadataSidebar.vue
- * @description A sidebar component that displays detailed metadata for the currently selected image.
- * It shows prompts, generation parameters, and allows users to rate the image and copy data.
+ * @description A comprehensive sidebar component for viewing and interacting with image-specific metadata.
+ *
+ * This component serves as the primary information hub for the selected image. It parses and displays
+ * technical generation parameters (Model, Sampler, Seed, etc.), prompts, and file system information.
+ *
+ * Key functionalities:
+ * - Metadata Visualization: Displays parsed AI generation data in a structured grid.
+ * - Prompt Management: Provides dedicated sections for positive and negative prompts with copy-to-clipboard support.
+ * - Rating System: Allows users to set and view star ratings for the current image.
+ * - System Integration: Enables opening the file's physical location in the OS file explorer.
+ * - Raw Data View: Includes a modal dialog for inspecting the unparsed, raw metadata string/JSON.
  */
 import { useBrowserStore } from '@/stores/browser';
 import { computed, ref } from 'vue';
@@ -122,7 +131,6 @@ const formattedRawMeta = computed(() => {
           <InputText :value="meta.Seed || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
 
-        <!-- CFG and Steps (Restored to col-3) -->
         <div class="col-3">
           <label class="block text-xs text-500 mb-1">CFG</label>
           <InputText :value="meta.CFG || '-'" readonly class="w-full p-inputtext-sm glass-input" />

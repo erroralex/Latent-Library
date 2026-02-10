@@ -8,9 +8,16 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 
 /**
- * Repository for persistent storage and retrieval of application-wide settings.
- * Provides a key-value abstraction over the settings database table.
- * Handles user preferences, application state, and configuration parameters.
+ * Repository for persistent storage and retrieval of application-wide settings and user preferences.
+ * <p>
+ * This class provides a simple key-value abstraction over the {@code settings} database table. It is
+ * used to persist application state that must survive restarts, such as the last visited directory,
+ * UI preferences, and tool-specific configurations (e.g., Speed Sorter target paths).
+ * <p>
+ * Key functionalities:
+ * - Persistent Key-Value Store: Implements a generic mechanism for storing and retrieving string-based settings.
+ * - Default Value Support: Provides a safe retrieval method that returns a fallback value if a key is missing.
+ * - Atomic Updates: Uses {@code INSERT OR REPLACE} to ensure settings are updated or created efficiently.
  */
 @Repository
 public class SettingsRepository {

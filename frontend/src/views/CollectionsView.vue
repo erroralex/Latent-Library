@@ -1,4 +1,18 @@
 <script setup>
+/**
+ * @file CollectionsView.vue
+ * @description A comprehensive management interface for image collections, supporting both static and dynamic (smart) groupings.
+ *
+ * This view allows users to organize their image library into logical sets. It features a robust "Smart Collection"
+ * builder that uses metadata filters to create live-updating groups of images.
+ *
+ * Key functionalities:
+ * - Collection CRUD: Full support for creating, reading, updating, and deleting collections.
+ * - Smart Filter Builder: An advanced UI for defining dynamic criteria (Model, Sampler, LoRA, Rating, Prompt keywords).
+ * - Real-time Preview: Integrates with the browser store to fetch and display available metadata values for filters.
+ * - Contextual Management: Provides a right-click menu for quick editing or removal of collections.
+ * - Navigation Integration: Seamlessly transitions to the Image Browser with pre-applied collection filters.
+ */
 import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useBrowserStore } from '@/stores/browser';
@@ -21,12 +35,10 @@ const collections = ref([]);
 const displayCreateDialog = ref(false);
 const isEditing = ref(false);
 
-// Context Menu
 const cm = ref();
 const menuModel = ref([]);
 const contextMenuSelection = ref(null);
 
-// State for new collection form
 const newCollectionName = ref('');
 const isSmartCollection = ref(false);
 const prompt = ref('');
@@ -192,7 +204,7 @@ const removeCollection = async (name) => {
     try {
         await axios.delete(`/api/collections/${name}`);
         toast.add({ severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000 });
-        store.refreshNav(); // This will trigger fetchCollections via the watcher
+        store.refreshNav();
     } catch (e) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000 });
     }
@@ -204,7 +216,6 @@ onMounted(() => {
       store.loadFilters();
   }
 
-  // Check if there's a pending edit request (e.g. from navigation)
   if (store.collectionToEdit) {
       editCollection(store.collectionToEdit);
       store.collectionToEdit = null;

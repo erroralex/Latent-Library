@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -19,8 +18,19 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * Controller for the Metadata Scrubber tool.
- * Handles image uploads, preview generation, and metadata stripping (scrubbing).
+ * REST Controller for the Metadata Scrubber utility.
+ * <p>
+ * This controller manages the lifecycle of image metadata removal. It provides endpoints for
+ * uploading images to a temporary staging area, generating web-accessible previews, and
+ * performing the "scrubbing" operation. The scrubbing process involves re-encoding the image
+ * using {@code ImageIO}, which effectively strips all non-pixel data (EXIF, XMP, and custom
+ * PNG chunks) from the resulting file.
+ * <p>
+ * Key functionalities:
+ * - Temporary Staging: Manages a local {@code data/temp} directory for transient files.
+ * - Image Upload: Handles multipart file uploads with unique UUID-based naming.
+ * - Metadata Stripping: Re-renders images to remove embedded generation parameters.
+ * - Secure Delivery: Serves the cleaned images as downloadable attachments.
  */
 @RestController
 @RequestMapping("/api/scrub")
@@ -78,7 +88,7 @@ public class ScrubController {
 
             String cleanFilename = "clean_" + filename;
             Path targetPath = tempDir.resolve(cleanFilename);
-            
+
             String format = "png";
             if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
                 format = "jpg";

@@ -11,8 +11,19 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Repository for managing image entities.
- * Handles CRUD operations for images and their ratings.
+ * Repository for managing core image entities and their persistent state.
+ * <p>
+ * This class serves as the primary data access layer for the {@code images} table. It handles the
+ * registration of new images, path updates (for file moves), and user-driven state changes like
+ * ratings and "starred" status. It also supports hash-based lookups to detect and reconcile
+ * file movements across the local file system.
+ * <p>
+ * Key functionalities:
+ * - Identity Management: Resolves file paths to internal database IDs.
+ * - File Move Detection: Uses SHA-256 hashes to find existing records when a file is moved.
+ * - Batch Processing: Provides a streaming mechanism ({@code forEachFilePath}) for library-wide operations.
+ * - Rating & Star Logic: Manages the {@code rating} and {@code is_starred} flags for image organization.
+ * - Atomic Registration: Implements {@code getOrCreateId} to ensure thread-safe image indexing.
  */
 @Repository
 public class ImageRepository {

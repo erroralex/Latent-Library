@@ -9,6 +9,16 @@ import org.springframework.web.context.request.WebRequest;
 import java.nio.file.InvalidPathException;
 import java.util.Map;
 
+/**
+ * Global exception handler for the application.
+ * <p>
+ * This class provides a centralized mechanism for intercepting and handling exceptions thrown by
+ * any controller. It ensures that the API returns consistent, well-formatted error responses
+ * to the frontend, improving debuggability and user experience.
+ * <p>
+ * Handled Exceptions:
+ * - {@code InvalidPathException}: Returns a 400 Bad Request when a file system path is malformed.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

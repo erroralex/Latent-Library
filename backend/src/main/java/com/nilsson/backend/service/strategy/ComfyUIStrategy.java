@@ -12,9 +12,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Extraction strategy for ComfyUI workflows.
- * Handles both UI Schema (web interface) and API Schema (execution graph).
- * Recursively traces graph connections to resolve parameters like prompts, models, and samplers.
+ * Metadata extraction strategy for ComfyUI workflows.
+ * <p>
+ * This strategy implements a sophisticated graph-traversal algorithm to resolve generation
+ * parameters from ComfyUI's node-based architecture. It supports both the "UI Schema"
+ * (exported from the web interface) and the "API Schema" (execution graph). It recursively
+ * traces connections between nodes (e.g., from a KSampler back to its CLIPTextEncode inputs)
+ * to accurately identify positive prompts, negative prompts, models, and samplers.
+ * <p>
+ * Key functionalities:
+ * - Graph Traversal: Recursively resolves linked parameters by following node input/output links.
+ * - Schema Detection: Automatically distinguishes between UI-based workflows and API-based graphs.
+ * - Intelligent Filtering: Uses extensive blacklists and whitelists to ignore utility nodes (reroutes,
+ * switches, pipes) and focus on core generation parameters.
+ * - LoRA Extraction: Identifies LoRAs from both specialized loader nodes and embedded prompt tags.
+ * - Parameter Normalization: Resolves and formats technical values like CFG, Seed, and Sampler names.
  */
 @Service
 public class ComfyUIStrategy implements MetadataStrategy {

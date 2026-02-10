@@ -18,8 +18,18 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Core infrastructure service handling database persistence, connection pooling, and schema migration.
- * Manages the SQLite database connection and ensures schema integrity using Flyway.
+ * Core infrastructure service for database lifecycle management and persistence.
+ * <p>
+ * This service initializes and maintains the SQLite database connection pool using HikariCP.
+ * It ensures that the database is stored in a portable, user-specific directory and handles
+ * automated schema migrations via Flyway. It also configures critical SQLite performance
+ * and concurrency settings, such as Write-Ahead Logging (WAL) mode.
+ * <p>
+ * Key functionalities:
+ * - Portable Storage: Resolves and creates the {@code .aitoolbox} directory in the user's home folder.
+ * - Connection Pooling: Manages a high-performance HikariCP pool optimized for SQLite.
+ * - Schema Migration: Executes Flyway migrations on startup to ensure database integrity.
+ * - Resource Management: Implements {@code DisposableBean} for graceful pool shutdown.
  */
 @Service
 public class DatabaseService implements DisposableBean {
@@ -97,7 +107,7 @@ public class DatabaseService implements DisposableBean {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
-                .baselineOnMigrate(true) // Important for existing non-empty databases
+                .baselineOnMigrate(true)
                 .load();
 
         flyway.migrate();

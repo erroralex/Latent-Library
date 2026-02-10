@@ -9,9 +9,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Standardized parsing implementation for image generation metadata.
- * Primarily supports Automatic1111 WebUI format but handles generic keys as well.
- * Capable of processing both raw text blocks and structured JSON input.
+ * Standardized parsing implementation for image generation metadata, primarily targeting the Automatic1111/Forge format.
+ * <p>
+ * This strategy is the most versatile, capable of processing both raw text blocks (the "Parameters" chunk)
+ * and structured JSON input. It implements complex regex-based parsing to separate positive prompts,
+ * negative prompts, and technical parameters (Steps, Sampler, CFG, etc.). It also includes specialized
+ * logic for extracting LoRA tags and strengths directly from the prompt text.
+ * <p>
+ * Key functionalities:
+ * - Text Block Decomposition: Splits raw metadata into Prompt, Negative Prompt, and Parameter sections.
+ * - Regex Parameter Extraction: Dynamically identifies key-value pairs in the parameter block.
+ * - LoRA Discovery: Scans prompt text for {@code <lora:...>} tags to populate the LoRAs metadata field.
+ * - JSON Normalization: Maps common JSON keys (e.g., "cfgscale", "sampler_name") to standard application attributes.
+ * - Dimension Parsing: Resolves "Size" strings (e.g., "512x512") into discrete Width and Height attributes.
  */
 @Service
 public class CommonStrategy implements MetadataStrategy {

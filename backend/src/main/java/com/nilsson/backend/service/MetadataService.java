@@ -22,10 +22,19 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 /**
- * Service for extracting, parsing, and interpreting metadata embedded within images.
- * Handles various formats (PNG chunks, EXIF, User Comments) and AI tool outputs
- * (SwarmUI, ComfyUI, InvokeAI, NovelAI, Automatic1111/Forge).
- * Uses strategy-based parsing for JSON structures and heuristic scoring for metadata blocks.
+ * Service for extracting, parsing, and interpreting technical metadata embedded within images.
+ * <p>
+ * This service implements a multi-stage extraction pipeline designed to handle the diverse and
+ * often non-standard ways AI generation tools store metadata. It supports standard EXIF/IPTC
+ * data as well as custom PNG chunks and User Comments used by tools like Automatic1111,
+ * ComfyUI, InvokeAI, NovelAI, and SwarmUI.
+ * <p>
+ * Key functionalities:
+ * - Format Agnostic Extraction: Utilizes {@code metadata-extractor} to find technical data in various image formats.
+ * - Heuristic Scoring: Implements a scoring mechanism to identify the most relevant metadata "chunk" when multiple exist.
+ * - Strategy-Based Parsing: Employs a suite of {@code MetadataStrategy} implementations to parse tool-specific JSON or text formats.
+ * - Physical Attribute Extraction: Resolves image dimensions and file sizes using low-level I/O.
+ * - Recursive JSON Traversal: Deep-scans complex JSON structures (like ComfyUI workflows) to extract generation parameters.
  */
 @Service
 public class MetadataService {
@@ -139,7 +148,7 @@ public class MetadataService {
         } catch (IOException e) {
             logger.debug("Failed to read dimensions using ImageIO for {}: {}", file.getName(), e.getMessage());
         }
-        
+
         if (width > 0 && height > 0) {
             results.put("Resolution", width + "x" + height);
         }

@@ -1,7 +1,18 @@
 <script setup>
 /**
- * App.vue
- * Root Navigation & Layout
+ * @file App.vue
+ * @description The root component of the AI Toolbox application, defining the global layout and navigation structure.
+ *
+ * This component establishes the primary UI shell, including the top navigation bar (header) and the main
+ * content area. It manages the application's top-level routing and provides a consistent frame for all
+ * functional views.
+ *
+ * Key functionalities:
+ * - Global Navigation: Implements the primary menu for switching between Gallery, Collections, Comparator, Scrubber, and Speed Sorter.
+ * - Window Management: Provides custom controls for minimizing, maximizing, and closing the application window, integrated with Electron APIs.
+ * - Layout Orchestration: Combines the FolderNav sidebar with the dynamic RouterView for content rendering.
+ * - Visual Identity: Defines the application's signature "glassmorphism" aesthetic and gradient-based branding.
+ * - Draggable Header: Implements Electron-specific draggable regions for the custom title bar.
  */
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button';
@@ -44,7 +55,6 @@ const navigate = (path) => {
 };
 
 const isActive = (path) => {
-  // Make Gallery active for both '/' and '/browser'
   if (path === '/') {
     return route.path === '/' || route.path.startsWith('/browser');
   }
@@ -99,7 +109,6 @@ const closeWindow = () => {
 </template>
 
 <style scoped>
-/* Glass Header Style */
 .menubar-glass {
   background: var(--app-bg-header, rgba(15, 18, 25, 0.75));
   backdrop-filter: blur(20px);
@@ -123,9 +132,8 @@ const closeWindow = () => {
   -webkit-app-region: no-drag;
 }
 
-/* Nav Button Styling */
 .nav-btn {
-  color: #9ca3af !important; /* text-gray-400 */
+  color: #9ca3af !important;
   border-radius: 8px;
   position: relative !important;
   z-index: 1 !important;
@@ -133,20 +141,18 @@ const closeWindow = () => {
   overflow: visible !important;
 }
 
-/* 1. Gradient Glow Layer (Deepest) */
 .nav-btn::before {
   content: '';
   position: absolute;
-  inset: -1px; /* Tighter inset */
+  inset: -1px;
   background: var(--app-grad-hover);
   border-radius: 9px;
   z-index: -2;
   opacity: 0;
-  filter: blur(4px); /* Tighter glow */
+  filter: blur(4px);
   transition: opacity 0.3s ease;
 }
 
-/* 2. Background Layer (Middle) */
 .nav-btn::after {
   content: '';
   position: absolute;
@@ -157,7 +163,6 @@ const closeWindow = () => {
   transition: background 0.3s ease;
 }
 
-/* Hover: Black Background + White Text + Glow */
 .nav-btn:hover {
   color: white !important;
   transform: translateY(-1px);
@@ -168,10 +173,9 @@ const closeWindow = () => {
 }
 
 .nav-btn:hover::after {
-  background: #000000; /* Opaque black */
+  background: #000000;
 }
 
-/* Reset gradient text on hover to ensure it's white */
 :deep(.nav-btn:hover .p-button-label),
 :deep(.nav-btn:hover .p-button-icon) {
   background: none !important;
@@ -179,16 +183,14 @@ const closeWindow = () => {
   color: white !important;
 }
 
-/* Active: Black Background + Gradient Text + Glow (Static) */
 .active-nav-btn::before {
   opacity: 0.8;
 }
 
 .active-nav-btn::after {
-  background: #000000; /* Opaque black */
+  background: #000000;
 }
 
-/* Apply gradient to text and icon ONLY when active */
 :deep(.active-nav-btn .p-button-label),
 :deep(.active-nav-btn .p-button-icon) {
   background: var(--app-grad-hover);
@@ -198,7 +200,6 @@ const closeWindow = () => {
   color: transparent !important;
 }
 
-/* --- Close Button Override --- */
 .window-close-btn {
   position: relative !important;
   z-index: 1 !important;
@@ -206,12 +207,11 @@ const closeWindow = () => {
   overflow: visible !important;
 }
 
-/* 1. Red Glow Layer */
 .window-close-btn::before {
   content: '';
   position: absolute;
   inset: -1px;
-  background: var(--app-red-warning); /* Red Glow */
+  background: var(--app-red-warning);
   border-radius: 9px;
   z-index: -2;
   opacity: 0;
@@ -219,7 +219,6 @@ const closeWindow = () => {
   transition: opacity 0.3s ease;
 }
 
-/* 2. Background Layer */
 .window-close-btn::after {
   content: '';
   position: absolute;
@@ -230,23 +229,21 @@ const closeWindow = () => {
   transition: background 0.3s ease;
 }
 
-/* Hover State */
 .window-close-btn:hover {
   color: white !important;
   transform: translateY(-1px);
-  box-shadow: none !important; /* Remove any direct shadow */
+  box-shadow: none !important;
   background: transparent !important;
 }
 
 .window-close-btn:hover::before {
-  opacity: 0.8; /* Show Red Glow */
+  opacity: 0.8;
 }
 
 .window-close-btn:hover::after {
-  background: #000000; /* Opaque Black Background */
+  background: #000000;
 }
 
-/* Ensure icon stays white */
 :deep(.window-close-btn:hover .p-button-icon) {
   background: none !important;
   -webkit-text-fill-color: white !important;

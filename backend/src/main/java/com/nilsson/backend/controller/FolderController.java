@@ -14,9 +14,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for file system navigation and folder management.
- * Handles listing of root drives, directory contents, and pinned folder operations.
- * Provides the data structure for the frontend file tree navigation.
+ * REST Controller for file system navigation and directory management.
+ * <p>
+ * This controller provides the backend infrastructure for the application's file explorer. It enables
+ * the frontend to traverse the local file system by listing root drives and dynamically fetching
+ * child directories. It also manages "pinned" folders, allowing users to bookmark frequently
+ * accessed locations for rapid navigation.
+ * <p>
+ * Key functionalities:
+ * - Root Discovery: Identifies and returns all available system root drives.
+ * - Lazy Directory Traversal: Provides on-demand listing of subdirectories for a given path.
+ * - Folder Pinning: Manages persistent bookmarks for specific file system paths.
+ * - Data Normalization: Returns {@code FileDTO} objects optimized for PrimeVue's Tree component.
  */
 @RestController
 @RequestMapping("/api/folders")
@@ -100,7 +109,11 @@ public class FolderController {
         return ResponseEntity.ok().build();
     }
 
-    public record FileDTO(String name, String path, boolean isDirectory, boolean isPinned, String key, String label, String icon, boolean leaf) {
+    /**
+     * Data Transfer Object representing a file system entry, optimized for tree-view rendering.
+     */
+    public record FileDTO(String name, String path, boolean isDirectory, boolean isPinned, String key, String label,
+                          String icon, boolean leaf) {
         public FileDTO(String name, String path, boolean isDirectory, boolean isPinned) {
             this(name, path, isDirectory, isPinned, path, name, isDirectory ? "pi pi-folder" : "pi pi-file", !isDirectory);
         }

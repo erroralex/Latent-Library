@@ -6,6 +6,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+/**
+ * Service for managing image tags and ensuring search index consistency.
+ * <p>
+ * This service provides a high-level API for tagging operations. It wraps the underlying
+ * repository calls in transactions and automatically triggers search index updates
+ * whenever tags are added or removed, ensuring that new tags are immediately searchable.
+ * <p>
+ * Key functionalities:
+ * - Atomic Tagging: Adds or removes tags within a transactional context.
+ * - Index Synchronization: Coordinates with {@code FtsService} to refresh the search index.
+ * - Validation: Ensures only non-blank, valid tags are processed.
+ */
 @Service
 public class TagService {
 

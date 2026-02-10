@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.core.io.Resource;
@@ -14,11 +15,20 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * REST Controller for image-related operations.
- * Handles image search, metadata retrieval, rating updates, and serving image content.
+ * REST Controller for image-centric operations and content delivery.
+ * <p>
+ * This controller serves as the primary API for interacting with individual images and the indexed library.
+ * It provides endpoints for high-performance searching (utilizing FTS5), metadata retrieval, and user
+ * interactions such as star ratings. It also handles the streaming of raw image content to the frontend,
+ * ensuring correct MIME types are detected and served.
+ * <p>
+ * Key functionalities:
+ * - Advanced Search: Supports complex filtering by model, sampler, LoRA, and rating.
+ * - Metadata Management: Provides access to both cached technical metadata and user-defined ratings.
+ * - Content Streaming: Serves local image files as web-accessible resources.
+ * - Filter Discovery: Exposes distinct metadata values to populate frontend filter menus.
  */
 @RestController
 @RequestMapping("/api/images")
@@ -34,7 +44,7 @@ public class ImageController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<String>> searchImages(
+    public ResponseEntity<List<ImageDTO>> searchImages(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String model,
             @RequestParam(required = false) String sampler,
@@ -54,9 +64,7 @@ public class ImageController {
 
         int offset = page * size;
 
-        return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, offset, size).join().stream()
-                .map(pathService::getNormalizedAbsolutePath)
-                .collect(Collectors.toList()));
+        return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, offset, size).join());
     }
 
     @GetMapping("/filters")

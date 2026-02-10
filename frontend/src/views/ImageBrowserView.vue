@@ -1,10 +1,18 @@
 <script setup>
 /**
  * @file ImageBrowserView.vue
- * @description The main user interface for browsing and viewing images. This component
- * orchestrates the entire browser experience, supporting two primary modes: 'gallery' for a
- * grid-based overview and 'browser' for a focused, single-image view with a filmstrip.
- * It handles keyboard navigation, folder selection, and integrates the metadata sidebar.
+ * @description The primary application view for exploring and interacting with the image library.
+ *
+ * This view acts as the main orchestrator for the image browsing experience. It dynamically switches
+ * between a high-level 'gallery' grid and a focused 'browser' (single image) view. It manages
+ * global keyboard shortcuts for navigation and view control, ensuring a fluid user experience.
+ *
+ * Key functionalities:
+ * - View Orchestration: Toggles between VirtualGallery and SingleImageViewer based on application state.
+ * - Keyboard Navigation: Implements a comprehensive set of hotkeys (Arrows, WASD, Enter, Escape, G, B) for rapid browsing.
+ * - State Synchronization: Integrates with the Pinia store to handle folder initialization, collection loading, and search.
+ * - Layout Management: Controls the visibility of the MetadataSidebar and ensures the main viewer retains focus.
+ * - Deep Linking: Supports direct navigation to specific collections via URL query parameters.
  */
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useBrowserStore } from '@/stores/browser';
@@ -79,14 +87,12 @@ const handleKeydown = (e) => {
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown);
 
-  // Check if we are navigating to a specific collection
   if (route.query.collection) {
       if (store.availableModels.length === 0) {
           await store.loadFilters();
       }
       await store.loadCollection(route.query.collection);
   } else {
-      // Default behavior: load last folder or initialize
       await store.initialize();
       if (store.files.length === 0) {
         store.search('');
@@ -100,11 +106,11 @@ onUnmounted(() => {
 
 watch(() => store.viewMode, (newMode) => {
   if (newMode === 'gallery') {
-    store.setSidebarOpen(true); // Keep sidebar open in gallery view
+    store.setSidebarOpen(true);
   } else {
-    store.setSidebarOpen(false); // Or manage as before, e.g., close it
+    store.setSidebarOpen(false);
   }
-}, { immediate: true }); // Run on component mount
+}, { immediate: true });
 
 watch(() => store.imageFocusRequested, (requested) => {
   if (requested) {

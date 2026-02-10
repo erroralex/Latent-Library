@@ -1,9 +1,16 @@
 <script setup>
 /**
  * @file FolderNav.vue
- * @description A sidebar component for navigating the file system and user collections.
- * It provides a hierarchical tree view of drives, pinned folders, and collections,
- * with lazy-loading for directory contents and context menu actions.
+ * @description A sophisticated navigation sidebar component that provides a unified interface for exploring the local file system and user-defined collections.
+ *
+ * This component implements a hierarchical tree structure using PrimeVue's Tree component. It serves as the primary entry point for users to locate and load images into the browser.
+ *
+ * Key architectural features:
+ * - Multi-Root Navigation: Organizes navigation into logical sections: Collections, Pinned Folders, and Local Drives (This PC).
+ * - Lazy Loading: Implements on-demand directory traversal. Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
+ * - Reactive State Integration: Synchronizes with the global Pinia store to trigger library scans and update the browser view when a folder or collection is selected.
+ * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
+ * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
@@ -64,9 +71,7 @@ const loadTree = async () => {
   nodes.value = rootNodes;
   expandedKeys.value = { 'collections': true, 'pinned': true, 'drives': true };
 
-  // Attempt to select the current folder if it exists in the tree
   if (store.lastFolderPath) {
-      // We need to wait for the tree to render and nodes to be populated
       setTimeout(() => {
           selectNodeByPath(store.lastFolderPath);
       }, 500);
@@ -74,17 +79,12 @@ const loadTree = async () => {
 };
 
 const selectNodeByPath = (path) => {
-    // Check pinned folders first
     const pinnedNode = nodes.value.find(n => n.key === 'pinned')?.children?.find(c => c.data.path === path);
     if (pinnedNode) {
         selectedKey.value = { [pinnedNode.key]: true };
         return;
     }
 
-    // Check collections (if path matches collection name logic, though collections are usually names not paths)
-    // If we were tracking collection selection in store, we'd check that here.
-
-    // For drives, it's harder because they are lazy loaded. We can only select root drives easily.
     const driveNode = nodes.value.find(n => n.key === 'drives')?.children?.find(c => c.data.path === path);
     if (driveNode) {
         selectedKey.value = { [driveNode.key]: true };

@@ -1,8 +1,17 @@
 <script setup>
 /**
  * @file BrowserToolbar.vue
- * @description The top navigation bar for the Image Browser. Contains controls for view switching,
- * search, filtering, and thumbnail size adjustment.
+ * @description The primary control interface for the Image Browser, providing tools for navigation, search, and advanced filtering.
+ *
+ * This component acts as the command center for the user's browsing experience. It integrates directly with the global browser store
+ * to manage view modes (Gallery vs. Single Image), adjust thumbnail scaling, and apply complex metadata filters.
+ *
+ * Key functionalities:
+ * - View Orchestration: Switches between 'gallery' and 'browser' modes.
+ * - Dynamic Filtering: Provides dropdown menus for filtering by Model, Sampler, LoRA, and Star Rating.
+ * - Real-time Search: Implements a search bar with instant feedback and clear capabilities.
+ * - UI Customization: Includes a slider for real-time adjustment of image card sizes in the gallery view.
+ * - Responsive Feedback: Uses PrimeVue Chips to display and manage active filter states.
  */
 import { useBrowserStore } from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';

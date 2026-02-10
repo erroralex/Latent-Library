@@ -1,8 +1,17 @@
 <script setup>
 /**
  * @file CustomContextMenu.vue
- * @description A custom, themeable context menu component that teleports to the body.
- * It is controlled programmatically via `show` and `hide` methods exposed to the parent.
+ * @description A highly customizable, programmatic context menu component.
+ *
+ * This component is designed to be triggered manually from parent components. It uses Vue's Teleport
+ * feature to render the menu at the body level, ensuring it bypasses any parent container clipping
+ * or z-index issues.
+ *
+ * Key functionalities:
+ * - Programmatic Control: Exposed `show` and `hide` methods allow precise control over menu visibility and positioning.
+ * - Dynamic Positioning: Automatically positions itself based on the mouse event coordinates.
+ * - Auto-closing: Implements global listeners to close the menu on clicks, scrolls, or subsequent context menu actions.
+ * - Flexible Schema: Supports labels, icons, separators, and conditional visibility for menu items.
  */
 import { ref, onBeforeUnmount } from 'vue';
 
@@ -93,7 +102,6 @@ defineExpose({ show, hide });
 </template>
 
 <style>
-/* Global Styles (Not Scoped) for Teleported Content */
 .custom-context-menu {
   position: fixed;
   z-index: 999999 !important;

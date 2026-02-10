@@ -11,11 +11,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Service for managing image collections and their dynamic population.
+ * <p>
+ * This service handles the business logic for both static and smart collections. For smart
+ * collections, it orchestrates the resolution of metadata filters into a concrete set of
+ * image associations. It ensures that smart collections are refreshed when their
+ * definitions change or when their contents are accessed.
+ * <p>
+ * Key functionalities:
+ * - Collection Lifecycle: Manages the creation, update, and deletion of collection entities.
+ * - Smart Population: Translates high-level metadata filters into database-level image associations.
+ * - Dynamic Refresh: Automatically re-populates smart collections to ensure they reflect the latest library state.
+ * - Membership Management: Handles manual image additions to static collections.
+ */
 @Service
 public class CollectionService {
 
     private final CollectionRepository collectionRepository;
-    private final ImageRepository imageRepository; // Keep for getIdByPath
+    private final ImageRepository imageRepository;
     private final SearchRepository searchRepository;
 
     public CollectionService(CollectionRepository collectionRepository, ImageRepository imageRepository, SearchRepository searchRepository) {
@@ -68,7 +82,6 @@ public class CollectionService {
                 query = String.join(" ", f.prompt());
             }
 
-            // Use default offset 0 and limit 2000 for smart collection population
             List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, 0, 2000);
 
             for (String path : matchingPaths) {

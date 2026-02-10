@@ -13,9 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for managing image collections and their associations.
- * Handles CRUD operations for collections and manages the many-to-many relationship with images.
- * Provides methods to retrieve image paths associated with specific collections.
+ * Repository for managing image collections and their relational associations.
+ * <p>
+ * This class handles the persistence of both static and smart collections. It manages the
+ * {@code collections} table, which stores collection definitions (including serialized JSON
+ * filters for smart collections), and the {@code collection_images} join table, which
+ * maintains the many-to-many relationship between images and collections.
+ * <p>
+ * Key functionalities:
+ * - Collection CRUD: Implements full lifecycle management for collection entities.
+ * - Smart Filter Persistence: Serializes and deserializes complex search criteria using Jackson.
+ * - Membership Management: Handles adding images to collections and clearing memberships.
+ * - Path Resolution: Retrieves absolute file system paths for all images within a specific collection.
+ * - Atomic Operations: Utilizes {@code INSERT OR IGNORE} to safely manage image associations.
  */
 @Repository
 public class CollectionRepository {

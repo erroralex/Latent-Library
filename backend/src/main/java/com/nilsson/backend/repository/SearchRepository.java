@@ -14,6 +14,21 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Repository for executing complex, high-performance image searches.
+ * <p>
+ * This class is the primary engine for the application's search functionality. It orchestrates
+ * queries against both the standard relational {@code images} table and the specialized
+ * {@code metadata_fts} virtual table (SQLite FTS5). It dynamically constructs SQL queries
+ * that combine full-text search clauses with relational filters like star ratings.
+ * <p>
+ * Key functionalities:
+ * - FTS5 Integration: Implements advanced full-text search with prefix matching and tokenization.
+ * - Dynamic Query Building: Constructs complex {@code JOIN} and {@code WHERE} clauses based on active filters.
+ * - Multi-Filter Support: Handles concurrent filtering by model, sampler, LoRA, and rating.
+ * - Token Sanitization: Ensures search terms are correctly formatted to match the FTS5 index tokens.
+ * - Pagination: Implements {@code LIMIT} and {@code OFFSET} for efficient frontend data loading.
+ */
 @Repository
 public class SearchRepository {
 
@@ -31,10 +46,9 @@ public class SearchRepository {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
         List<String> ftsClauses = new ArrayList<>();
 
-        // General text query
         if (query != null && !query.isBlank()) {
             String generalQuery = Arrays.stream(query.trim().split("\\s+"))
-                    .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll("_") + "*") // Sanitize and prefix search
+                    .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll("_") + "*")
                     .collect(Collectors.joining(" AND "));
             ftsClauses.add("(" + generalQuery + ")");
         }
@@ -53,18 +67,13 @@ public class SearchRepository {
                 if (validValues.isEmpty()) continue;
 
                 if ("Rating".equals(key)) {
-                    // Rating is not text-based, handle separately
                     continue;
                 }
 
-                // For all text-based filters, build an FTS query
                 String fieldQuery;
                 if ("Loras".equals(key)) {
-                    // Since we now index Loras individually in FtsService, we can search for them directly.
-                    // However, we still use prefix matching (*) to be safe against minor tokenization differences
-                    // or version numbers that might be attached.
                     fieldQuery = validValues.stream()
-                            .map(v -> FtsService.formatFtsToken(key, v)) // No wildcard needed if indexed correctly, but let's test exact match first
+                            .map(v -> FtsService.formatFtsToken(key, v))
                             .collect(Collectors.joining(" OR "));
                 } else {
                     fieldQuery = validValues.stream()
@@ -76,7 +85,6 @@ public class SearchRepository {
             }
         }
 
-        // Add FTS subquery if needed
         if (!ftsClauses.isEmpty()) {
             sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.metadata_fts MATCH ? ");
             params.add(String.join(" AND ", ftsClauses));
@@ -84,7 +92,6 @@ public class SearchRepository {
             sql.append("WHERE 1=1 ");
         }
 
-        // Handle non-FTS filters like Rating
         if (filters != null && filters.containsKey("Rating")) {
             List<String> ratingValues = filters.get("Rating").stream()
                     .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
@@ -112,7 +119,7 @@ public class SearchRepository {
                 conditions.add("i.rating > 0");
             } else {
                 try {
-                    Integer.parseInt(val); // Validate it's a number
+                    Integer.parseInt(val);
                     conditions.add("i.rating = ?");
                     params.add(val);
                 } catch (NumberFormatException e) {

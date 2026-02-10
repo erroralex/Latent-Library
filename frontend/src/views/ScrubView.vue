@@ -1,9 +1,17 @@
 <script setup>
 /**
  * @file ScrubView.vue
- * @description A user interface for the Metadata Scrubber tool. This component allows users
- * to upload an image, see a preview, and then download a "clean" version of the image
- * with all embedded metadata (like EXIF, prompts, and workflow data) removed for privacy.
+ * @description A specialized utility view for stripping sensitive metadata from AI-generated images.
+ *
+ * This view provides a secure interface for users to upload images and generate "clean" versions.
+ * It targets the removal of embedded generation parameters (prompts, seeds, workflow JSON) and
+ * standard EXIF data to ensure privacy before sharing images publicly.
+ *
+ * Key functionalities:
+ * - Secure Upload: Handles temporary image staging on the backend for processing.
+ * - Visual Preview: Displays the uploaded image to confirm selection before scrubbing.
+ * - Metadata Stripping: Triggers a backend process that re-encodes the image without metadata chunks.
+ * - Automated Download: Facilitates the immediate download of the processed, clean image file.
  */
 import { ref } from 'vue';
 import axios from 'axios';
