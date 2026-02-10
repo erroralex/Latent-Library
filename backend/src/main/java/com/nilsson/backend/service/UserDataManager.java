@@ -1,5 +1,6 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.repository.CollectionRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.SettingsRepository;
@@ -12,18 +13,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.HashMap;
 
-/**
- * Facade service managing data persistence, file system interactions, and path normalization.
- * Abstracts the complexity of repositories and ensures consistent data access.
- * Handles path relativization, file hashing, metadata caching, and domain delegation.
- */
 @Service
 public class UserDataManager {
 
@@ -113,7 +111,13 @@ public class UserDataManager {
     public CompletableFuture<List<File>> findFilesWithFilters(String query, Map<String, String> filters, int limit) {
         return CompletableFuture.supplyAsync(() -> {
             long start = System.currentTimeMillis();
-            List<String> paths = imageRepo.findPaths(query, filters, limit);
+            // Convert Map<String, String> to Map<String, List<String>> for the new repository method
+            Map<String, List<String>> listFilters = new HashMap<>();
+            if (filters != null) {
+                filters.forEach((k, v) -> listFilters.put(k, Collections.singletonList(v)));
+            }
+            
+            List<String> paths = imageRepo.findPaths(query, listFilters, limit);
             List<File> files = new ArrayList<>();
             for (String path : paths) {
                 File f = resolvePath(path);
@@ -262,8 +266,60 @@ public class UserDataManager {
         return collectionRepo.getAllNames();
     }
 
-    public void createCollection(String name) {
-        collectionRepo.create(name);
+    public Optional<CreateCollectionRequest> getCollectionDetails(String name) {
+        return collectionRepo.get(name);
+    }
+
+    public void createCollection(CreateCollectionRequest request) {
+        collectionRepo.create(request.name(), request.isSmart(), request.filters());
+        populateSmartCollection(request);
+    }
+
+    public void updateCollection(CreateCollectionRequest request) {
+        collectionRepo.update(request.name(), request.isSmart(), request.filters());
+        // If it's smart, re-populate (clear and add)
+        // If it was smart and is now not, we might want to keep images or clear them.
+        // For now, if it's smart, we clear and re-populate to ensure it matches filters.
+        if (request.isSmart()) {
+            collectionRepo.removeAllImages(request.name());
+            populateSmartCollection(request);
+        }
+    }
+
+    private void populateSmartCollection(CreateCollectionRequest request) {
+        if (request.isSmart() && request.filters() != null) {
+            Map<String, List<String>> searchFilters = new HashMap<>();
+            CreateCollectionRequest.CollectionFilters f = request.filters();
+            
+            if (f.models() != null && !f.models().isEmpty()) {
+                searchFilters.put("Model", f.models());
+            }
+            if (f.samplers() != null && !f.samplers().isEmpty()) {
+                searchFilters.put("Sampler", f.samplers());
+            }
+            if (f.loras() != null && !f.loras().isEmpty()) {
+                searchFilters.put("Loras", f.loras());
+            }
+            if (f.rating() != null) {
+                searchFilters.put("Rating", Collections.singletonList(String.valueOf(f.rating())));
+            }
+            
+            String query = null;
+            if (f.prompt() != null && !f.prompt().isEmpty()) {
+                query = String.join(" ", f.prompt());
+            }
+            
+            // Find matching files
+            List<String> matchingPaths = imageRepo.findPaths(query, searchFilters, 1000); // Limit to 1000 for now
+            
+            // Add them to the collection
+            for (String path : matchingPaths) {
+                File file = resolvePath(path);
+                if (file != null && file.exists()) {
+                    addImageToCollection(request.name(), file);
+                }
+            }
+        }
     }
 
     public void deleteCollection(String name) {
@@ -295,6 +351,7 @@ public class UserDataManager {
     public void setSetting(String key, String value) {
         settingsRepo.set(key, value);
     }
+
 
     public File getLastFolder() {
         String path = settingsRepo.get("last_folder", null);

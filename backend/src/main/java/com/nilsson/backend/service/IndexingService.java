@@ -61,7 +61,6 @@ public class IndexingService {
         }
 
         Runnable ghostCleanupTask = () -> {
-            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
             logger.info("[Reconcile] Starting background ghost record cleanup...");
             long start = System.currentTimeMillis();
             AtomicInteger removedCount = new AtomicInteger(0);
@@ -90,6 +89,7 @@ public class IndexingService {
 
         File[] files = folder.listFiles(this::isImageFile);
         if (files != null && files.length > 0) {
+            logger.info("Indexing folder: {} ({} files)", folder.getName(), files.length);
             startIndexing(Arrays.asList(files), null);
         }
     }
@@ -98,8 +98,7 @@ public class IndexingService {
         if (files == null || files.isEmpty()) return;
 
         Runnable task = () -> {
-            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-
+            logger.info("Starting background indexing for {} files...", files.size());
             int total = files.size();
             for (int i = 0; i < total; i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, total);
@@ -111,8 +110,10 @@ public class IndexingService {
                     onBatchResult.accept(result);
                 }
 
+                // Small yield to prevent hogging CPU if not using virtual threads (though we are)
                 Thread.yield();
             }
+            logger.info("Background indexing completed for {} files.", total);
         };
         executor.submit(task);
     }
@@ -248,6 +249,7 @@ public class IndexingService {
         Map<File, Integer> ratingMap = new HashMap<>();
 
         for (File file : batch) {
+            // This triggers metadata extraction if missing
             Map<String, String> meta = dataManager.getCachedMetadata(file);
             int rating = dataManager.getRating(file);
             

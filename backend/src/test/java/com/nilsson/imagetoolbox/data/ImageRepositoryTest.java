@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ class ImageRepositoryTest {
         String connectionString = "jdbc:sqlite:" + dbFile.getAbsolutePath();
 
         dbService = new DatabaseService(connectionString);
-        repository = new ImageRepository(dbService);
+        repository = new ImageRepository(dbService.dataSource());
     }
 
     @AfterEach
@@ -66,8 +67,8 @@ class ImageRepositoryTest {
 
         repository.saveMetadata(id, meta);
 
-        Map<String, String> filters = new HashMap<>();
-        filters.put("Model", "Stable Diffusion XL");
+        Map<String, List<String>> filters = new HashMap<>();
+        filters.put("Model", Collections.singletonList("Stable Diffusion XL"));
 
         List<String> results = repository.findPaths("", filters, 10);
         assertEquals(1, results.size());

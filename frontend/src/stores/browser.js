@@ -29,6 +29,8 @@ export const useBrowserStore = defineStore('browser', {
         selectedRating: null,
 
         lastFolderPath: null,
+        navRefreshKey: 0,
+        collectionToEdit: null,
     }),
 
     actions: {
@@ -40,6 +42,10 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
         
+        refreshNav() {
+            this.navRefreshKey++;
+        },
+
         async loadFilters() {
             try {
                 const res = await axios.get('/api/images/filters');
@@ -71,6 +77,28 @@ export const useBrowserStore = defineStore('browser', {
                 }
             } catch (error) {
                 console.error('Failed to load folder:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        async loadCollection(collectionName) {
+            this.isLoading = true;
+            try {
+                const response = await axios.get('/api/collections/images', {
+                    params: { name: collectionName }
+                });
+                this.files = response.data;
+                this.searchQuery = '';
+                
+                if (this.files.length > 0) {
+                    this.selectFile(this.files[0]);
+                } else {
+                    this.selectedFile = null;
+                    this.currentMetadata = {};
+                }
+            } catch (error) {
+                console.error('Failed to load collection:', error);
             } finally {
                 this.isLoading = false;
             }
