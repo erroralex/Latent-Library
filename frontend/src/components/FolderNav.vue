@@ -5,7 +5,7 @@
  * It provides a hierarchical tree view of drives, pinned folders, and collections,
  * with lazy-loading for directory contents and context menu actions.
  */
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useBrowserStore } from '@/stores/browser';
 import { useRouter } from 'vue-router';
@@ -25,6 +25,10 @@ const contextMenuSelection = ref(null);
 
 const cm = ref();
 const menuModel = ref([]);
+
+watch(() => store.navRefreshKey, () => {
+    loadTree();
+});
 
 const loadTree = async () => {
   const rootNodes = [];
@@ -84,7 +88,11 @@ const onNodeExpand = async (node) => {
 
 const onNodeSelect = async (node) => {
   const actualNode = node.node || node;
-  if (actualNode.data?.path) {
+  if (actualNode.type === 'collection') {
+      router.push('/browser');
+      await store.loadCollection(actualNode.data);
+  }
+  else if (actualNode.data?.path) {
     try { await store.loadFolder(actualNode.data.path); }
     catch (e) { toast.add({ severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000 }); }
   }
@@ -100,13 +108,25 @@ const onCustomContextMenu = (event, node) => {
       label: 'Pin Folder',
       icon: 'pi pi-bookmark',
       command: () => pinFolder(node.data.path),
-      visible: node.type !== 'pinned' && node.data?.path
+      visible: node.type !== 'pinned' && node.type !== 'collection' && node.data?.path
     },
     {
       label: 'Unpin Folder',
       icon: 'pi pi-bookmark-fill',
       command: () => unpinFolder(node.data.path),
       visible: node.type === 'pinned'
+    },
+    {
+      label: 'Edit Collection',
+      icon: 'pi pi-pencil',
+      command: () => editCollection(node.data),
+      visible: node.type === 'collection'
+    },
+    {
+      label: 'Remove Collection',
+      icon: 'pi pi-trash',
+      command: () => removeCollection(node.data),
+      visible: node.type === 'collection'
     },
     { separator: true },
     {
@@ -130,6 +150,19 @@ const onCustomContextMenu = (event, node) => {
 
 const pinFolder = async (path) => { await axios.post('/api/folders/pin', null, {params: {path}}); loadTree(); };
 const unpinFolder = async (path) => { await axios.post('/api/folders/unpin', null, {params: {path}}); loadTree(); };
+const removeCollection = async (name) => {
+    try {
+        await axios.delete(`/api/collections/${name}`);
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000 });
+        store.refreshNav();
+    } catch (e) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000 });
+    }
+};
+const editCollection = (name) => {
+    store.collectionToEdit = name;
+    router.push('/collections');
+};
 const openInSpeedSorter = async (path) => { await axios.post('/api/speedsorter/config/input', null, {params: {path}}); router.push('/speedsorter'); };
 const openInExplorer = async (path) => { await axios.post('/api/system/open-folder', null, {params: {path}}); };
 
@@ -253,7 +286,7 @@ onMounted(loadTree);
   transform: translateY(-1px);
 }
 
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::before) {
+:deep(.p-treenode-content:hover::before) {
   opacity: 0.8;
 }
 

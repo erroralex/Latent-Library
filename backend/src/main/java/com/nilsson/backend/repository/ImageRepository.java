@@ -1,15 +1,15 @@
 package com.nilsson.backend.repository;
 
-import com.nilsson.backend.service.DatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
 import java.io.File;
-import java.sql.*;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Repository for managing image entities and their associated metadata.
@@ -20,357 +20,279 @@ import java.util.stream.Collectors;
 public class ImageRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ImageRepository.class);
-    private final DatabaseService db;
+    private final JdbcClient jdbcClient;
 
-    public ImageRepository(DatabaseService db) {
-        this.db = db;
+    public ImageRepository(DataSource dataSource) {
+        this.jdbcClient = JdbcClient.create(dataSource);
     }
 
     public int getIdByPath(String path) {
-        String sql = "SELECT id FROM images WHERE file_path = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("id");
-            }
-        } catch (SQLException e) {
-            logger.error("Failed to fetch ID for path: {}", path, e);
-        }
-        return -1;
+        return jdbcClient.sql("SELECT id FROM images WHERE file_path = ?")
+                .param(path)
+                .query(Integer.class)
+                .optional()
+                .orElse(-1);
     }
 
     public List<String> findPathsByHash(String hash) {
-        List<String> paths = new ArrayList<>();
-        String sql = "SELECT file_path FROM images WHERE file_hash = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, hash);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) paths.add(rs.getString("file_path"));
-            }
-        } catch (SQLException e) {
-            logger.error("Failed to fetch paths by hash", e);
-        }
-        return paths;
+        return jdbcClient.sql("SELECT file_path FROM images WHERE file_hash = ?")
+                .param(hash)
+                .query(String.class)
+                .list();
     }
 
     public void updatePath(String oldPath, String newPath) {
-        String sql = "UPDATE images SET file_path = ? WHERE file_path = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, newPath);
-            pstmt.setString(2, oldPath);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("Failed to update path from {} to {}", oldPath, newPath, e);
-        }
+        jdbcClient.sql("UPDATE images SET file_path = ? WHERE file_path = ?")
+                .param(newPath)
+                .param(oldPath)
+                .update();
     }
 
-    public int getOrCreateId(String path, String hash) throws SQLException {
-        try (Connection conn = db.connect()) {
-            String insertSql = "INSERT OR IGNORE INTO images(file_path, file_hash, last_scanned) VALUES(?, ?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
-                pstmt.setString(1, path);
-                pstmt.setString(2, hash);
-                pstmt.setLong(3, System.currentTimeMillis());
-                pstmt.executeUpdate();
-            }
+    @Transactional
+    public int getOrCreateId(String path, String hash) {
+        jdbcClient.sql("INSERT OR IGNORE INTO images(file_path, file_hash, last_scanned) VALUES(?, ?, ?)")
+                .param(path)
+                .param(hash)
+                .param(System.currentTimeMillis())
+                .update();
 
-            String selectSql = "SELECT id FROM images WHERE file_path = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
-                pstmt.setString(1, path);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getInt("id");
-                    }
-                }
-            }
-        }
-        throw new SQLException("Failed to get ID for " + path);
+        return jdbcClient.sql("SELECT id FROM images WHERE file_path = ?")
+                .param(path)
+                .query(Integer.class)
+                .optional()
+                .orElseThrow(() -> new IllegalStateException("Failed to get ID for " + path));
     }
 
     public void deleteByPath(String path) {
-        String sql = "DELETE FROM images WHERE file_path = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("Failed to delete record: {}", path, e);
-        }
+        jdbcClient.sql("DELETE FROM images WHERE file_path = ?")
+                .param(path)
+                .update();
     }
 
     public void forEachFilePath(Consumer<String> action) {
-        String sql = "SELECT file_path FROM images";
-        try (Connection conn = db.connect();
-             Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                String path = rs.getString("file_path");
-                if (path != null) {
-                    action.accept(path);
-                }
-            }
-        } catch (SQLException e) {
-            logger.error("Error streaming file paths", e);
-        }
+        jdbcClient.sql("SELECT file_path FROM images")
+                .query(String.class)
+                .list()
+                .forEach(action);
     }
 
-    public List<String> findPaths(String query, Map<String, String> filters, int limit) {
-        List<String> results = new ArrayList<>();
-        try (Connection conn = db.connect()) {
-            StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
-            List<Object> params = new ArrayList<>();
+    public List<String> findPaths(String query, Map<String, List<String>> filters, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
 
-            sql.append("WHERE 1=1 ");
+        if (query != null && !query.isBlank()) {
+            sql.append("AND (");
+            sql.append("EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.value LIKE ?) ");
+            sql.append("OR ");
+            sql.append("EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND t.tag LIKE ?) ");
+            sql.append(") ");
+            String likeQuery = "%" + query + "%";
+            params.add(likeQuery);
+            params.add(likeQuery);
+        }
 
-            if (query != null && !query.isBlank()) {
-                sql.append("AND (");
-                sql.append("EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.value LIKE ?) ");
-                sql.append("OR ");
-                sql.append("EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND t.tag LIKE ?) ");
-                sql.append(") ");
-                String likeQuery = "%" + query + "%";
-                params.add(likeQuery);
-                params.add(likeQuery);
-            }
+        if (filters != null) {
+            for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
+                List<String> values = entry.getValue();
+                if (values == null || values.isEmpty()) continue;
 
-            if (filters != null) {
-                for (Map.Entry<String, String> entry : filters.entrySet()) {
-                    if (entry.getValue() == null || "All".equals(entry.getValue())) continue;
-
-                    if ("Rating".equals(entry.getKey())) {
-                        if ("Any Star Count".equals(entry.getValue())) {
-                            sql.append("AND i.rating > 0 ");
-                        } else {
-                            sql.append("AND i.rating = ? ");
-                            params.add(entry.getValue());
-                        }
-                    } else if ("Loras".equals(entry.getKey())) {
-                        sql.append("AND EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.key = ? AND m.value LIKE ?) ");
-                        params.add(entry.getKey());
-                        params.add("%" + entry.getValue() + "%");
-                    } else if ("Tag".equals(entry.getKey())) {
-                        sql.append("AND EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND t.tag LIKE ?) ");
-                        params.add("%" + entry.getValue() + "%");
-                    } else {
-                        sql.append("AND EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.key = ? AND m.value = ?) ");
-                        params.add(entry.getKey());
-                        params.add(entry.getValue());
+                // Filter out "All" or empty strings
+                List<String> validValues = new ArrayList<>();
+                for (String v : values) {
+                    if (v != null && !v.isBlank() && !"All".equals(v)) {
+                        validValues.add(v);
                     }
                 }
-            }
-            sql.append("LIMIT ?");
-            params.add(limit);
+                if (validValues.isEmpty()) continue;
 
-            try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-                for (int k = 0; k < params.size(); k++) pstmt.setObject(k + 1, params.get(k));
-                ResultSet rs = pstmt.executeQuery();
-                while (rs.next()) results.add(rs.getString("file_path"));
+                if ("Rating".equals(entry.getKey())) {
+                    // Special handling for Rating: usually single value, but if list, treat as OR
+                    sql.append("AND (");
+                    for (int j = 0; j < validValues.size(); j++) {
+                        if (j > 0) sql.append(" OR ");
+                        String val = validValues.get(j);
+                        if ("Any Star Count".equals(val)) {
+                            sql.append("i.rating > 0");
+                        } else {
+                            sql.append("i.rating = ?");
+                            params.add(val);
+                        }
+                    }
+                    sql.append(") ");
+
+                } else if ("Loras".equals(entry.getKey())) {
+                    // For Loras, we want images that contain ANY of the selected Loras (OR logic)
+                    sql.append("AND EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.key = ? AND (");
+                    params.add(entry.getKey());
+                    for (int j = 0; j < validValues.size(); j++) {
+                        if (j > 0) sql.append(" OR ");
+                        sql.append("m.value LIKE ?");
+                        params.add("%" + validValues.get(j) + "%");
+                    }
+                    sql.append(")) ");
+
+                } else if ("Tag".equals(entry.getKey())) {
+                    sql.append("AND EXISTS (SELECT 1 FROM image_tags t WHERE t.image_id = i.id AND (");
+                    for (int j = 0; j < validValues.size(); j++) {
+                        if (j > 0) sql.append(" OR ");
+                        sql.append("t.tag LIKE ?");
+                        params.add("%" + validValues.get(j) + "%");
+                    }
+                    sql.append(")) ");
+
+                } else {
+                    // Standard metadata (Model, Sampler, etc.)
+                    // OR logic for multiple values of the same key
+                    sql.append("AND EXISTS (SELECT 1 FROM image_metadata m WHERE m.image_id = i.id AND m.key = ? AND (");
+                    params.add(entry.getKey());
+                    for (int j = 0; j < validValues.size(); j++) {
+                        if (j > 0) sql.append(" OR ");
+                        sql.append("m.value = ?");
+                        params.add(validValues.get(j));
+                    }
+                    sql.append(")) ");
+                }
             }
-        } catch (SQLException e) {
-            logger.error("Search failed", e);
         }
-        return results;
+        sql.append("LIMIT ?");
+        params.add(limit);
+
+        return jdbcClient.sql(sql.toString())
+                .params(params)
+                .query(String.class)
+                .list();
     }
 
     public int getRating(String path) {
-        String sql = "SELECT rating FROM images WHERE file_path = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return rs.getInt("rating");
-        } catch (SQLException e) {
-            logger.error("Failed to get rating for path: {}", path, e);
-        }
-        return 0;
+        return jdbcClient.sql("SELECT rating FROM images WHERE file_path = ?")
+                .param(path)
+                .query(Integer.class)
+                .optional()
+                .orElse(0);
     }
 
     public void setRating(int id, int rating) {
-        String sql = "UPDATE images SET rating = ?, is_starred = ? WHERE id = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, rating);
-            pstmt.setBoolean(2, rating > 0);
-            pstmt.setInt(3, id);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("Failed to set rating", e);
-        }
+        jdbcClient.sql("UPDATE images SET rating = ?, is_starred = ? WHERE id = ?")
+                .param(rating)
+                .param(rating > 0)
+                .param(id)
+                .update();
     }
 
     public List<String> getStarredPaths() {
-        List<String> results = new ArrayList<>();
-        try (Connection conn = db.connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT file_path FROM images WHERE is_starred = 1")) {
-            while (rs.next()) results.add(rs.getString("file_path"));
-        } catch (SQLException e) {
-            logger.error("Failed to fetch starred", e);
-        }
-        return results;
+        return jdbcClient.sql("SELECT file_path FROM images WHERE is_starred = 1")
+                .query(String.class)
+                .list();
     }
 
     public boolean hasMetadata(String path) {
-        String sql = "SELECT 1 FROM image_metadata m JOIN images i ON i.id = m.image_id WHERE i.file_path = ? LIMIT 1";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
-            logger.error("Failed to check metadata existence for path: {}", path, e);
-            return false;
-        }
+        return jdbcClient.sql("SELECT 1 FROM image_metadata m JOIN images i ON i.id = m.image_id WHERE i.file_path = ? LIMIT 1")
+                .param(path)
+                .query(Integer.class)
+                .optional()
+                .isPresent();
     }
 
     public Map<String, String> getMetadata(String path) {
-        Map<String, String> meta = new HashMap<>();
-        String sql = """
+        return jdbcClient.sql("""
                     SELECT key, value FROM image_metadata m
                     JOIN images i ON i.id = m.image_id
                     WHERE i.file_path = ?
-                """;
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) meta.put(rs.getString("key"), rs.getString("value"));
-        } catch (SQLException e) {
-            logger.error("Failed to fetch metadata: {}", path, e);
-        }
-        return meta;
+                """)
+                .param(path)
+                .query(rs -> {
+                    Map<String, String> meta = new HashMap<>();
+                    while (rs.next()) {
+                        meta.put(rs.getString("key"), rs.getString("value"));
+                    }
+                    return meta;
+                });
     }
 
+    @Transactional
     public void saveMetadata(int imageId, Map<String, String> meta) {
-        String deleteSql = "DELETE FROM image_metadata WHERE image_id = ?";
-        String insertSql = "INSERT INTO image_metadata(image_id, key, value) VALUES(?, ?, ?)";
+        jdbcClient.sql("DELETE FROM image_metadata WHERE image_id = ?")
+                .param(imageId)
+                .update();
 
-        try (Connection conn = db.connect()) {
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement pstmt = conn.prepareStatement(deleteSql)) {
-                pstmt.setInt(1, imageId);
-                pstmt.executeUpdate();
-            }
-
-            try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
-                for (Map.Entry<String, String> entry : meta.entrySet()) {
-                    pstmt.setInt(1, imageId);
-                    pstmt.setString(2, entry.getKey());
-                    pstmt.setString(3, entry.getValue());
-                    pstmt.addBatch();
-                }
-                pstmt.executeBatch();
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            }
-            updateFtsIndex(imageId);
-        } catch (SQLException e) {
-            logger.error("Failed to save metadata", e);
+        for (Map.Entry<String, String> entry : meta.entrySet()) {
+            jdbcClient.sql("INSERT INTO image_metadata(image_id, key, value) VALUES(?, ?, ?)")
+                    .param(imageId)
+                    .param(entry.getKey())
+                    .param(entry.getValue())
+                    .update();
         }
+
+        updateFtsIndex(imageId);
     }
 
     public void addTag(int imageId, String tag) {
-        try (Connection conn = db.connect();
-             PreparedStatement pstmt = conn.prepareStatement("INSERT OR IGNORE INTO image_tags(image_id, tag) VALUES(?, ?)")) {
-            pstmt.setInt(1, imageId);
-            pstmt.setString(2, tag);
-            pstmt.executeUpdate();
-            updateFtsIndex(imageId);
-        } catch (SQLException e) {
-            logger.error("Failed to add tag", e);
-        }
+        jdbcClient.sql("INSERT OR IGNORE INTO image_tags(image_id, tag) VALUES(?, ?)")
+                .param(imageId)
+                .param(tag)
+                .update();
+        updateFtsIndex(imageId);
     }
 
     public void removeTag(int imageId, String tag) {
-        try (Connection conn = db.connect();
-             PreparedStatement pstmt = conn.prepareStatement("DELETE FROM image_tags WHERE image_id = ? AND tag = ?")) {
-            pstmt.setInt(1, imageId);
-            pstmt.setString(2, tag);
-            pstmt.executeUpdate();
-            updateFtsIndex(imageId);
-        } catch (SQLException e) {
-            logger.error("Failed to remove tag", e);
-        }
+        jdbcClient.sql("DELETE FROM image_tags WHERE image_id = ? AND tag = ?")
+                .param(imageId)
+                .param(tag)
+                .update();
+        updateFtsIndex(imageId);
     }
 
     public Set<String> getTags(String path) {
-        Set<String> tags = new HashSet<>();
-        String sql = "SELECT tag FROM image_tags t JOIN images i ON i.id = t.image_id WHERE i.file_path = ?";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, path);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) tags.add(rs.getString("tag"));
-        } catch (SQLException e) {
-            logger.error("Failed to get tags for path: {}", path, e);
-        }
-        return tags;
+        return new HashSet<>(jdbcClient.sql("SELECT tag FROM image_tags t JOIN images i ON i.id = t.image_id WHERE i.file_path = ?")
+                .param(path)
+                .query(String.class)
+                .list());
     }
 
     public List<File> getPinnedFolders(java.util.function.Function<String, File> resolver) {
-        List<File> result = new ArrayList<>();
-        try (Connection conn = db.connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT path FROM pinned_folders ORDER BY path ASC")) {
-            while (rs.next()) {
-                File f = resolver.apply(rs.getString("path"));
-                if (f != null && f.exists()) result.add(f);
-            }
-        } catch (SQLException e) {
-            logger.error("Error fetching pinned folders", e);
-        }
-        return result;
+        return jdbcClient.sql("SELECT path FROM pinned_folders ORDER BY path ASC")
+                .query(String.class)
+                .list()
+                .stream()
+                .map(resolver)
+                .filter(f -> f != null && f.exists())
+                .toList();
     }
 
     public void addPinnedFolder(String path) {
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement("INSERT OR IGNORE INTO pinned_folders(path) VALUES(?)")) {
-            pstmt.setString(1, path);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("Failed to add pinned folder: {}", path, e);
-        }
+        jdbcClient.sql("INSERT OR IGNORE INTO pinned_folders(path) VALUES(?)")
+                .param(path)
+                .update();
     }
 
     public void removePinnedFolder(String path) {
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement("DELETE FROM pinned_folders WHERE path = ?")) {
-            pstmt.setString(1, path);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("Failed to remove pinned folder: {}", path, e);
-        }
+        jdbcClient.sql("DELETE FROM pinned_folders WHERE path = ?")
+                .param(path)
+                .update();
     }
 
     private void updateFtsIndex(int imageId) {
-        String sql = """
+        jdbcClient.sql("""
                     INSERT OR REPLACE INTO metadata_fts(image_id, global_text)
                     SELECT ?, group_concat(val, ' ') FROM (
                         SELECT value as val FROM image_metadata WHERE image_id = ?
                         UNION ALL
                         SELECT tag as val FROM image_tags WHERE image_id = ?
                     )
-                """;
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, imageId);
-            pstmt.setInt(2, imageId);
-            pstmt.setInt(3, imageId);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.error("FTS Update failed", e);
-        }
+                """)
+                .param(imageId)
+                .param(imageId)
+                .param(imageId)
+                .update();
     }
 
     public List<String> getDistinctValues(String key) {
-        List<String> results = new ArrayList<>();
-        String sql = "SELECT DISTINCT value FROM image_metadata WHERE key = ? ORDER BY value ASC";
-        try (Connection conn = db.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, key);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String val = rs.getString("value");
-                if (val != null && !val.isBlank()) {
-                    results.add(val);
-                }
-            }
-        } catch (SQLException e) {
-            logger.error("Failed to fetch distinct values for key: {}", key, e);
-        }
-        return results;
+        return jdbcClient.sql("SELECT DISTINCT value FROM image_metadata WHERE key = ? ORDER BY value ASC")
+                .param(key)
+                .query(String.class)
+                .list()
+                .stream()
+                .filter(val -> val != null && !val.isBlank())
+                .toList();
     }
 }

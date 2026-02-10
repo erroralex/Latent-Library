@@ -1,14 +1,13 @@
 package com.nilsson.imagetoolbox.data;
 
 import com.nilsson.backend.repository.ImageRepository;
-import com.nilsson.backend.service.DatabaseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -27,40 +26,22 @@ class RepositoryTest {
 
     private static final Logger logger = LoggerFactory.getLogger(RepositoryTest.class);
 
-    private DatabaseService dbService;
     private ImageRepository repository;
     private Connection realConnection;
-    private Connection proxyConnection;
+    private SingleConnectionDataSource dataSource;
 
     @BeforeEach
     void setUp() throws SQLException {
         String jdbcUrl = "jdbc:sqlite::memory:";
 
+        // Create the real connection
         realConnection = DriverManager.getConnection(jdbcUrl);
 
-        proxyConnection = (Connection) Proxy.newProxyInstance(
-                RepositoryTest.class.getClassLoader(),
-                new Class<?>[]{Connection.class},
-                (proxy, method, args) -> {
-                    if (method.getName().equals("close")) {
-                        return null;
-                    }
-                    return method.invoke(realConnection, args);
-                });
+        // Wrap it in a SingleConnectionDataSource which suppresses close() calls by default
+        dataSource = new SingleConnectionDataSource(realConnection, true);
 
-        dbService = new DatabaseService(jdbcUrl) {
-            @Override
-            public Connection connect() throws SQLException {
-                return proxyConnection;
-            }
-
-            @Override
-            public void shutdown() {
-                // No-op
-            }
-        };
-
-        try (Connection conn = dbService.connect()) {
+        // Initialize schema manually since we are bypassing DatabaseService
+        try (Connection conn = dataSource.getConnection()) {
             conn.createStatement().execute("CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT UNIQUE NOT NULL, file_hash TEXT, is_starred BOOLEAN DEFAULT 0, last_scanned INTEGER, rating INTEGER DEFAULT 0)");
             conn.createStatement().execute("CREATE TABLE IF NOT EXISTS image_metadata (image_id INTEGER, key TEXT, value TEXT, FOREIGN KEY(image_id) REFERENCES images(id))");
             conn.createStatement().execute("CREATE VIRTUAL TABLE IF NOT EXISTS metadata_fts USING fts5(image_id UNINDEXED, global_text)");
@@ -68,11 +49,14 @@ class RepositoryTest {
             conn.createStatement().execute("CREATE TABLE IF NOT EXISTS pinned_folders (path TEXT UNIQUE NOT NULL)");
         }
 
-        repository = new ImageRepository(dbService);
+        repository = new ImageRepository(dataSource);
     }
 
     @AfterEach
     void tearDown() {
+        if (dataSource != null) {
+            dataSource.destroy();
+        }
         if (realConnection != null) {
             try {
                 realConnection.close();

@@ -20,6 +20,6 @@ app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
 
-app.directive('tooltip', Tooltip); // Register Tooltip directive globally
+app.directive('tooltip', Tooltip);
 
 app.mount('#app')

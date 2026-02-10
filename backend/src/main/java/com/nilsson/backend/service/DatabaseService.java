@@ -5,8 +5,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,6 +53,11 @@ public class DatabaseService implements DisposableBean {
 
         this.dataSource = new HikariDataSource(config);
         performMigrations();
+    }
+
+    @Bean
+    public DataSource dataSource() {
+        return this.dataSource;
     }
 
     private static String resolvePortableDbUrl() {
