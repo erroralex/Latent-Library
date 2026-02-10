@@ -68,7 +68,8 @@ public class CollectionService {
                 query = String.join(" ", f.prompt());
             }
 
-            List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, 2000);
+            // Use default offset 0 and limit 2000 for smart collection population
+            List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, 0, 2000);
 
             for (String path : matchingPaths) {
                 int id = imageRepository.getIdByPath(path);

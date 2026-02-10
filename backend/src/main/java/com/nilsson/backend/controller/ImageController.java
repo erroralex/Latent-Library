@@ -40,7 +40,8 @@ public class ImageController {
             @RequestParam(required = false) String sampler,
             @RequestParam(required = false) String lora,
             @RequestParam(required = false) String rating,
-            @RequestParam(defaultValue = "1000") int limit) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
 
         Map<String, String> filters = new HashMap<>();
         if (model != null && !model.isEmpty() && !"All".equals(model)) filters.put("Model", model);
@@ -51,7 +52,9 @@ public class ImageController {
             filters.put("Rating", rating);
         }
 
-        return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, limit).join().stream()
+        int offset = page * size;
+
+        return ResponseEntity.ok(dataManager.findFilesWithFilters(query, filters, offset, size).join().stream()
                 .map(pathService::getNormalizedAbsolutePath)
                 .collect(Collectors.toList()));
     }

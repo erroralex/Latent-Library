@@ -1,6 +1,6 @@
 package com.nilsson.backend.repository;
 
-import com.nilsson.backend.service.FtsService; // Added missing import
+import com.nilsson.backend.service.FtsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -26,7 +26,7 @@ public class SearchRepository {
         this.jdbcClient = JdbcClient.create(dataSource);
     }
 
-    public List<String> findPaths(String query, Map<String, List<String>> filters, int limit) {
+    public List<String> findPaths(String query, Map<String, List<String>> filters, int offset, int limit) {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
         List<String> ftsClauses = new ArrayList<>();
@@ -58,9 +58,19 @@ public class SearchRepository {
                 }
 
                 // For all text-based filters, build an FTS query
-                String fieldQuery = validValues.stream()
-                        .map(v -> FtsService.formatFtsToken(key, v)) // Use FtsService for token formatting
-                        .collect(Collectors.joining(" OR "));
+                String fieldQuery;
+                if ("Loras".equals(key)) {
+                    // Since we now index Loras individually in FtsService, we can search for them directly.
+                    // However, we still use prefix matching (*) to be safe against minor tokenization differences
+                    // or version numbers that might be attached.
+                    fieldQuery = validValues.stream()
+                            .map(v -> FtsService.formatFtsToken(key, v)) // No wildcard needed if indexed correctly, but let's test exact match first
+                            .collect(Collectors.joining(" OR "));
+                } else {
+                    fieldQuery = validValues.stream()
+                            .map(v -> FtsService.formatFtsToken(key, v))
+                            .collect(Collectors.joining(" OR "));
+                }
 
                 ftsClauses.add("(" + fieldQuery + ")");
             }
@@ -85,8 +95,9 @@ public class SearchRepository {
         }
 
 
-        sql.append("LIMIT ?");
+        sql.append(" LIMIT ? OFFSET ?");
         params.add(limit);
+        params.add(offset);
 
         return jdbcClient.sql(sql.toString())
                 .params(params)

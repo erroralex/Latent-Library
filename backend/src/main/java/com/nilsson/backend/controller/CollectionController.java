@@ -104,7 +104,8 @@ public class CollectionController {
 
                         String prompt = details.filters().prompt() != null ? String.join(" ", details.filters().prompt()) : "";
 
-                        List<String> result = dataManager.findFilesWithFilters(prompt, filtersMap, 2000).join().stream()
+                        // Use default offset 0 and limit 2000 for smart collections for now
+                        List<String> result = dataManager.findFilesWithFilters(prompt, filtersMap, 0, 2000).join().stream()
                                 .map(File::getAbsolutePath)
                                 .collect(Collectors.toList());
                         return ResponseEntity.ok(result);

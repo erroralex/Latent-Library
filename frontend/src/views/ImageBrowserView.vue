@@ -13,6 +13,7 @@ import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
 import ImageCard from '@/components/ImageCard.vue';
 import FilmstripView from '@/components/FilmstripView.vue';
+import VirtualScroller from 'primevue/virtualscroller';
 
 const store = useBrowserStore();
 const route = useRoute();
@@ -21,7 +22,8 @@ const galleryContainer = ref(null);
 
 const getGridColumns = () => {
   if (!galleryContainer.value) return 1;
-  const containerWidth = galleryContainer.value.clientWidth;
+  // VirtualScroller might wrap the container, so we need to be careful about width
+  const containerWidth = galleryContainer.value.$el ? galleryContainer.value.$el.clientWidth : galleryContainer.value.clientWidth;
   const cardWidth = store.cardSize + 16;
   return Math.floor(containerWidth / cardWidth) || 1;
 };
@@ -137,6 +139,76 @@ watch(() => store.imageFocusRequested, (requested) => {
   }
 });
 
+// Virtual Scroller Logic
+const virtualItems = computed(() => {
+    // We need to chunk the files array into rows for the virtual scroller
+    // But VirtualScroller handles lists. For a grid, we can use the 'grid' display of VirtualScroller
+    // However, PrimeVue's VirtualScroller is list-based. To make a grid, we need to chunk the data ourselves
+    // or use CSS grid within the item template if the scroller supports it.
+    // A simpler approach for a responsive grid with VirtualScroller is to pre-calculate rows.
+    // But that breaks responsiveness on resize.
+    //
+    // Better approach: Use VirtualScroller with a fixed item size and flex wrap? No.
+    //
+    // Let's use the standard VirtualScroller and chunk the data into arrays of arrays (rows).
+    // We need to re-calculate chunks when window resizes.
+    return store.files;
+});
+
+// For simplicity and robustness with PrimeVue VirtualScroller, we will use it in list mode
+// but each "item" will be a row of images.
+const gridCols = ref(4); // Default
+const chunkedFiles = computed(() => {
+    const chunks = [];
+    for (let i = 0; i < store.files.length; i += gridCols.value) {
+        chunks.push(store.files.slice(i, i + gridCols.value));
+    }
+    return chunks;
+});
+
+const updateGridCols = () => {
+    if (!galleryContainer.value) return;
+    // Access the DOM element correctly whether it's a component ref or element ref
+    const el = galleryContainer.value.$el || galleryContainer.value;
+    if (!el) return;
+
+    const containerWidth = el.clientWidth;
+    const cardWidth = store.cardSize + 16; // card size + gap
+    const cols = Math.floor(containerWidth / cardWidth) || 1;
+    gridCols.value = cols;
+};
+
+// Resize observer for the gallery container
+let resizeObserver;
+watch(() => store.viewMode, (newMode) => {
+    if (newMode === 'gallery') {
+        // Wait for DOM update
+        setTimeout(() => {
+            if (galleryContainer.value) {
+                const el = galleryContainer.value.$el || galleryContainer.value;
+                if (!resizeObserver) {
+                    resizeObserver = new ResizeObserver(() => updateGridCols());
+                }
+                resizeObserver.observe(el);
+                updateGridCols();
+            }
+        }, 100);
+    } else {
+        if (resizeObserver) resizeObserver.disconnect();
+    }
+});
+
+const onScrollIndexChange = (event) => {
+    // Check if we are near the end to load more
+    // event.last is the index of the last visible item
+    if (store.hasMore && !store.isFetchingMore) {
+        const totalRows = chunkedFiles.value.length;
+        if (event.last >= totalRows - 2) { // Load more when 2 rows from bottom
+            store.loadMore();
+        }
+    }
+};
+
 </script>
 
 <template>
@@ -146,17 +218,26 @@ watch(() => store.imageFocusRequested, (requested) => {
     <div class="flex-grow-1 overflow-hidden relative">
       <div class="h-full" ref="containerRef" tabindex="0" style="outline: none;">
 
-        <div v-if="store.viewMode === 'gallery'" class="h-full overflow-y-auto p-3" ref="galleryContainer">
-          <div class="flex flex-wrap gap-2 justify-content-center">
-            <div v-for="file in store.files" :key="file"
-                 :style="{ width: store.cardSize + 'px' }"
-                 class="border-round transition-all transition-duration-100"
-                 :class="{ 'outline-active': store.selectedFile === file }"
-                 @click="store.selectFile(file)"
-                 @dblclick="handleGalleryItemDoubleClick(file)">
-              <ImageCard :path="file" />
-            </div>
-          </div>
+        <div v-if="store.viewMode === 'gallery'" class="h-full p-3" ref="galleryContainer">
+             <VirtualScroller :items="chunkedFiles" :itemSize="store.cardSize + 16" class="h-full"
+                              @scroll-index-change="onScrollIndexChange">
+                <template v-slot:item="{ item, options }">
+                    <div class="flex gap-2 justify-content-center" :style="{ height: (store.cardSize + 8) + 'px', marginBottom: '8px' }">
+                        <div v-for="file in item" :key="file"
+                             :style="{ width: store.cardSize + 'px', height: store.cardSize + 'px' }"
+                             class="border-round transition-all transition-duration-100"
+                             :class="{ 'outline-active': store.selectedFile === file }"
+                             @click="store.selectFile(file)"
+                             @dblclick="handleGalleryItemDoubleClick(file)">
+                            <ImageCard :path="file" />
+                        </div>
+                        <!-- Fill empty space in the last row to align left if needed, or center as per flex -->
+                    </div>
+                </template>
+             </VirtualScroller>
+             <div v-if="store.files.length === 0 && !store.isLoading" class="text-center p-5 text-gray-500">
+                 No images found.
+             </div>
         </div>
 
         <!--

@@ -63,6 +63,32 @@ const loadTree = async () => {
 
   nodes.value = rootNodes;
   expandedKeys.value = { 'collections': true, 'pinned': true, 'drives': true };
+
+  // Attempt to select the current folder if it exists in the tree
+  if (store.lastFolderPath) {
+      // We need to wait for the tree to render and nodes to be populated
+      setTimeout(() => {
+          selectNodeByPath(store.lastFolderPath);
+      }, 500);
+  }
+};
+
+const selectNodeByPath = (path) => {
+    // Check pinned folders first
+    const pinnedNode = nodes.value.find(n => n.key === 'pinned')?.children?.find(c => c.data.path === path);
+    if (pinnedNode) {
+        selectedKey.value = { [pinnedNode.key]: true };
+        return;
+    }
+
+    // Check collections (if path matches collection name logic, though collections are usually names not paths)
+    // If we were tracking collection selection in store, we'd check that here.
+
+    // For drives, it's harder because they are lazy loaded. We can only select root drives easily.
+    const driveNode = nodes.value.find(n => n.key === 'drives')?.children?.find(c => c.data.path === path);
+    if (driveNode) {
+        selectedKey.value = { [driveNode.key]: true };
+    }
 };
 
 const onNodeExpand = async (node) => {
