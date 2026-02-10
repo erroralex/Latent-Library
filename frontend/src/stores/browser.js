@@ -84,12 +84,11 @@ export const useBrowserStore = defineStore('browser', {
         
         async loadCollection(collectionName) {
             this.isLoading = true;
+            this.searchQuery = `collection: ${collectionName}`; // Update search query to reflect context
             try {
-                const response = await axios.get('/api/collections/images', {
-                    params: { name: collectionName }
-                });
+                // Use the new POST endpoint that correctly handles smart filters
+                const response = await axios.post('/api/collections/images', { name: collectionName });
                 this.files = response.data;
-                this.searchQuery = '';
                 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
@@ -99,6 +98,8 @@ export const useBrowserStore = defineStore('browser', {
                 }
             } catch (error) {
                 console.error('Failed to load collection:', error);
+                this.files = [];
+                this.selectedFile = null;
             } finally {
                 this.isLoading = false;
             }

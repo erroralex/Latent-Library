@@ -5,7 +5,8 @@
  */
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button';
-import { ref, computed } from "vue";
+import { ref } from "vue";
+import FolderNav from '@/components/FolderNav.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -43,7 +44,10 @@ const navigate = (path) => {
 };
 
 const isActive = (path) => {
-  if (path === '/' && route.path === '/') return true;
+  // Make Gallery active for both '/' and '/browser'
+  if (path === '/') {
+    return route.path === '/' || route.path.startsWith('/browser');
+  }
   if (path !== '/' && route.path.startsWith(path)) return true;
   return false;
 };
@@ -85,8 +89,11 @@ const closeWindow = () => {
       </div>
     </header>
 
-    <main class="flex-grow-1 overflow-hidden relative">
-      <RouterView />
+    <main class="flex-grow-1 overflow-hidden flex">
+      <FolderNav />
+      <div class="flex-grow-1 overflow-hidden relative">
+        <RouterView />
+      </div>
     </main>
   </div>
 </template>

@@ -8,13 +8,14 @@
  */
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { useBrowserStore } from '@/stores/browser';
+import { useRoute } from 'vue-router';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
 import ImageCard from '@/components/ImageCard.vue';
-import FolderNav from '@/components/FolderNav.vue';
 import FilmstripView from '@/components/FilmstripView.vue';
 
 const store = useBrowserStore();
+const route = useRoute();
 const containerRef = ref(null);
 const galleryContainer = ref(null);
 
@@ -84,9 +85,19 @@ const handleKeydown = (e) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown);
-  await store.initialize();
-  if (store.files.length === 0) {
-    store.search('');
+
+  // Check if we are navigating to a specific collection
+  if (route.query.collection) {
+      if (store.availableModels.length === 0) {
+          await store.loadFilters();
+      }
+      await store.loadCollection(route.query.collection);
+  } else {
+      // Default behavior: load last folder or initialize
+      await store.initialize();
+      if (store.files.length === 0) {
+        store.search('');
+      }
   }
 });
 
@@ -132,11 +143,8 @@ watch(() => store.imageFocusRequested, (requested) => {
   <div class="flex flex-column h-full overflow-hidden">
     <BrowserToolbar class="flex-shrink-0" />
 
-    <div class="flex flex-grow-1 overflow-hidden relative">
-
-      <FolderNav />
-
-      <div class="flex-grow-1 flex flex-column overflow-hidden relative" ref="containerRef" tabindex="0" style="outline: none;">
+    <div class="flex-grow-1 overflow-hidden relative">
+      <div class="h-full" ref="containerRef" tabindex="0" style="outline: none;">
 
         <div v-if="store.viewMode === 'gallery'" class="h-full overflow-y-auto p-3" ref="galleryContainer">
           <div class="flex flex-wrap gap-2 justify-content-center">
@@ -151,8 +159,14 @@ watch(() => store.imageFocusRequested, (requested) => {
           </div>
         </div>
 
-        <div v-else class="flex flex-column h-full">
-          <div class="flex-grow-1 flex align-items-center justify-content-center image-viewer-glass relative overflow-hidden">
+        <!--
+          DEFINITIVE LAYOUT FIX:
+          This layout uses absolute positioning to create two independent, non-interacting regions.
+          This prevents the image's aspect ratio from influencing the filmstrip's position.
+        -->
+        <div v-else class="relative h-full">
+          <!-- The image viewer is locked to the top and fills all space DOWN TO the filmstrip's height. -->
+          <div class="absolute top-0 left-0 right-0 flex align-items-center justify-content-center image-viewer-glass" style="bottom: 10rem;">
             <img v-if="mainImageUrl" :src="mainImageUrl"
                  class="max-w-full max-h-full object-contain shadow-8 cursor-pointer"
                  style="transition: all 0.2s ease;"
@@ -160,6 +174,7 @@ watch(() => store.imageFocusRequested, (requested) => {
 
             <div v-else class="text-white text-xl">No image selected</div>
 
+            <!-- Navigation Arrows -->
             <div class="absolute left-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200"
                  @click="store.navigate(-1)">
               <i class="pi pi-chevron-left text-4xl text-white-alpha-50"></i>
@@ -170,7 +185,8 @@ watch(() => store.imageFocusRequested, (requested) => {
             </div>
           </div>
 
-          <FilmstripView />
+          <!-- The filmstrip is locked to the bottom with a fixed height matching its internal class `h-10rem`. -->
+          <FilmstripView class="absolute bottom-0 left-0 right-0 w-full" style="height: 10rem;" />
         </div>
       </div>
 

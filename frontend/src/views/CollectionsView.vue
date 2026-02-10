@@ -11,7 +11,6 @@ import Chip from 'primevue/chip';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useRouter } from 'vue-router';
-import FolderNav from '@/components/FolderNav.vue';
 import CustomContextMenu from '@/components/CustomContextMenu.vue';
 
 const store = useBrowserStore();
@@ -103,7 +102,7 @@ const editCollection = async (name) => {
             selectedModels.value = data.filters.models || [];
             selectedLoras.value = data.filters.loras || [];
             selectedSamplers.value = data.filters.samplers || [];
-            selectedRating.value = data.filters.rating;
+            selectedRating.value = data.filters.rating ? parseInt(data.filters.rating) : null;
             prompt.value = data.filters.prompt ? data.filters.prompt.join(', ') : '';
         } else {
             selectedModels.value = [];
@@ -134,7 +133,7 @@ const saveCollection = async () => {
       models: selectedModels.value,
       loras: selectedLoras.value,
       samplers: selectedSamplers.value,
-      rating: selectedRating.value,
+      rating: selectedRating.value ? String(selectedRating.value) : null,
       prompt: prompt.value.split(',').map(p => p.trim()).filter(Boolean),
     } : null,
   };
@@ -167,8 +166,7 @@ const fetchCollections = async () => {
 };
 
 const navigateToCollection = (collectionName) => {
-    router.push({ path: '/browser' });
-    store.loadCollection(collectionName);
+    router.push({ path: '/browser', query: { collection: collectionName } });
 };
 
 const onCardContextMenu = (event, collectionName) => {
@@ -216,7 +214,6 @@ onMounted(() => {
 
 <template>
   <div class="flex h-full overflow-hidden">
-    <FolderNav />
     <div class="flex-grow-1 flex flex-column overflow-y-auto collections-view p-4">
         <Toast/>
         <div class="flex flex-column align-items-center mb-4">

@@ -6,7 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,11 +42,6 @@ public class CollectionController {
 
     @PutMapping("/{name}")
     public ResponseEntity<Void> updateCollection(@PathVariable String name, @RequestBody CreateCollectionRequest request) {
-        // Ensure the name in the path matches the request, or use the path name
-        if (!name.equals(request.name())) {
-            // If renaming is supported, we'd need more logic. For now, assume name is immutable or handled elsewhere.
-            // But CreateCollectionRequest has 'name'. Let's assume we are updating the collection *with* this name.
-        }
         dataManager.updateCollection(request);
         return ResponseEntity.ok().build();
     }
@@ -63,10 +60,52 @@ public class CollectionController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/images")
-    public ResponseEntity<List<String>> getCollectionImages(@RequestParam String name) {
+    @GetMapping("/static-images")
+    public ResponseEntity<List<String>> getStaticCollectionImages(@RequestParam String name) {
         return ResponseEntity.ok(dataManager.getFilesFromCollection(name).stream()
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList()));
+    }
+
+    @PostMapping("/images")
+    public ResponseEntity<List<String>> getSmartCollectionImages(@RequestBody Map<String, String> requestBody) {
+        String name = requestBody.get("name");
+        if (name == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return dataManager.getCollectionDetails(name)
+                .map(details -> {
+                    if (details.isSmart() && details.filters() != null) {
+                        // Adapt to the existing UserDataManager API which expects Map<String, String>
+                        Map<String, String> filtersMap = new HashMap<>();
+                        if (details.filters().models() != null && !details.filters().models().isEmpty()) {
+                            filtersMap.put("Model", details.filters().models().get(0)); // Use only the first value
+                        }
+                        if (details.filters().loras() != null && !details.filters().loras().isEmpty()) {
+                            filtersMap.put("Loras", details.filters().loras().get(0)); // Use only the first value
+                        }
+                        if (details.filters().samplers() != null && !details.filters().samplers().isEmpty()) {
+                            filtersMap.put("Sampler", details.filters().samplers().get(0)); // Use only the first value
+                        }
+                        if (details.filters().rating() != null && !details.filters().rating().isBlank()) {
+                            filtersMap.put("Rating", details.filters().rating());
+                        }
+
+                        String prompt = details.filters().prompt() != null ? String.join(" ", details.filters().prompt()) : "";
+
+                        List<String> result = dataManager.findFilesWithFilters(prompt, filtersMap, 2000).join().stream()
+                                .map(File::getAbsolutePath)
+                                .collect(Collectors.toList());
+                        return ResponseEntity.ok(result);
+                    } else {
+                        // Fallback for non-smart collections
+                        List<String> result = dataManager.getFilesFromCollection(name).stream()
+                                .map(File::getAbsolutePath)
+                                .collect(Collectors.toList());
+                        return ResponseEntity.ok(result);
+                    }
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

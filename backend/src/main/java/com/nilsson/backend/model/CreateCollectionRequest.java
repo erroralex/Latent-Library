@@ -11,7 +11,7 @@ public record CreateCollectionRequest(
             List<String> models,
             List<String> loras,
             List<String> samplers,
-            Integer rating,
+            String rating,
             List<String> prompt
     ) {}
 }
