@@ -68,6 +68,11 @@ const refreshFilters = () => {
 
     <template #center>
       <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
+        <div v-if="store.viewMode === 'gallery'" class="flex gap-3 align-items-center mr-3">
+          <i class="pi pi-search-plus text-xl text-500"></i>
+          <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem" />
+        </div>
+
         <div class="flex gap-1 mr-2">
           <Button icon="pi pi-th-large"
                   class="p-button-sm nav-btn"
@@ -159,11 +164,6 @@ const refreshFilters = () => {
 
     <template #end>
       <div class="flex gap-3 align-items-center">
-        <div v-if="store.viewMode === 'gallery'" class="flex gap-3 align-items-center">
-          <i class="pi pi-images text-xl text-500"></i>
-          <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem" />
-        </div>
-
         <Button icon="pi pi-info-circle"
                 :class="[ store.isSidebarOpen ? 'text-primary' : 'text-white' ]"
                 class="p-button-rounded p-button-text"
