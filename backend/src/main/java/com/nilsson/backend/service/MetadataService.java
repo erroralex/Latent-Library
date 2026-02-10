@@ -18,6 +18,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -49,6 +50,7 @@ public class MetadataService {
         Map<String, String> results = new HashMap<>();
 
         extractPhysicalDimensions(file, results);
+        extractFileSize(file, results);
         String rawData = findBestMetadataChunk(file);
         results.putAll(processRawMetadata(rawData));
 
@@ -79,6 +81,20 @@ public class MetadataService {
         }
 
         return results;
+    }
+
+    private void extractFileSize(File file, Map<String, String> results) {
+        if (file == null || !file.exists()) return;
+        long bytes = file.length();
+        String sizeStr;
+        if (bytes < 1024) {
+            sizeStr = bytes + " B";
+        } else if (bytes < 1024 * 1024) {
+            sizeStr = new DecimalFormat("#.##").format(bytes / 1024.0) + " KB";
+        } else {
+            sizeStr = new DecimalFormat("#.##").format(bytes / (1024.0 * 1024.0)) + " MB";
+        }
+        results.put("FileSize", sizeStr);
     }
 
     private void extractPhysicalDimensions(File file, Map<String, String> results) {
@@ -122,6 +138,10 @@ public class MetadataService {
             }
         } catch (IOException e) {
             logger.debug("Failed to read dimensions using ImageIO for {}: {}", file.getName(), e.getMessage());
+        }
+        
+        if (width > 0 && height > 0) {
+            results.put("Resolution", width + "x" + height);
         }
     }
 

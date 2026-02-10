@@ -121,6 +121,8 @@ const formattedRawMeta = computed(() => {
           <label class="block text-xs text-500 mb-1">Seed</label>
           <InputText :value="meta.Seed || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
+
+        <!-- CFG and Steps (Restored to col-3) -->
         <div class="col-3">
           <label class="block text-xs text-500 mb-1">CFG</label>
           <InputText :value="meta.CFG || '-'" readonly class="w-full p-inputtext-sm glass-input" />
@@ -128,6 +130,14 @@ const formattedRawMeta = computed(() => {
         <div class="col-3">
           <label class="block text-xs text-500 mb-1">Steps</label>
           <InputText :value="meta.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input" />
+        </div>
+        <div class="col-5">
+          <label class="block text-xs text-500 mb-1">Resolution</label>
+          <InputText :value="meta.Resolution || '-'" readonly class="w-full p-inputtext-sm glass-input" />
+        </div>
+        <div class="col-5">
+          <label class="block text-xs text-500 mb-1">Size</label>
+          <InputText :value="meta.FileSize || '-'" readonly class="w-full p-inputtext-sm glass-input" />
         </div>
       </div>
 
