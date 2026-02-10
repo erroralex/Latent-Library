@@ -6,6 +6,19 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.util.List;
 
+/**
+ * Repository for managing user-pinned directories.
+ * <p>
+ * This class provides persistent storage for file system paths that the user has "bookmarked"
+ * for quick access. It manages the {@code pinned_folders} table, ensuring that paths are
+ * stored uniquely and can be retrieved in alphabetical order.
+ * <p>
+ * Key functionalities:
+ * - Bookmark Persistence: Saves absolute file system paths to the database.
+ * - Duplicate Prevention: Uses {@code INSERT OR IGNORE} to handle redundant pin requests.
+ * - Retrieval: Returns a sorted list of all pinned directory paths.
+ * - Removal: Deletes specific path entries from the pinned list.
+ */
 @Repository
 public class PinnedFolderRepository {
 

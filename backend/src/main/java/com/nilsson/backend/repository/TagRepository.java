@@ -7,6 +7,18 @@ import javax.sql.DataSource;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Repository for managing user-defined tags associated with images.
+ * <p>
+ * This class provides persistent storage operations for the many-to-many relationship between images and tags.
+ * It utilizes the {@code image_tags} table to store unique tag strings per image ID. Tags are used to
+ * augment the searchability of images beyond their embedded metadata and are indexed in the FTS5 system.
+ * <p>
+ * Key functionalities:
+ * - Tag Association: Adds new tags to an image while preventing duplicates via {@code INSERT OR IGNORE}.
+ * - Tag Removal: Deletes specific tag associations for a given image.
+ * - Retrieval: Fetches the complete set of tags for a specific image ID.
+ */
 @Repository
 public class TagRepository {
 

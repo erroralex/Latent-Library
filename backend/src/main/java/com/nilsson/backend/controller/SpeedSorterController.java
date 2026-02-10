@@ -12,8 +12,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Controller for the Speed Sorter tool.
- * Facilitates rapid image organization by moving files between configured source and target directories.
+ * REST Controller for the Speed Sorter utility.
+ * <p>
+ * This controller facilitates rapid image organization by managing source and target directory
+ * configurations and executing file move/delete operations. It is designed to support a
+ * high-throughput workflow where users can triage images using keyboard shortcuts.
+ * <p>
+ * Key functionalities:
+ * - Configuration Management: Stores and retrieves user-defined input and target folder paths.
+ * - Rapid File Movement: Executes atomic file moves between directories, ensuring unique filenames.
+ * - Trash Integration: Leverages system-native trash/recycle bin for safe file deletion.
+ * - Undo Support: Provides an endpoint to revert the most recent move operation.
+ * - Directory Listing: Returns a sorted list of images from the configured input directory.
  */
 @RestController
 @RequestMapping("/api/speedsorter")
@@ -114,14 +124,14 @@ public class SpeedSorterController {
         }
         return ResponseEntity.internalServerError().body("Delete failed");
     }
-    
+
     @PostMapping("/undo")
     public ResponseEntity<String> undoMove(@RequestParam("source") String sourcePath, @RequestParam("original") String originalPath) {
         File current = new File(sourcePath);
         File original = new File(originalPath);
-        
+
         if (!current.exists()) return ResponseEntity.badRequest().body("File not found");
-        
+
         try {
             Files.move(current.toPath(), original.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return ResponseEntity.ok("Undone");

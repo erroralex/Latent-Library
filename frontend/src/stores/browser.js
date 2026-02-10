@@ -3,9 +3,18 @@ import axios from 'axios';
 
 /**
  * @file browser.js
- * @description Pinia store for managing the state of the Image Browser. This store handles
- * file lists, selection, metadata fetching, filtering, and view modes. It acts as the
- * central data hub for all browser-related UI components.
+ * @description The central state management hub for the Image Browser application.
+ * 
+ * This Pinia store orchestrates the data flow and UI state for the entire browsing experience.
+ * It manages the image library (files), selection state, metadata caching, search/filter criteria,
+ * and view configurations. It acts as the single source of truth for all browser-related components.
+ * 
+ * Key responsibilities:
+ * - Library Management: Handles folder scanning and collection loading via backend APIs.
+ * - Search & Filtering: Maintains active filter states (Model, Sampler, LoRA, Rating) and executes paginated search queries.
+ * - Metadata Orchestration: Fetches and caches detailed metadata for the currently selected image.
+ * - Navigation Logic: Implements directional navigation (Next/Previous) and view mode switching.
+ * - Pagination: Manages infinite scroll state, including page offsets and loading indicators.
  */
 export const useBrowserStore = defineStore('browser', {
     state: () => ({
@@ -32,7 +41,6 @@ export const useBrowserStore = defineStore('browser', {
         navRefreshKey: 0,
         collectionToEdit: null,
 
-        // Pagination state
         page: 0,
         pageSize: 50,
         hasMore: true,
@@ -65,9 +73,9 @@ export const useBrowserStore = defineStore('browser', {
 
         async loadFolder(path) {
             this.isLoading = true;
-            this.files = []; // Clear existing files
+            this.files = [];
             this.page = 0;
-            this.hasMore = false; // Disable pagination for folder view as scan returns all files
+            this.hasMore = false;
             
             try {
                 const response = await axios.post('/api/library/scan', null, {
@@ -94,13 +102,12 @@ export const useBrowserStore = defineStore('browser', {
         
         async loadCollection(collectionName) {
             this.isLoading = true;
-            this.searchQuery = `collection: ${collectionName}`; // Update search query to reflect context
+            this.searchQuery = `collection: ${collectionName}`;
             this.files = [];
             this.page = 0;
-            this.hasMore = false; // Disable pagination for collection view
+            this.hasMore = false;
 
             try {
-                // Use the new POST endpoint that correctly handles smart filters
                 const response = await axios.post('/api/collections/images', { name: collectionName });
                 this.files = response.data;
                 
@@ -155,7 +162,7 @@ export const useBrowserStore = defineStore('browser', {
                 await this.fetchPage();
             } catch (error) {
                 console.error('Load more failed:', error);
-                this.page--; // Revert page increment on failure
+                this.page--;
             } finally {
                 this.isFetchingMore = false;
             }
@@ -192,7 +199,6 @@ export const useBrowserStore = defineStore('browser', {
             if (!isAnyFilterActive && this.lastFolderPath) {
                 this.loadFolder(this.lastFolderPath);
             } else {
-                // If filters are active, just re-search with empty query
                 this.search('');
             }
         },
@@ -221,7 +227,8 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
-        async selectFile(path) {
+        async selectFile(file) {
+            const path = file.path || file;
             if (this.selectedFile === path) return;
             this.selectedFile = path;
             this.fetchMetadata(path);
@@ -253,6 +260,11 @@ export const useBrowserStore = defineStore('browser', {
                     params: { path: this.selectedFile, rating }
                 });
                 this.currentRating = rating;
+                
+                const fileIndex = this.files.findIndex(f => f.path === this.selectedFile);
+                if (fileIndex !== -1) {
+                    this.files[fileIndex].rating = rating;
+                }
             } catch (error) {
                 console.error('Failed to set rating:', error);
             }
@@ -272,7 +284,7 @@ export const useBrowserStore = defineStore('browser', {
 
         navigate(direction) {
             if (this.files.length === 0) return;
-            const currentIndex = this.files.indexOf(this.selectedFile);
+            const currentIndex = this.files.findIndex(f => f.path === this.selectedFile);
             if (currentIndex === -1) {
                 this.selectFile(this.files[0]);
                 return;

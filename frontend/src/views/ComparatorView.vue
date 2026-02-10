@@ -2,8 +2,15 @@
 /**
  * @file ComparatorView.vue
  * @description A side-by-side image comparison tool featuring a draggable slider.
- * Users can drop two images into designated slots (A and B) to visually inspect
- * differences between them.
+ *
+ * This view allows users to perform detailed visual inspections between two images. It implements
+ * a "before-and-after" style slider that reveals portions of each image as it is moved.
+ *
+ * Key functionalities:
+ * - Drag-and-Drop: Supports direct file drops into designated slots for quick loading.
+ * - Interactive Slider: Implements a custom clip-path based slider for real-time comparison.
+ * - Memory Management: Automatically revokes object URLs on unmount to prevent memory leaks.
+ * - Responsive Layout: Adapts the comparison container to the available viewport space.
  */
 import { ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';

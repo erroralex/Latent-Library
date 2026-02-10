@@ -9,6 +9,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Repository for managing granular image metadata.
+ * <p>
+ * This class provides persistent storage for the key-value pairs extracted from image files. It manages
+ * the {@code image_metadata} table, which stores technical generation parameters (e.g., "Steps",
+ * "Sampler", "CFG Scale"). This data is used for both detailed display in the UI and as the
+ * source for the FTS5 search index.
+ * <p>
+ * Key functionalities:
+ * - Metadata Persistence: Saves a map of metadata keys and values for a specific image ID.
+ * - Atomic Updates: Implements a delete-then-insert strategy within a transaction to ensure metadata consistency.
+ * - Retrieval: Fetches all metadata associated with an image as a {@code Map<String, String>}.
+ * - Discovery: Provides distinct values for specific metadata keys to support frontend filter menus.
+ */
 @Repository
 public class ImageMetadataRepository {
 

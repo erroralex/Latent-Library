@@ -1,3 +1,18 @@
+/**
+ * @file main.js (Electron)
+ * @description The main process entry point for the Electron-based desktop application.
+ * 
+ * This script manages the application lifecycle, creates the native window, and orchestrates
+ * the integration between the Electron frontend and the Spring Boot backend. It handles
+ * process spawning, IPC communication for window controls, and graceful shutdown procedures.
+ * 
+ * Key responsibilities:
+ * - Backend Lifecycle: Spawns the Java Spring Boot process and monitors its health.
+ * - Window Management: Configures a frameless, maximized BrowserWindow with custom title bar support.
+ * - IPC Bridge: Implements handlers for native dialogs (folder selection) and window state (min/max/close).
+ * - Graceful Shutdown: Sends a shutdown signal to the backend before terminating the Electron process.
+ * - Development Support: Assumptions for JAR paths in development vs. production environments.
+ */
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -7,29 +22,27 @@ let mainWindow;
 let backendProcess;
 
 const BACKEND_PORT = 8080;
-const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar'; // Adjust version if needed
+const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
 
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
-        title: "AI Toolbox", // Set application title
-        icon: path.join(__dirname, '../frontend/src/assets/icon.png'), // Set application icon
-        frame: false, // Remove OS titlebar
+        title: "AI Toolbox",
+        icon: path.join(__dirname, '../frontend/src/assets/icon.png'),
+        frame: false,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         },
         autoHideMenuBar: true,
-        show: false // Don't show until maximized
+        show: false
     });
 
-    // Maximize the window
     mainWindow.maximize();
     mainWindow.show();
 
-    // Load the Spring Boot app
     mainWindow.loadURL(`http://localhost:${BACKEND_PORT}`);
 
     mainWindow.on('closed', function () {
@@ -38,18 +51,12 @@ function createWindow() {
 }
 
 function startBackend() {
-    const jarPath = path.join(process.resourcesPath, 'backend', JAR_NAME);
-    
-    // In development, we might want to point to the target folder directly
-    // const devJarPath = path.join(__dirname, '..', 'backend', 'target', JAR_NAME);
-    
-    // For this setup, let's assume we are running in dev mode and the user has built the jar
     const devJarPath = path.join(__dirname, '../backend/target', JAR_NAME);
 
     console.log('Starting backend from:', devJarPath);
 
     backendProcess = spawn('java', ['-jar', devJarPath], {
-        cwd: path.dirname(devJarPath) // Set working directory to jar location so ./data is created there
+        cwd: path.dirname(devJarPath)
     });
 
     backendProcess.stdout.on('data', (data) => {
@@ -93,7 +100,6 @@ app.on('ready', () => {
         }
     });
 
-    // Window Controls
     ipcMain.on('window-minimize', () => {
         if (mainWindow) mainWindow.minimize();
     });
@@ -122,7 +128,7 @@ app.on('window-all-closed', function () {
 
 app.on('will-quit', async (event) => {
     if (backendProcess) {
-        event.preventDefault(); // Prevent immediate quit
+        event.preventDefault();
         console.log('Requesting backend shutdown...');
         
         const req = http.request({
@@ -132,7 +138,6 @@ app.on('will-quit', async (event) => {
             method: 'POST'
         }, (res) => {
             console.log(`Backend shutdown response: ${res.statusCode}`);
-            // Give it a moment to shut down gracefully
             setTimeout(() => {
                 backendProcess = null;
                 app.quit();
@@ -141,7 +146,6 @@ app.on('will-quit', async (event) => {
 
         req.on('error', (e) => {
             console.error(`Problem with shutdown request: ${e.message}`);
-            // If request fails, fall back to killing the process
             killBackendProcess();
             app.quit();
         });

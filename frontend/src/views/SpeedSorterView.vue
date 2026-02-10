@@ -1,9 +1,18 @@
 <script setup>
 /**
  * @file SpeedSorterView.vue
- * @description A high-efficiency tool for rapid image organization. It allows users to
- * quickly move, copy, or delete images using keyboard shortcuts and pre-configured
- * source and target directories, designed for sorting large batches of files.
+ * @description A high-efficiency, keyboard-driven tool for rapid image organization and triage.
+ *
+ * This view is designed for power users who need to sort through large volumes of images quickly.
+ * It implements a "hotkey" system where images can be moved to pre-configured target directories
+ * with a single keystroke.
+ *
+ * Key functionalities:
+ * - Keyboard Orchestration: Maps numeric keys (1-5) to target folders and 'X' to deletion.
+ * - Rapid Triage: Automatically advances to the next image after an action, minimizing UI interaction time.
+ * - Configuration Management: Allows users to define a source "input" folder and up to five "target" folders.
+ * - Undo System: Maintains a local history of move actions, allowing users to revert mistakes (Ctrl+Z).
+ * - Electron Integration: Leverages native folder selection dialogs when running in an Electron environment.
  */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';

@@ -1,8 +1,24 @@
+/**
+ * @file main.js
+ * @description The entry point for the AI Toolbox frontend application.
+ * 
+ * This script initializes the Vue 3 application instance, configures global plugins,
+ * and mounts the root component to the DOM. It orchestrates the integration of
+ * state management (Pinia), routing (Vue Router), and the UI component library (PrimeVue).
+ * 
+ * Key initializations:
+ * - Pinia: Global state management.
+ * - Vue Router: Client-side navigation.
+ * - PrimeVue: UI components and theme configuration (Aura Dark Green).
+ * - ToastService: Global notification system.
+ * - Tooltip: Custom directive for UI hints.
+ * - Global CSS: Imports base styles, icons, and utility classes (PrimeFlex).
+ */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice';
-import Tooltip from 'primevue/tooltip'; // Import Tooltip directive
+import Tooltip from 'primevue/tooltip';
 
 import 'primevue/resources/themes/aura-dark-green/theme.css'
 import 'primeicons/primeicons.css'

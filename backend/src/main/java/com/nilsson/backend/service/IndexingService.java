@@ -19,9 +19,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- * Service responsible for the background indexing and real-time monitoring of image folders.
- * Bridges the gap between the local file system and the application's data layer.
- * Handles file system events, batch processing, and library reconciliation.
+ * Service responsible for background image indexing and real-time file system monitoring.
+ * <p>
+ * This service acts as the bridge between the local file system and the application's database.
+ * It implements a robust indexing pipeline that handles initial folder scans, background
+ * metadata extraction, and live updates via the Java {@code WatchService}. It utilizes
+ * Virtual Threads (Project Loom) to ensure high-concurrency I/O operations without
+ * blocking the main application threads.
+ * <p>
+ * Key functionalities:
+ * - Library Reconciliation: Synchronizes the database with the disk, removing "ghost" records for deleted files.
+ * - Background Indexing: Processes large batches of images in the background with configurable batch sizes.
+ * - Real-time Monitoring: Watches active directories for file creation, deletion, and modification events.
+ * - Event Debouncing: Implements a debouncing mechanism to prevent redundant processing of rapid file system events.
+ * - Metadata Integration: Coordinates with {@code MetadataService} and {@code UserDataManager} to cache technical data.
  */
 @Service
 public class IndexingService {
@@ -123,7 +134,6 @@ public class IndexingService {
                     onBatchResult.accept(result);
                 }
 
-                // Small yield to prevent hogging CPU if not using virtual threads (though we are)
                 Thread.yield();
             }
             logger.info("Background indexing completed for {} files.", total);
@@ -236,9 +246,8 @@ public class IndexingService {
 
     private void handleFileCreation(File file) {
         try {
-            // Explicitly extract and cache metadata for new/modified files
             Map<String, String> meta = metaService.getExtractedData(file);
-            dataManager.cacheMetadata(file, meta); // This will now correctly save metadata and update FTS
+            dataManager.cacheMetadata(file, meta);
             logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing new file: {}", file.getName(), e);
@@ -265,11 +274,9 @@ public class IndexingService {
         Map<File, Integer> ratingMap = new HashMap<>();
 
         for (File file : batch) {
-            // Explicitly extract and cache metadata for each file in the batch
             Map<String, String> meta = metaService.getExtractedData(file);
-            dataManager.cacheMetadata(file, meta); // This will now correctly save metadata and update FTS
+            dataManager.cacheMetadata(file, meta);
 
-            // After caching, retrieve the rating (which might have been set previously or is default 0)
             int rating = dataManager.getRating(file);
 
             metadataMap.put(file, meta);

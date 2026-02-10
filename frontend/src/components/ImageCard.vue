@@ -1,47 +1,36 @@
 <script setup>
 /**
  * @file ImageCard.vue
- * @description A reusable component for displaying a single image thumbnail in a card format.
- * It features a blurred background effect to fill the aspect ratio and emits a contextmenu
- * event for parent components to handle right-click actions.
+ * @description A compact, high-performance UI component for displaying image thumbnails within a grid or list.
+ *
+ * This component is optimized for use within virtualized containers. It renders an image with a blurred
+ * background effect to maintain a consistent aspect ratio regardless of the source image's dimensions.
+ * It also features an information overlay that displays key metadata (rating, model name, filename)
+ * without requiring additional network requests, as it consumes data passed via the `file` prop.
+ *
+ * Key functionalities:
+ * - Visual Consistency: Implements a "glass" overlay and blurred background for a premium aesthetic.
+ * - Contextual Interaction: Emits a custom `contextmenu` event to allow parent components to handle right-click actions.
+ * - Lazy Loading: Utilizes native browser lazy loading for images to optimize initial page load and scroll performance.
+ * - Responsive Metadata: Conditionally renders star ratings and model information based on availability.
  */
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 import Card from 'primevue/card';
-import axios from 'axios';
 
 const props = defineProps({
-    path: String
+    file: {
+        type: Object,
+        required: true
+    }
 });
 
-const imageUrl = computed(() => `http://localhost:8080/api/images/content?path=${encodeURIComponent(props.path)}`);
+const imageUrl = computed(() => `http://localhost:8080/api/images/content?path=${encodeURIComponent(props.file.path)}`);
 
 const emit = defineEmits(['contextmenu']);
 
 const onRightClick = (event) => {
-  emit('contextmenu', { event, path: props.path });
+  emit('contextmenu', { event, path: props.file.path });
 };
-
-const rating = ref(0);
-const model = ref('');
-
-const fetchMetadata = async () => {
-    try {
-        const response = await axios.get('/api/images/metadata', {
-            params: { path: props.path }
-        });
-        rating.value = response.data.rating || 0;
-        model.value = response.data.Model || '';
-    } catch (error) {
-        // Silent fail for card metadata
-    }
-};
-
-onMounted(() => {
-    // We fetch metadata for the overlay.
-    // Optimization: In a real virtual scroller, we might want to pass this data in
-    // rather than fetching it per card, but for now this meets the requirement.
-    fetchMetadata();
-});
 
 </script>
 
@@ -58,30 +47,25 @@ onMounted(() => {
                          class="relative w-full h-full"
                          style="object-fit: contain;" />
 
-                    <!-- Overlay -->
                     <div class="absolute bottom-0 left-0 w-full p-2 glass-overlay flex flex-column gap-1">
-                        <!-- Top: Stars -->
-                        <div class="flex gap-1" v-if="rating > 0">
+                        <div class="flex gap-1" v-if="file.rating > 0">
                              <i v-for="i in 5" :key="i"
                                 class="pi text-xs"
-                                :class="i <= rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-white-alpha-30'"
+                                :class="i <= file.rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-white-alpha-30'"
                                 style="font-size: 0.7rem"></i>
                         </div>
 
-                        <!-- Middle: Model -->
-                        <div v-if="model" class="text-xs text-white-alpha-80 text-overflow-ellipsis white-space-nowrap overflow-hidden font-semibold">
-                            {{ model }}
+                        <div v-if="file.model" class="text-xs text-white-alpha-80 text-overflow-ellipsis white-space-nowrap overflow-hidden font-semibold">
+                            {{ file.model }}
                         </div>
 
-                        <!-- Bottom: Filename -->
-                        <div class="text-xs text-white text-overflow-ellipsis white-space-nowrap overflow-hidden" :title="path">
-                            {{ path.split(/[\\/]/).pop() }}
+                        <div class="text-xs text-white text-overflow-ellipsis white-space-nowrap overflow-hidden" :title="file.path">
+                            {{ file.path.split(/[\\/]/).pop() }}
                         </div>
                     </div>
                 </div>
             </template>
             <template #content>
-                <!-- Content is now empty as info is in overlay -->
             </template>
         </Card>
     </div>

@@ -7,12 +7,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Service responsible for managing the Full-Text Search (FTS) index.
+ * <p>
+ * This service orchestrates the synchronization between relational image data (metadata and tags)
+ * and the SQLite FTS5 virtual table. It implements specialized tokenization logic to ensure
+ * that complex AI metadata (like LoRAs with strengths) is searchable via clean, predictable tokens.
+ * <p>
+ * Key functionalities:
+ * - Incremental Indexing: Updates the FTS entry for a single image when its metadata or tags change.
+ * - Specialized Tokenization: Formats metadata key-value pairs into searchable tokens (e.g., "Model_SDXL").
+ * - LoRA Parsing: Implements deep cleaning of LoRA strings to index the base name independently of strength values.
+ * - Index Reconstruction: Provides a mechanism to rebuild the entire FTS index from the ground up.
+ */
 @Service
 public class FtsService {
 
@@ -33,13 +45,10 @@ public class FtsService {
         String metadataText = metadataRepository.getMetadata(imageId).entrySet().stream()
                 .map(entry -> {
                     if ("Loras".equals(entry.getKey())) {
-                        // Special handling for Loras: split by comma and index each lora individually
-                        // We want to index the CLEAN name so that searching for "Loras_MyLora" matches
-                        // even if the stored value is "<lora:MyLora:0.8>"
                         return Arrays.stream(entry.getValue().split(","))
                                 .map(String::trim)
                                 .filter(s -> !s.isEmpty())
-                                .map(this::cleanLoraName) // Extract just the name for indexing
+                                .map(this::cleanLoraName)
                                 .map(loraName -> formatFtsToken("Loras", loraName))
                                 .collect(Collectors.joining(" "));
                     }
@@ -63,17 +72,14 @@ public class FtsService {
         if (raw.toLowerCase().startsWith("<lora:")) raw = raw.substring(6);
         if (raw.endsWith(">")) raw = raw.substring(0, raw.length() - 1);
         int lastColon = raw.lastIndexOf(':');
-        // Check if the part after the last colon is numeric (strength)
         if (lastColon > 0 && raw.substring(lastColon + 1).matches("[\\d.]+")) {
             raw = raw.substring(0, lastColon);
         }
-        // Handle cases like <lora:name:1.0:1.0> or similar if they exist, though standard is name:strength
-        // If there's another colon, it might be another parameter, strip it too
         lastColon = raw.lastIndexOf(':');
         if (lastColon > 0 && raw.substring(lastColon + 1).matches("[\\d.]+")) {
-             raw = raw.substring(0, lastColon);
+            raw = raw.substring(0, lastColon);
         }
-        
+
         return raw.trim();
     }
 

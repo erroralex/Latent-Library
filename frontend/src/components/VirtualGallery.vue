@@ -1,4 +1,18 @@
 <script setup>
+/**
+ * @file VirtualGallery.vue
+ * @description A high-performance, grid-based image gallery component utilizing virtual scrolling.
+ *
+ * This component is responsible for rendering large sets of images efficiently by only mounting
+ * elements currently visible in the viewport. It dynamically calculates grid columns based on
+ * the container width and user-defined card size.
+ *
+ * Key functionalities:
+ * - Virtual Scrolling: Uses PrimeVue's VirtualScroller to handle thousands of items with minimal DOM overhead.
+ * - Dynamic Grid: Automatically adjusts the number of columns when the window is resized or the card size changes.
+ * - Smart Scrolling: Monitors selection changes to ensure the active image is always scrolled into view.
+ * - Infinite Loading: Triggers pagination/lazy-loading when the user nears the bottom of the list.
+ */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useBrowserStore } from '@/stores/browser';
 import ImageCard from '@/components/ImageCard.vue';
@@ -9,6 +23,10 @@ const galleryContainer = ref(null);
 const scrollerRef = ref(null);
 const gridCols = ref(4);
 
+/**
+ * Chunks the flat file list into rows based on the current grid column count.
+ * This is required for the VirtualScroller to render a grid layout.
+ */
 const chunkedFiles = computed(() => {
     const chunks = [];
     for (let i = 0; i < store.files.length; i += gridCols.value) {
@@ -23,28 +41,23 @@ const updateGridCols = () => {
     if (!el) return;
 
     const containerWidth = el.clientWidth;
-    const cardWidth = store.cardSize + 16; // card size + gap
+    const cardWidth = store.cardSize + 16;
     const cols = Math.floor(containerWidth / cardWidth) || 1;
     gridCols.value = cols;
 };
 
-// Watch for cardSize changes to recalculate grid columns immediately
 watch(() => store.cardSize, () => {
     updateGridCols();
 });
 
-// Watch for selected file changes to scroll to it
 watch(() => store.selectedFile, async (newFile) => {
     if (!newFile || !scrollerRef.value) return;
 
-    // Find which chunk (row) contains the selected file
-    const rowIndex = chunkedFiles.value.findIndex(chunk => chunk.includes(newFile));
+    const rowIndex = chunkedFiles.value.findIndex(chunk => chunk.some(f => f.path === newFile));
 
     if (rowIndex !== -1) {
         await nextTick();
 
-        // Manual scroll logic to ensure the item is in view (smart scrolling)
-        // We prefer this over scrollToIndex which always snaps to top
         const scrollerEl = scrollerRef.value.$el;
         if (scrollerEl) {
             const itemSize = store.cardSize + 16;
@@ -55,10 +68,8 @@ watch(() => store.selectedFile, async (newFile) => {
             const clientHeight = scrollerEl.clientHeight;
 
             if (rowTop < scrollTop) {
-                // Item is above visible area -> Scroll up to show it at top
                 scrollerEl.scrollTop = rowTop;
             } else if (rowBottom > scrollTop + clientHeight) {
-                // Item is below visible area -> Scroll down to show it at bottom
                 scrollerEl.scrollTop = rowBottom - clientHeight;
             }
         }
@@ -68,7 +79,6 @@ watch(() => store.selectedFile, async (newFile) => {
 let resizeObserver;
 
 onMounted(() => {
-    // We need to wait for the element to be available
     setTimeout(() => {
         if (galleryContainer.value) {
             const el = galleryContainer.value.$el || galleryContainer.value;
@@ -107,15 +117,14 @@ defineExpose({ gridCols });
                           @scroll-index-change="onScrollIndexChange">
             <template v-slot:item="{ item, options }">
                 <div class="flex gap-2 justify-content-center" :style="{ height: (store.cardSize + 8) + 'px', marginBottom: '8px' }">
-                    <div v-for="file in item" :key="file"
+                    <div v-for="file in item" :key="file.path"
                          :style="{ width: store.cardSize + 'px', height: store.cardSize + 'px' }"
                          class="border-round transition-all transition-duration-100"
-                         :class="{ 'outline-active': store.selectedFile === file }"
+                         :class="{ 'outline-active': store.selectedFile === file.path }"
                          @click="store.selectFile(file)"
                          @dblclick="handleGalleryItemDoubleClick(file)">
-                        <ImageCard :path="file" />
+                        <ImageCard :file="file" />
                     </div>
-                    <!-- Fill empty space in the last row to align left if needed, or center as per flex -->
                 </div>
             </template>
          </VirtualScroller>

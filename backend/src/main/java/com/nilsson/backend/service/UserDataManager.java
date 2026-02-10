@@ -1,6 +1,7 @@
 package com.nilsson.backend.service;
 
 import com.nilsson.backend.model.CreateCollectionRequest;
+import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.PinnedFolderRepository;
@@ -23,6 +24,21 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * High-level facade service for managing user data, application state, and complex business logic.
+ * <p>
+ * This service acts as the primary orchestrator for the application's data layer. It aggregates
+ * functionality from multiple specialized services and repositories to provide a unified API
+ * for the controller layer. It handles complex operations such as multi-filter searching,
+ * file movement detection (via hashing), and metadata value normalization.
+ * <p>
+ * Key functionalities:
+ * - Unified Data Access: Provides a single entry point for images, collections, tags, and settings.
+ * - Advanced Search Orchestration: Combines FTS5 search with relational filtering and DTO mapping.
+ * - File Integrity: Implements SHA-256 hashing to detect file moves and maintain database consistency.
+ * - Metadata Normalization: Cleans and formats raw metadata values (e.g., LoRAs, Samplers) for UI display.
+ * - System Integration: Manages OS-level operations like moving files to the system trash.
+ */
 @Service
 public class UserDataManager {
 
@@ -119,27 +135,27 @@ public class UserDataManager {
         return raw.trim();
     }
 
-    public CompletableFuture<List<File>> findFilesWithFilters(String query, Map<String, String> filters, int offset, int limit) {
+    public CompletableFuture<List<ImageDTO>> findFilesWithFilters(String query, Map<String, String> filters, int offset, int limit) {
         return CompletableFuture.supplyAsync(() -> {
-            long start = System.currentTimeMillis();
             Map<String, List<String>> listFilters = new java.util.HashMap<>();
             if (filters != null) {
                 filters.forEach((k, v) -> {
-                    // Special handling for Loras to support partial matching
-                    if ("Loras".equals(k)) {
-                        // We don't change the key here, but the repository needs to know how to handle it
-                        // For now, we just pass it through. The repository logic for FTS should handle partial matches
-                        // if we format the token correctly.
-                        listFilters.put(k, Collections.singletonList(v));
-                    } else {
-                        listFilters.put(k, Collections.singletonList(v));
-                    }
+                    listFilters.put(k, Collections.singletonList(v));
                 });
             }
 
             List<String> paths = searchRepository.findPaths(query, listFilters, offset, limit);
             return paths.stream()
-                    .map(pathService::resolve)
+                    .map(path -> {
+                        File file = pathService.resolve(path);
+                        int rating = getRating(file);
+                        String model = "";
+                        if (hasCachedMetadata(file)) {
+                            Map<String, String> meta = getCachedMetadata(file);
+                            model = meta.getOrDefault("Model", "");
+                        }
+                        return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
+                    })
                     .collect(Collectors.toList());
         });
     }

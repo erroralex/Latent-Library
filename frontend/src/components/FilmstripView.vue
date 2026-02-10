@@ -1,9 +1,17 @@
 <script setup>
 /**
  * @file FilmstripView.vue
- * @description A horizontal, carousel-style list of image thumbnails. This component
- * keeps the currently selected image centered in the view, with other images scrolling
- * horizontally around it.
+ * @description A horizontal, carousel-style navigation component that displays a "filmstrip" of image thumbnails.
+ *
+ * This component is designed to provide quick visual context and navigation within the current image set.
+ * It features a dynamic centering mechanism that automatically scrolls the selected image into the center
+ * of the view using CSS transforms.
+ *
+ * Key functionalities:
+ * - Reactive centering: Calculates the necessary translateX offset based on the selected image's index and container width.
+ * - Smooth transitions: Uses CSS transitions for fluid movement when the selection changes.
+ * - Responsive design: Utilizes ResizeObserver to adapt centering logic to container size changes.
+ * - Interactive thumbnails: Allows users to select images directly from the strip.
  */
 import { useBrowserStore } from '@/stores/browser';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
@@ -12,36 +20,30 @@ const store = useBrowserStore();
 const containerRef = ref(null);
 const containerWidth = ref(0);
 
-// --- Carousel Logic ---
-const ITEM_WIDTH = 120; // From CSS width
-const ITEM_GAP = 8;    // From `gap-2` class (0.5rem)
+const ITEM_WIDTH = 120;
+const ITEM_GAP = 8;
 const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_GAP;
 
-// This computed property is the core of the carousel logic.
-// It calculates the exact `translateX` offset needed to center the selected item.
+/**
+ * Calculates the exact `translateX` offset needed to center the selected item within the container.
+ * This is the core logic for the carousel's positioning.
+ */
 const carouselOffset = computed(() => {
   if (!store.selectedFile || containerWidth.value === 0) {
     return 0;
   }
 
-  const selectedIndex = store.files.indexOf(store.selectedFile);
+  const selectedIndex = store.files.findIndex(f => f.path === store.selectedFile);
   if (selectedIndex === -1) {
     return 0;
   }
 
-  // Calculate the position of the center of the selected item
   const selectedItemCenter = (selectedIndex * TOTAL_ITEM_WIDTH) + (TOTAL_ITEM_WIDTH / 2);
-
-  // Calculate the position of the center of the filmstrip container
   const containerCenter = containerWidth.value / 2;
 
-  // The offset is the difference, which will shift the items container
-  // so that the two centers align.
   return containerCenter - selectedItemCenter;
 });
 
-// We need to know the width of the container to center things correctly.
-// A ResizeObserver is the most robust way to do this.
 let resizeObserver;
 onMounted(() => {
   if (containerRef.value) {
@@ -63,20 +65,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- The outer container clips the content -->
   <div ref="containerRef" class="filmstrip-view filmstrip-glass h-10rem flex align-items-center overflow-hidden">
-    <!-- The inner container is moved with a CSS transform -->
     <div
         class="flex flex-nowrap gap-2 px-2 transition-transform duration-500 ease-in-out"
         :style="{ transform: `translateX(${carouselOffset}px)` }"
     >
-      <div v-for="file in store.files" :key="file"
+      <div v-for="file in store.files" :key="file.path"
            class="filmstrip-item flex-shrink-0 cursor-pointer border-round"
-           :class="{ 'selected-item': store.selectedFile === file }"
+           :class="{ 'selected-item': store.selectedFile === file.path }"
            @click="store.selectFile(file)">
 
         <div class="relative border-round overflow-hidden flex align-items-center justify-content-center" :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
-          <img :src="`http://localhost:8080/api/images/content?path=${encodeURIComponent(file)}`"
+          <img :src="`http://localhost:8080/api/images/content?path=${encodeURIComponent(file.path)}`"
                loading="lazy"
                class="w-full h-full"
                style="object-fit: contain;" />
@@ -137,7 +137,6 @@ onUnmounted(() => {
   z-index: -1;
 }
 
-/* Helper for smooth transitions on the transform property */
 .transition-transform {
     transition-property: transform;
 }
