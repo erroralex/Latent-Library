@@ -47,8 +47,9 @@ public class SearchRepository {
         List<String> ftsClauses = new ArrayList<>();
 
         if (query != null && !query.isBlank()) {
+            // Replace non-alphanumeric characters with spaces to allow for standard tokenization
             String generalQuery = Arrays.stream(query.trim().split("\\s+"))
-                    .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll("_") + "*")
+                    .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll(" ") + "*")
                     .collect(Collectors.joining(" AND "));
             ftsClauses.add("(" + generalQuery + ")");
         }

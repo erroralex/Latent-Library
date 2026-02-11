@@ -36,7 +36,7 @@ public class DatabaseService implements DisposableBean {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
-    private static final String DATA_DIR_NAME = ".aitoolbox";
+    private static final String DATA_DIR_NAME = "data";
     private static final String DB_FILE_NAME = "library.db";
 
     private final HikariDataSource dataSource;
@@ -70,15 +70,16 @@ public class DatabaseService implements DisposableBean {
 
     private static String resolvePortableDbUrl() {
         try {
-            Path appDir = Paths.get(System.getProperty("user.home")).resolve(DATA_DIR_NAME);
+            // Check for "data" folder in current working directory (Portable Mode)
+            Path appDir = Paths.get(".").resolve(DATA_DIR_NAME).toAbsolutePath().normalize();
 
             if (!Files.exists(appDir)) {
-                logger.info("Data directory missing. Creating: {}", appDir.toAbsolutePath());
+                logger.info("Data directory missing. Creating: {}", appDir);
                 Files.createDirectories(appDir);
             }
 
             Path dbPath = appDir.resolve(DB_FILE_NAME);
-            return "jdbc:sqlite:" + dbPath.toAbsolutePath();
+            return "jdbc:sqlite:" + dbPath.toString();
 
         } catch (IOException e) {
             logger.error("Failed to initialize data directory.", e);
