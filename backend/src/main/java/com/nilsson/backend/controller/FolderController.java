@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/folders")
-@CrossOrigin(origins = "http://localhost:5173")
 public class FolderController {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderController.class);

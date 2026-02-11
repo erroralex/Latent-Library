@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/library")
-@CrossOrigin(origins = "http://localhost:5173")
 public class LibraryController {
 
     private final IndexingService indexingService;

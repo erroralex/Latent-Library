@@ -26,7 +26,6 @@ import java.io.IOException;
  */
 @RestController
 @RequestMapping("/api/system")
-@CrossOrigin(origins = "http://localhost:5173")
 public class SystemController {
 
     private final ConfigurableApplicationContext context;

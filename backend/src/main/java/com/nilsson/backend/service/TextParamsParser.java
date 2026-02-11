@@ -1,8 +1,8 @@
-package com.nilsson.backend.service.parser;
+package com.nilsson.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nilsson.backend.service.strategy.*;
+import com.nilsson.backend.strategy.*;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;

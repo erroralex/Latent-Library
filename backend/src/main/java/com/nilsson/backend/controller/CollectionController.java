@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/collections")
-@CrossOrigin(origins = "http://localhost:5173")
 public class CollectionController {
 
     private final UserDataManager dataManager;
