@@ -18,10 +18,12 @@ import { RouterView, useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button';
 import { ref } from "vue";
 import FolderNav from '@/components/FolderNav.vue';
+import { useBrowserStore } from '@/stores/browser';
+import { onMounted } from 'vue';
 
 const router = useRouter();
 const route = useRoute();
-
+const store = useBrowserStore();
 const items = ref([
   {
     label: 'Gallery',

@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
  */
 @RestController
 @RequestMapping("/api/images")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ImageController {
 
     private final UserDataManager dataManager;
@@ -112,22 +111,19 @@ public class ImageController {
             if (!file.exists()) return ResponseEntity.notFound().build();
 
             Resource resource = new UrlResource(file.toURI());
-            String contentType = null;
-            try {
-                contentType = Files.probeContentType(file.toPath());
-            } catch (Exception e) {
-                // ignore
-            }
 
+            String contentType = Files.probeContentType(file.toPath());
             if (contentType == null) {
                 contentType = "image/jpeg";
             }
 
             return ResponseEntity.ok()
+                    .contentLength(file.length())
                     .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(resource);
-        } catch (MalformedURLException e) {
+
+        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -147,6 +143,7 @@ public class ImageController {
             Resource resource = new UrlResource(thumbnail.toURI());
 
             return ResponseEntity.ok()
+                    .contentLength(thumbnail.length())
                     .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())
                     .contentType(MediaType.IMAGE_JPEG)
                     .body(resource);

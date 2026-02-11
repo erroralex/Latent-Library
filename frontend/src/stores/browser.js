@@ -17,11 +17,14 @@ import axios from 'axios';
  * - **Pagination:** Manages infinite scroll state, including page offsets and loading indicators.
  * - **Preloading:** Manages background preloading of adjacent images for smoother navigation.
  */
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],
         selectedFile: null,
-        viewMode: 'browser',
+        viewMode: 'gallery',
         searchQuery: '',
         isLoading: false,
         currentMetadata: {},
@@ -49,11 +52,38 @@ export const useBrowserStore = defineStore('browser', {
     }),
 
     actions: {
+        /**
+         * Polls the backend to ensure it is ready before attempting to load data.
+         * Prevents the "infinite spinner" race condition on application startup.
+         */
+        async waitForBackend(retries = 20) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    // Check a lightweight endpoint to confirm server availability
+                    await axios.get('/api/images/filters');
+                    return true;
+                } catch (e) {
+                    console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
+                    await delay(500);
+                }
+            }
+            throw new Error('Backend connection timeout: Server failed to start.');
+        },
+
         async initialize() {
-            await this.loadFilters();
-            this.lastFolderPath = localStorage.getItem('lastFolder');
-            if (this.lastFolderPath) {
-                await this.loadFolder(this.lastFolderPath);
+            this.isLoading = true;
+            try {
+                await this.waitForBackend();
+
+                await this.loadFilters();
+                this.lastFolderPath = localStorage.getItem('lastFolder');
+                if (this.lastFolderPath) {
+                    await this.loadFolder(this.lastFolderPath);
+                }
+            } catch (error) {
+                console.error("Initialization failed:", error);
+            } finally {
+                this.isLoading = false;
             }
         },
 
@@ -246,7 +276,7 @@ export const useBrowserStore = defineStore('browser', {
 
             const preload = (path) => {
                 const img = new Image();
-                img.src = `http://localhost:8080/api/images/content?path=${encodeURIComponent(path)}`;
+                img.src = `/api/images/content?path=${encodeURIComponent(path)}`;
             };
 
             preload(this.files[nextIndex].path);
