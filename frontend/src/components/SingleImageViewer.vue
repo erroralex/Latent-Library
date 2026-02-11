@@ -58,11 +58,29 @@ const resetZoom = () => {
   isDragging.value = false;
 };
 
-watch(mainImageUrl, () => {
+// Programmatic image loading to prevent spinner race conditions
+watch(mainImageUrl, (newUrl) => {
   resetZoom();
   isHighResReady.value = false;
   hasLoadError.value = false;
-});
+
+  if (!newUrl) return;
+
+  const img = new Image();
+  img.onload = () => {
+    // Ensure we are still looking at the same image
+    if (mainImageUrl.value === newUrl) {
+      isHighResReady.value = true;
+    }
+  };
+  img.onerror = () => {
+    if (mainImageUrl.value === newUrl) {
+      hasLoadError.value = true;
+      isHighResReady.value = true; // Stop spinner even on error
+    }
+  };
+  img.src = newUrl;
+}, { immediate: true });
 
 const onWheel = (e) => {
   e.preventDefault();
@@ -185,8 +203,6 @@ onUnmounted(() => {
            :class="{ 'opacity-100': isHighResReady, 'opacity-0': !isHighResReady }"
            style="transition: opacity 0.3s ease;"
            :style="imageStyle"
-           @load="isHighResReady = true"
-           @error="hasLoadError = true; isHighResReady = true"
            @click="handleImageClick"
            draggable="false"/>
 

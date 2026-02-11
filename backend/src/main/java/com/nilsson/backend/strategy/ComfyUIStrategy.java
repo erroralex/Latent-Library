@@ -1,4 +1,4 @@
-package com.nilsson.backend.service.strategy;
+package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
