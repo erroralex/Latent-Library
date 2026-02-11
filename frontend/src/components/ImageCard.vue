@@ -25,7 +25,8 @@ const props = defineProps({
   }
 });
 
-const imageUrl = computed(() => `http://localhost:8080/api/images/thumbnail?path=${encodeURIComponent(props.file.path)}`);
+// Use relative path for portability
+const imageUrl = computed(() => `/api/images/thumbnail?path=${encodeURIComponent(props.file.path)}`);
 
 const emit = defineEmits(['contextmenu']);
 
