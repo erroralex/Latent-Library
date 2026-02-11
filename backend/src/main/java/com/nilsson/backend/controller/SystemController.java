@@ -58,10 +58,14 @@ public class SystemController {
 
     @PostMapping("/shutdown")
     public ResponseEntity<String> shutdown() {
+        logger.info("Shutdown request received via API.");
+
         new Thread(() -> {
             try {
-                Thread.sleep(100);
+                Thread.sleep(500);
+                logger.info("Closing application context...");
                 context.close();
+                System.exit(0);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -76,19 +80,26 @@ public class SystemController {
 
         if (!folder.exists() || !folder.isDirectory()) {
             logger.warn("Folder not found: {}", folder.getAbsolutePath());
-            return ResponseEntity.badRequest().body("Folder does not exist or is not a directory: " + folder.getAbsolutePath());
+            return ResponseEntity.badRequest().body("Folder does not exist: " + folder.getAbsolutePath());
         }
 
-        if (Desktop.isDesktopSupported()) {
-            try {
-                Desktop.getDesktop().open(folder);
-                return ResponseEntity.ok("Opened");
-            } catch (IOException e) {
-                logger.error("Failed to open folder: {}", path, e);
-                return ResponseEntity.internalServerError().body("Failed to open folder: " + e.getMessage());
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                // Windows: Use explorer.exe
+                new ProcessBuilder("explorer.exe", folder.getAbsolutePath()).start();
+            } else if (os.contains("mac")) {
+                // macOS: Use open command
+                new ProcessBuilder("open", folder.getAbsolutePath()).start();
+            } else {
+                // Linux: Try xdg-open
+                new ProcessBuilder("xdg-open", folder.getAbsolutePath()).start();
             }
+            return ResponseEntity.ok("Opened");
+        } catch (IOException e) {
+            logger.error("Failed to open folder: {}", path, e);
+            return ResponseEntity.internalServerError().body("Failed to open folder: " + e.getMessage());
         }
-        return ResponseEntity.internalServerError().body("Desktop API not supported");
     }
 
     @PostMapping("/show-in-explorer")

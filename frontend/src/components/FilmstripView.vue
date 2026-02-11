@@ -78,7 +78,7 @@ onUnmounted(() => {
 
         <div class="relative border-round overflow-hidden flex align-items-center justify-content-center"
              :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
-          <img :src="`http://localhost:8080/api/images/thumbnail?path=${encodeURIComponent(file.path)}`"
+          <img :src="`/api/images/thumbnail?path=${encodeURIComponent(file.path)}`"
                loading="lazy"
                class="w-full h-full"
                style="object-fit: contain;"/>
