@@ -52,11 +52,15 @@ function createWindow() {
 
 function startBackend() {
     const devJarPath = path.join(__dirname, '../backend/target', JAR_NAME);
+    // Use the backend project root as CWD so the 'data' folder is created there,
+    // avoiding deletion by 'mvn clean' (which wipes 'target').
+    const projectRoot = path.join(__dirname, '../backend');
 
-    console.log('Starting backend from:', devJarPath);
+    console.log('Starting backend JAR:', devJarPath);
+    console.log('Backend Working Directory:', projectRoot);
 
     backendProcess = spawn('java', ['-jar', devJarPath], {
-        cwd: path.dirname(devJarPath)
+        cwd: projectRoot
     });
 
     backendProcess.stdout.on('data', (data) => {
