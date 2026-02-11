@@ -48,6 +48,7 @@ public class IndexingService {
     private final PathService pathService;
     private final ThumbnailService thumbnailService;
     private final ExecutorService executor;
+    private final FtsService ftsService; // Added FtsService dependency
 
     private WatchService watchService;
     private Thread watchThread;
@@ -58,12 +59,14 @@ public class IndexingService {
                            MetadataService metaService,
                            UserDataManager dataManager,
                            PathService pathService,
-                           ThumbnailService thumbnailService) {
+                           ThumbnailService thumbnailService,
+                           FtsService ftsService) { // Inject FtsService
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
         this.pathService = pathService;
         this.thumbnailService = thumbnailService;
+        this.ftsService = ftsService;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -286,15 +289,19 @@ public class IndexingService {
         Map<File, Integer> ratingMap = new HashMap<>();
 
         for (File file : batch) {
-            Map<String, String> meta = metaService.getExtractedData(file);
-            dataManager.cacheMetadata(file, meta);
+            try {
+                Map<String, String> meta = metaService.getExtractedData(file);
+                dataManager.cacheMetadata(file, meta);
 
-            int rating = dataManager.getRating(file);
+                int rating = dataManager.getRating(file);
 
-            metadataMap.put(file, meta);
-            ratingMap.put(file, rating);
+                metadataMap.put(file, meta);
+                ratingMap.put(file, rating);
 
-            thumbnailService.getThumbnail(file);
+                thumbnailService.getThumbnail(file);
+            } catch (Exception e) {
+                logger.error("Failed to index file: {}", file.getAbsolutePath(), e);
+            }
         }
 
         return new BatchResult(metadataMap, ratingMap);

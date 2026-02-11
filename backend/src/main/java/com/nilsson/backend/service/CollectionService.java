@@ -5,6 +5,7 @@ import com.nilsson.backend.repository.CollectionRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.SearchRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +47,13 @@ public class CollectionService {
         return collectionRepository.get(name);
     }
 
+    @Transactional
     public void createCollection(CreateCollectionRequest request) {
         collectionRepository.create(request.name(), request.isSmart(), request.filters());
         populateSmartCollection(request);
     }
 
+    @Transactional
     public void updateCollection(CreateCollectionRequest request) {
         collectionRepository.update(request.name(), request.isSmart(), request.filters());
         if (request.isSmart()) {
@@ -103,6 +106,7 @@ public class CollectionService {
         }
     }
 
+    @Transactional
     public List<String> getFilePathsFromCollection(String collectionName) {
         Optional<CreateCollectionRequest> details = collectionRepository.get(collectionName);
         if (details.isPresent() && details.get().isSmart()) {

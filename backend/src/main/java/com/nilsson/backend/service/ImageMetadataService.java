@@ -60,7 +60,7 @@ public class ImageMetadataService {
     }
 
     @Transactional
-    private void saveMetadataAndIndex(int imageId, Map<String, String> meta) {
+    protected void saveMetadataAndIndex(int imageId, Map<String, String> meta) {
         if (imageId > 0 && meta != null && !meta.isEmpty()) {
             imageMetadataRepository.saveMetadata(imageId, meta);
             ftsService.updateFtsIndex(imageId);
