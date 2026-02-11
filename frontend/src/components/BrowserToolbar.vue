@@ -204,6 +204,13 @@ const refreshFilters = () => {
   backdrop-filter: blur(10px);
 }
 
+.glass-input:enabled:focus {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: transparent !important;
+  border-image: var(--app-grad-hover) 1 !important;
+}
+
 :deep(.p-toolbar) {
   background: transparent !important;
   border: none !important;

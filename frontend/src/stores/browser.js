@@ -24,7 +24,7 @@ export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],
         selectedFile: null,
-        viewMode: 'gallery',
+        viewMode: 'browser',
         searchQuery: '',
         isLoading: false,
         currentMetadata: {},
