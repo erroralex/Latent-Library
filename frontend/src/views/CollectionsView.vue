@@ -192,7 +192,7 @@ const fetchCollections = async () => {
 };
 
 const navigateToCollection = (collectionName) => {
-  router.push({path: '/browser', query: {collection: collectionName}});
+  router.push({path: '/', query: {collection: collectionName}});
 };
 
 const onCardContextMenu = (event, collectionName) => {

@@ -144,10 +144,13 @@ const onNodeExpand = async (node) => {
 const onNodeSelect = async (node) => {
   const actualNode = node.node || node;
   if (actualNode.type === 'collection') {
-    router.push({path: '/browser', query: {collection: actualNode.data}});
+    router.push({path: '/', query: {collection: actualNode.data}});
   } else if (actualNode.data?.path) {
     try {
       await store.loadFolder(actualNode.data.path);
+      if (router.currentRoute.value.path !== '/') {
+        router.push('/');
+      }
     } catch (e) {
       toast.add({severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000});
     }
