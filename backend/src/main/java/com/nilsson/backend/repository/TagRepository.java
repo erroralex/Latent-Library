@@ -10,14 +10,20 @@ import java.util.Set;
 /**
  * Repository for managing user-defined tags associated with images.
  * <p>
- * This class provides persistent storage operations for the many-to-many relationship between images and tags.
- * It utilizes the {@code image_tags} table to store unique tag strings per image ID. Tags are used to
- * augment the searchability of images beyond their embedded metadata and are indexed in the FTS5 system.
+ * This class provides persistent storage operations for the many-to-many relationship between images
+ * and tags. It utilizes the {@code image_tags} table to store unique tag strings per image ID.
+ * Tags are used to augment the searchability of images beyond their embedded technical metadata
+ * and are integrated into the SQLite FTS5 search index.
  * <p>
- * Key functionalities:
- * - Tag Association: Adds new tags to an image while preventing duplicates via {@code INSERT OR IGNORE}.
- * - Tag Removal: Deletes specific tag associations for a given image.
- * - Retrieval: Fetches the complete set of tags for a specific image ID.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Tag Association:</b> Persists new tags for an image, utilizing {@code INSERT OR IGNORE}
+ *   to prevent duplicate entries for the same image-tag pair.</li>
+ *   <li><b>Tag Removal:</b> Deletes specific tag associations, allowing users to refine their
+ *   image organization.</li>
+ *   <li><b>Retrieval:</b> Fetches the complete set of tags for a specific image ID, returning
+ *   them as a {@link Set} for efficient membership checks.</li>
+ * </ul>
  */
 @Repository
 public class TagRepository {

@@ -13,17 +13,24 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Service responsible for managing the Full-Text Search (FTS) index.
+ * Service responsible for managing the Full-Text Search (FTS) index using SQLite's FTS5 extension.
  * <p>
  * This service orchestrates the synchronization between relational image data (metadata and tags)
- * and the SQLite FTS5 virtual table. It implements specialized tokenization logic to ensure
- * that complex AI metadata (like LoRAs with strengths) is searchable via clean, predictable tokens.
+ * and the FTS virtual table. It implements specialized tokenization logic to ensure that complex
+ * AI metadata, such as LoRAs with strength values and technical generation parameters, is
+ * searchable via clean, predictable tokens.
  * <p>
- * Key functionalities:
- * - Incremental Indexing: Updates the FTS entry for a single image when its metadata or tags change.
- * - Specialized Tokenization: Formats metadata key-value pairs into searchable tokens (e.g., "Model_SDXL").
- * - LoRA Parsing: Implements deep cleaning of LoRA strings to index the base name independently of strength values.
- * - Index Reconstruction: Provides a mechanism to rebuild the entire FTS index from the ground up.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Incremental Indexing:</b> Updates the FTS entry for a specific image whenever its
+ *   metadata or tags are modified, ensuring real-time search accuracy.</li>
+ *   <li><b>Specialized Tokenization:</b> Formats metadata key-value pairs into searchable tokens
+ *   (e.g., "Model_SDXL") to allow for precise field-based filtering within the global text index.</li>
+ *   <li><b>LoRA Parsing:</b> Implements deep cleaning of LoRA strings to index the base name
+ *   independently of strength values (e.g., {@code <lora:name:0.8>} becomes {@code Loras_name}).</li>
+ *   <li><b>Index Reconstruction:</b> Provides a comprehensive mechanism to rebuild the entire
+ *   FTS index from the ground up, typically used for maintenance or after schema changes.</li>
+ * </ul>
  */
 @Service
 public class FtsService {
@@ -56,7 +63,6 @@ public class FtsService {
                                 .collect(Collectors.joining(" "));
                     }
 
-                    // Index prompts as raw text to allow natural language search
                     if ("Prompt".equals(key) || "Negative".equals(key)) {
                         return value;
                     }

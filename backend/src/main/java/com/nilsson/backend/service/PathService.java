@@ -11,15 +11,20 @@ import java.nio.file.Path;
 /**
  * Utility service for path normalization and resolution in a local-first environment.
  * <p>
- * This service provides a centralized mechanism for handling file system paths. It ensures
- * that paths are consistently formatted (e.g., using forward slashes) and correctly resolved
- * across different operating systems. Unlike traditional web applications, this service
- * operates in an "open" mode, allowing navigation across the entire local file system.
+ * This service provides a centralized mechanism for handling file system paths across the application.
+ * It ensures that paths are consistently formatted (e.g., using forward slashes) and correctly
+ * resolved regardless of the host operating system. Designed for a local file browser context,
+ * it allows for navigation across the entire accessible file system.
  * <p>
- * Key functionalities:
- * - Path Normalization: Converts OS-specific paths into a consistent, forward-slash format.
- * - Safe Resolution: Resolves string-based paths into {@code File} objects while handling invalid segments.
- * - Absolute Path Generation: Provides a reliable way to obtain normalized absolute paths for database storage.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Path Normalization:</b> Converts OS-specific path separators into a consistent,
+ *   web-friendly forward-slash format to prevent database inconsistencies.</li>
+ *   <li><b>Safe Resolution:</b> Resolves string-based paths into {@link File} objects,
+ *   providing robust error handling for malformed or illegal path segments.</li>
+ *   <li><b>Absolute Path Generation:</b> Provides a reliable way to obtain normalized absolute
+ *   paths for persistent storage and cross-service communication.</li>
+ * </ul>
  */
 @Service
 public class PathService {

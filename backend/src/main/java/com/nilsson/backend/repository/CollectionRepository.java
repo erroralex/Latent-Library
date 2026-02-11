@@ -15,17 +15,25 @@ import java.util.Optional;
 /**
  * Repository for managing image collections and their relational associations.
  * <p>
- * This class handles the persistence of both static and smart collections. It manages the
- * {@code collections} table, which stores collection definitions (including serialized JSON
- * filters for smart collections), and the {@code collection_images} join table, which
- * maintains the many-to-many relationship between images and collections.
+ * This class handles the persistence of both "Static Collections" (manual associations) and
+ * "Smart Collections" (dynamic, filter-based groupings). It manages the {@code collections}
+ * table, which stores collection definitions and serialized JSON filters, and the
+ * {@code collection_images} join table, which maintains the many-to-many relationship
+ * between images and collections.
  * <p>
- * Key functionalities:
- * - Collection CRUD: Implements full lifecycle management for collection entities.
- * - Smart Filter Persistence: Serializes and deserializes complex search criteria using Jackson.
- * - Membership Management: Handles adding images to collections and clearing memberships.
- * - Path Resolution: Retrieves absolute file system paths for all images within a specific collection.
- * - Atomic Operations: Utilizes {@code INSERT OR IGNORE} to safely manage image associations.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Collection CRUD:</b> Implements full lifecycle management for collection entities,
+ *   including creation, updates, and deletion.</li>
+ *   <li><b>Smart Filter Persistence:</b> Serializes and deserializes complex search criteria
+ *   using Jackson to store dynamic collection rules in the database.</li>
+ *   <li><b>Membership Management:</b> Handles adding images to collections, distinguishing
+ *   between manual additions and smart population, and managing blacklisted exclusions.</li>
+ *   <li><b>Path Resolution:</b> Retrieves absolute file system paths for all images within
+ *   a specific collection, respecting user-defined exclusions.</li>
+ *   <li><b>Atomic Operations:</b> Utilizes {@code INSERT OR IGNORE} and transactional updates
+ *   to safely manage image associations and collection state.</li>
+ * </ul>
  */
 @Repository
 public class CollectionRepository {
@@ -115,7 +123,6 @@ public class CollectionRepository {
 
     public void addImage(String collectionName, int imageId) {
         if (collectionName == null) return;
-        // Set is_manual = 1 for explicit additions
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 1 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)
@@ -126,7 +133,6 @@ public class CollectionRepository {
 
     public void removeAllImages(String collectionName) {
         if (collectionName == null) return;
-        // Only remove non-manual images (smart population)
         String sql = "DELETE FROM collection_images WHERE collection_id = (SELECT id FROM collections WHERE name = ?) AND is_manual = 0";
         jdbcClient.sql(sql)
                 .param(collectionName.trim())
@@ -135,7 +141,6 @@ public class CollectionRepository {
 
     public List<String> getFilePaths(String collectionName) {
         if (collectionName == null) return List.of();
-        // Exclude blacklisted images
         String sql = """
             SELECT i.file_path 
             FROM images i 
@@ -177,7 +182,6 @@ public class CollectionRepository {
     
     public void addSmartImage(String collectionName, int imageId) {
         if (collectionName == null) return;
-        // is_manual = 0 for smart population
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 0 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)

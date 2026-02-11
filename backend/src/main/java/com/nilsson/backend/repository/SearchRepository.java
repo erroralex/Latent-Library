@@ -15,19 +15,27 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Repository for executing complex, high-performance image searches.
+ * Repository for executing complex, high-performance image searches using relational and full-text indexing.
  * <p>
  * This class is the primary engine for the application's search functionality. It orchestrates
  * queries against both the standard relational {@code images} table and the specialized
  * {@code metadata_fts} virtual table (SQLite FTS5). It dynamically constructs SQL queries
- * that combine full-text search clauses with relational filters like star ratings.
+ * that combine full-text search clauses with relational filters like star ratings and
+ * collection memberships.
  * <p>
- * Key functionalities:
- * - FTS5 Integration: Implements advanced full-text search with prefix matching and tokenization.
- * - Dynamic Query Building: Constructs complex {@code JOIN} and {@code WHERE} clauses based on active filters.
- * - Multi-Filter Support: Handles concurrent filtering by model, sampler, LoRA, and rating.
- * - Token Sanitization: Ensures search terms are correctly formatted to match the FTS5 index tokens.
- * - Pagination: Implements {@code LIMIT} and {@code OFFSET} for efficient frontend data loading.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>FTS5 Integration:</b> Implements advanced full-text search with prefix matching and
+ *   custom tokenization to allow for natural language and field-specific queries.</li>
+ *   <li><b>Dynamic Query Building:</b> Constructs complex {@code JOIN} and {@code WHERE} clauses
+ *   on-the-fly based on the active set of user-defined filters.</li>
+ *   <li><b>Multi-Filter Support:</b> Handles concurrent filtering by Model, Sampler, LoRA,
+ *   Rating, and Collection, ensuring precise result sets.</li>
+ *   <li><b>Token Sanitization:</b> Ensures search terms are correctly formatted to match the
+ *   FTS5 index tokens, preventing SQL injection and improving match accuracy.</li>
+ *   <li><b>Pagination:</b> Implements efficient {@code LIMIT} and {@code OFFSET} logic to
+ *   support high-performance scrolling in the frontend.</li>
+ * </ul>
  */
 @Repository
 public class SearchRepository {
@@ -51,7 +59,6 @@ public class SearchRepository {
         List<String> ftsClauses = new ArrayList<>();
 
         if (query != null && !query.isBlank()) {
-            // Replace non-alphanumeric characters with spaces to allow for standard tokenization
             String generalQuery = Arrays.stream(query.trim().split("\\s+"))
                     .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll(" ") + "*")
                     .collect(Collectors.joining(" AND "));
@@ -108,20 +115,8 @@ public class SearchRepository {
         
         if (collectionPaths != null) {
             if (collectionPaths.isEmpty()) {
-                // Collection is empty, so result must be empty
                 return new ArrayList<>();
             }
-            // For large collections, IN clause might be slow, but it's the simplest way without joining collection_images
-            // (which only works for static collections).
-            // Since we resolved paths for both static and smart collections in UserDataManager, this works for both.
-            // Optimization: Create a temporary table or use a CTE if list is huge, but for < 2000 items IN is fine.
-            // SQLite limit is usually 999 variables, so we might need to handle that.
-            // However, for now, let's assume reasonable collection size or rely on SQLite's ability to handle larger IN clauses in newer versions.
-            // A safer approach for very large lists is to not pass paths but IDs, but SearchRepository works with paths.
-            
-            // Let's use a JOIN on a VALUES clause (CTE) for performance and to avoid variable limit if possible,
-            // but standard JDBC param binding for lists is tricky.
-            // Fallback: Construct IN clause dynamically.
             
             sql.append(" AND i.file_path IN (");
             for (int i = 0; i < collectionPaths.size(); i++) {

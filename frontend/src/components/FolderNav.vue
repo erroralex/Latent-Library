@@ -20,10 +20,16 @@ import Tree from 'primevue/tree';
 import CustomContextMenu from './CustomContextMenu.vue';
 import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import ConfirmDialog from 'primevue/confirmdialog';
+import {useConfirm} from 'primevue/useconfirm';
+import InputText from 'primevue/inputtext';
 
 const store = useBrowserStore();
 const router = useRouter();
 const toast = useToast();
+const confirm = useConfirm();
 
 const nodes = ref([]);
 const expandedKeys = ref({});
@@ -32,6 +38,10 @@ const contextMenuSelection = ref(null);
 
 const cm = ref();
 const menuModel = ref([]);
+
+const showSettings = ref(false);
+const excludedPaths = ref([]);
+const newExcludedPath = ref('');
 
 watch(() => store.navRefreshKey, () => {
   loadTree();
@@ -236,6 +246,94 @@ const openInExplorer = async (path) => {
   await axios.post('/api/system/open-folder', null, {params: {path}});
 };
 
+const openSettings = async () => {
+  showSettings.value = true;
+  try {
+    const res = await axios.get('/api/system/excluded-paths');
+    excludedPaths.value = res.data;
+  } catch (e) {
+    console.error("Failed to load excluded paths", e);
+  }
+};
+
+const openDataFolder = async () => {
+  try {
+    await axios.post('/api/system/open-data-folder');
+  } catch (e) {
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to open data folder', life: 3000});
+  }
+};
+
+const clearDatabase = () => {
+  confirm.require({
+    message: 'Are you sure you want to clear the database? All metadata and collections will be lost.',
+    header: 'Clear Database',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await axios.post('/api/system/clear-database');
+        toast.add({severity: 'success', summary: 'Success', detail: 'Database cleared', life: 3000});
+        store.initialize(); // Reload
+      } catch (e) {
+        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to clear database', life: 3000});
+      }
+    }
+  });
+};
+
+const clearThumbnails = () => {
+  confirm.require({
+    message: 'Are you sure you want to delete all thumbnails? They will be regenerated on demand.',
+    header: 'Clear Thumbnails',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await axios.post('/api/system/clear-thumbnails');
+        toast.add({severity: 'success', summary: 'Success', detail: 'Thumbnails cleared', life: 3000});
+      } catch (e) {
+        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to clear thumbnails', life: 3000});
+      }
+    }
+  });
+};
+
+const addExcludedPath = async () => {
+  if (!newExcludedPath.value) return;
+  try {
+    await axios.post('/api/system/excluded-paths', null, {params: {path: newExcludedPath.value}});
+    excludedPaths.value.push(newExcludedPath.value);
+    newExcludedPath.value = '';
+  } catch (e) {
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to add path', life: 3000});
+  }
+};
+
+const selectExcludedFolder = async () => {
+  if (window.electronAPI) {
+    const path = await window.electronAPI.selectFolder();
+    if (path) {
+      newExcludedPath.value = path;
+    }
+  } else {
+    // Fallback for browser dev mode
+    const path = prompt("Enter absolute path to exclude:");
+    if (path) {
+      newExcludedPath.value = path;
+    }
+  }
+};
+
+const removeExcludedPath = async (path) => {
+  try {
+    await axios.delete('/api/system/excluded-paths', {params: {path}});
+    excludedPaths.value = excludedPaths.value.filter(p => p !== path);
+  } catch (e) {
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to remove path', life: 3000});
+  }
+};
+
 onMounted(loadTree);
 </script>
 
@@ -243,10 +341,14 @@ onMounted(loadTree);
   <div class="folder-nav-glass h-full flex flex-column"
        style="width: 290px; min-width: 300px;">
     <Toast/>
-    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center gap-2"
+    <ConfirmDialog></ConfirmDialog>
+
+    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center justify-content-between"
          style="background: rgba(255,255,255,0.02)">
-      <img src="@/assets/icon.png" alt="Logo" style="width: 24px; height: 24px;">
-      <span class="text-gradient">Library</span>
+      <div class="flex align-items-center gap-2">
+        <span class="text-gradient">Library</span>
+      </div>
+      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white" @click="openSettings" />
     </div>
 
     <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
@@ -274,6 +376,40 @@ onMounted(loadTree);
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel"/>
+
+    <Dialog v-model:visible="showSettings" modal header="Settings" :style="{ width: '50vw' }" class="glass-dialog">
+      <div class="flex flex-column gap-4">
+        <div>
+          <h3 class="text-lg font-semibold mb-2 text-white">Data Management</h3>
+          <div class="flex gap-2">
+            <Button label="Open Data Folder" icon="pi pi-folder-open" class="p-button-outlined" @click="openDataFolder" />
+            <Button label="Clear Database" icon="pi pi-database" class="p-button-danger p-button-outlined" @click="clearDatabase" />
+            <Button label="Clear Thumbnails" icon="pi pi-images" class="p-button-warning p-button-outlined" @click="clearThumbnails" />
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold mb-2 text-white">Excluded Paths</h3>
+          <p class="text-sm text-gray-400 mb-2">Folders starting with these paths will be ignored by the indexer.</p>
+
+          <div class="flex gap-2 mb-3">
+            <div class="p-inputgroup flex-grow-1">
+                <InputText v-model="newExcludedPath" placeholder="Enter path to exclude..." class="glass-input" />
+                <Button icon="pi pi-folder-open" @click="selectExcludedFolder" />
+            </div>
+            <Button icon="pi pi-plus" @click="addExcludedPath" />
+          </div>
+
+          <div class="glass-box p-2 border-round" style="max-height: 200px; overflow-y: auto;">
+            <div v-for="path in excludedPaths" :key="path" class="flex justify-content-between align-items-center p-2 hover:surface-white-alpha-10 border-round">
+              <span class="text-sm text-white">{{ path }}</span>
+              <Button icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" @click="removeExcludedPath(path)" />
+            </div>
+            <div v-if="excludedPaths.length === 0" class="text-center text-gray-500 text-sm p-2">No excluded paths</div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>
 
@@ -297,6 +433,25 @@ onMounted(loadTree);
   background: rgba(255, 255, 255, 0.1);
   margin: 0.5rem 0;
   width: 100%;
+}
+
+.glass-dialog .p-dialog-header,
+.glass-dialog .p-dialog-content,
+.glass-dialog .p-dialog-footer {
+  background: rgba(10, 10, 10, 0.95) !important;
+  color: white;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.glass-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 :deep(.p-tree) {

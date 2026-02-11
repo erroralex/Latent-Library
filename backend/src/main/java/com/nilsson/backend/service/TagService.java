@@ -9,14 +9,20 @@ import java.util.Set;
 /**
  * Service for managing image tags and ensuring search index consistency.
  * <p>
- * This service provides a high-level API for tagging operations. It wraps the underlying
- * repository calls in transactions and automatically triggers search index updates
- * whenever tags are added or removed, ensuring that new tags are immediately searchable.
+ * This service provides a high-level API for tagging operations, abstracting the underlying
+ * repository interactions. It ensures that all tagging actions are performed within a
+ * transactional context and coordinates with the {@link FtsService} to keep the search
+ * index synchronized with the latest tag data.
  * <p>
- * Key functionalities:
- * - Atomic Tagging: Adds or removes tags within a transactional context.
- * - Index Synchronization: Coordinates with {@code FtsService} to refresh the search index.
- * - Validation: Ensures only non-blank, valid tags are processed.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Atomic Tagging:</b> Facilitates the addition and removal of tags, ensuring that
+ *   database changes are committed only if the entire operation succeeds.</li>
+ *   <li><b>Index Synchronization:</b> Automatically triggers updates to the SQLite FTS5 index
+ *   whenever tags are modified, making new tags immediately searchable.</li>
+ *   <li><b>Validation & Sanitization:</b> Ensures that only valid, non-blank tags are processed
+ *   and that whitespace is consistently trimmed.</li>
+ * </ul>
  */
 @Service
 public class TagService {

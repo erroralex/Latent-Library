@@ -22,19 +22,26 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 /**
- * Service for extracting, parsing, and interpreting technical metadata embedded within images.
+ * Service for extracting, parsing, and interpreting technical metadata embedded within AI-generated images.
  * <p>
  * This service implements a multi-stage extraction pipeline designed to handle the diverse and
  * often non-standard ways AI generation tools store metadata. It supports standard EXIF/IPTC
  * data as well as custom PNG chunks and User Comments used by tools like Automatic1111,
  * ComfyUI, InvokeAI, NovelAI, and SwarmUI.
  * <p>
- * Key functionalities:
- * - Format Agnostic Extraction: Utilizes {@code metadata-extractor} to find technical data in various image formats.
- * - Heuristic Scoring: Implements a scoring mechanism to identify the most relevant metadata "chunk" when multiple exist.
- * - Strategy-Based Parsing: Employs a suite of {@code MetadataStrategy} implementations to parse tool-specific JSON or text formats.
- * - Physical Attribute Extraction: Resolves image dimensions and file sizes using low-level I/O.
- * - Recursive JSON Traversal: Deep-scans complex JSON structures (like ComfyUI workflows) to extract generation parameters.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Format Agnostic Extraction:</b> Utilizes {@code metadata-extractor} to find technical
+ *   data in various image formats (PNG, JPG, WebP).</li>
+ *   <li><b>Heuristic Scoring:</b> Implements a scoring mechanism to identify the most relevant
+ *   metadata "chunk" when multiple exist (e.g., both EXIF and custom PNG chunks).</li>
+ *   <li><b>Strategy-Based Parsing:</b> Employs a suite of {@link MetadataStrategy} implementations
+ *   to parse tool-specific JSON or text formats into a unified key-value map.</li>
+ *   <li><b>Physical Attribute Extraction:</b> Resolves image dimensions and file sizes using
+ *   low-level I/O and metadata headers.</li>
+ *   <li><b>Recursive JSON Traversal:</b> Deep-scans complex JSON structures (like ComfyUI workflows)
+ *   to extract generation parameters even when nested deep within the graph.</li>
+ * </ul>
  */
 @Service
 public class MetadataService {

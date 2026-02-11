@@ -14,18 +14,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for file system navigation and directory management.
+ * REST Controller for file system navigation, directory traversal, and bookmark management.
  * <p>
- * This controller provides the backend infrastructure for the application's file explorer. It enables
- * the frontend to traverse the local file system by listing root drives and dynamically fetching
- * child directories. It also manages "pinned" folders, allowing users to bookmark frequently
- * accessed locations for rapid navigation.
+ * This controller provides the backend infrastructure for the application's integrated file explorer.
+ * It enables the frontend to interact with the host's local file system in a controlled manner,
+ * supporting lazy-loading of directory structures and persistent "pinning" of frequently accessed folders.
  * <p>
- * Key functionalities:
- * - Root Discovery: Identifies and returns all available system root drives.
- * - Lazy Directory Traversal: Provides on-demand listing of subdirectories for a given path.
- * - Folder Pinning: Manages persistent bookmarks for specific file system paths.
- * - Data Normalization: Returns {@code FileDTO} objects optimized for PrimeVue's Tree component.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Root Discovery:</b> Identifies and returns all available system root drives (e.g., C:\, D:\ on Windows, / on Linux/macOS).</li>
+ *   <li><b>Lazy Traversal:</b> Provides on-demand listing of subdirectories for a given path, optimized for
+ *   rendering in tree-based UI components.</li>
+ *   <li><b>Folder Pinning:</b> Manages a persistent list of bookmarked directories, allowing for rapid
+ *   navigation to user-defined "hot" locations.</li>
+ *   <li><b>Data Normalization:</b> Transforms raw {@link File} objects into {@link FileDTO} records,
+ *   ensuring consistent path formatting and UI-ready metadata (icons, labels).</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/folders")

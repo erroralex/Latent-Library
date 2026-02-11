@@ -7,17 +7,24 @@ import javax.sql.DataSource;
 import java.util.List;
 
 /**
- * Repository for managing user-pinned directories.
+ * Repository for managing user-pinned directories for rapid file system navigation.
  * <p>
- * This class provides persistent storage for file system paths that the user has "bookmarked"
- * for quick access. It manages the {@code pinned_folders} table, ensuring that paths are
- * stored uniquely and can be retrieved in alphabetical order.
+ * This class provides persistent storage for absolute file system paths that the user has
+ * "bookmarked" or pinned within the application's file explorer. It manages the
+ * {@code pinned_folders} table, ensuring that paths are stored uniquely and can be
+ * retrieved in a consistent, sorted order for display in the UI.
  * <p>
- * Key functionalities:
- * - Bookmark Persistence: Saves absolute file system paths to the database.
- * - Duplicate Prevention: Uses {@code INSERT OR IGNORE} to handle redundant pin requests.
- * - Retrieval: Returns a sorted list of all pinned directory paths.
- * - Removal: Deletes specific path entries from the pinned list.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Bookmark Persistence:</b> Saves absolute file system paths to the database,
+ *   allowing user navigation state to survive application restarts.</li>
+ *   <li><b>Duplicate Prevention:</b> Utilizes {@code INSERT OR IGNORE} to gracefully handle
+ *   redundant pin requests for the same directory path.</li>
+ *   <li><b>Retrieval:</b> Returns a sorted list of all pinned directory paths, optimized
+ *   for rendering in navigation menus or tree views.</li>
+ *   <li><b>Removal:</b> Deletes specific path entries from the pinned list when a user
+ *   chooses to unpin a directory.</li>
+ * </ul>
  */
 @Repository
 public class PinnedFolderRepository {

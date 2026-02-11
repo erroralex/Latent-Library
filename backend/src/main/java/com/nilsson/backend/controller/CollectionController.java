@@ -15,18 +15,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for managing image collections.
+ * REST Controller for managing image collections, supporting both static and dynamic groupings.
  * <p>
- * This controller provides a full CRUD API for image collections, supporting both static (manual)
- * and smart (dynamic) groupings. It handles the persistence of collection definitions and the
- * association of images with those collections. For smart collections, it dynamically executes
- * metadata-based searches to resolve the current set of matching images.
+ * This controller provides a comprehensive CRUD API for image collections. It supports "Static Collections,"
+ * where users manually associate specific images, and "Smart Collections," which dynamically resolve
+ * images based on metadata filters (e.g., all images with a specific Model or Rating).
  * <p>
- * Key functionalities:
- * - Collection CRUD: Create, read, update, and delete collection definitions.
- * - Image Association: Manually add images to static collections.
- * - Smart Resolution: Dynamically fetches images for smart collections based on stored filters.
- * - Performance Optimization: Returns {@code ImageDTO}s to minimize frontend network overhead.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Collection CRUD:</b> Manages the lifecycle of collection definitions, including creation,
+ *   updates to filters, and deletion.</li>
+ *   <li><b>Image Association:</b> Handles the manual addition of images to static collections and
+ *   the blacklisting of images from smart collections.</li>
+ *   <li><b>Dynamic Resolution:</b> Executes metadata-based queries to fetch the current set of images
+ *   matching a smart collection's criteria.</li>
+ *   <li><b>DTO Transformation:</b> Returns {@link ImageDTO} objects to ensure the frontend receives
+ *   all necessary metadata (ratings, models) in a single request.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/collections")
@@ -83,7 +88,7 @@ public class CollectionController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     @PostMapping("/{name}/blacklist")
     public ResponseEntity<Void> blacklistImageFromCollection(@PathVariable String name, @RequestParam String path) {
         try {
