@@ -13,14 +13,14 @@
  * - UI Customization: Includes a slider for real-time adjustment of image card sizes in the gallery view.
  * - Responsive Feedback: Uses PrimeVue Chips to display and manage active filter states.
  */
-import { useBrowserStore } from '@/stores/browser';
+import {useBrowserStore} from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Slider from 'primevue/slider';
 import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
-import { ref, computed } from 'vue';
+import {ref, computed} from 'vue';
 
 const store = useBrowserStore();
 
@@ -50,12 +50,12 @@ const samplerItems = computed(() => createMenuItems(store.availableSamplers, 'sa
 const loraItems = computed(() => createMenuItems(store.availableLoras, 'lora'));
 
 const ratingItems = [
-  { label: 'Any Star Count', command: () => store.setFilter('rating', 'Any Star Count') },
-  { label: '1', value: '1', command: () => store.setFilter('rating', '1') },
-  { label: '2', value: '2', command: () => store.setFilter('rating', '2') },
-  { label: '3', value: '3', command: () => store.setFilter('rating', '3') },
-  { label: '4', value: '4', command: () => store.setFilter('rating', '4') },
-  { label: '5', value: '5', command: () => store.setFilter('rating', '5') }
+  {label: 'Any Star Count', command: () => store.setFilter('rating', 'Any Star Count')},
+  {label: '1', value: '1', command: () => store.setFilter('rating', '1')},
+  {label: '2', value: '2', command: () => store.setFilter('rating', '2')},
+  {label: '3', value: '3', command: () => store.setFilter('rating', '3')},
+  {label: '4', value: '4', command: () => store.setFilter('rating', '4')},
+  {label: '5', value: '5', command: () => store.setFilter('rating', '5')}
 ];
 
 const clearFilter = (type) => {
@@ -79,7 +79,7 @@ const refreshFilters = () => {
       <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
         <div v-if="store.viewMode === 'gallery'" class="flex gap-3 align-items-center mr-3">
           <i class="pi pi-search-plus text-xl text-500"></i>
-          <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem" />
+          <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem"/>
         </div>
 
         <div class="flex gap-1 mr-2">
@@ -87,18 +87,19 @@ const refreshFilters = () => {
                   class="p-button-sm nav-btn"
                   :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"
                   @click="store.setViewMode('gallery')"
-                  tooltip="Gallery View" />
+                  tooltip="Gallery View"/>
           <Button icon="pi pi-image"
                   class="p-button-sm nav-btn"
                   :class="{ 'active-nav-btn': store.viewMode === 'browser' }"
                   @click="store.setViewMode('browser')"
-                  tooltip="Browser View" />
+                  tooltip="Browser View"/>
         </div>
 
         <span class="p-input-icon-left p-input-icon-right mr-2">
-            <i class="pi pi-search" />
-            <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input" @keyup.enter="onSearch" />
-            <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()" />
+            <i class="pi pi-search"/>
+            <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input"
+                       @keyup.enter="onSearch"/>
+            <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
         </span>
 
         <div class="flex gap-2 align-items-center">
@@ -106,43 +107,43 @@ const refreshFilters = () => {
           <div class="flex align-items-center">
             <Button label="Model" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm text-white"
-                    @click="(e) => { refreshFilters(); modelMenu.toggle(e); }" />
-            <Menu ref="modelMenu" :model="modelItems" :popup="true" class="w-15rem" />
+                    @click="(e) => { refreshFilters(); modelMenu.toggle(e); }"/>
+            <Menu ref="modelMenu" :model="modelItems" :popup="true" class="w-15rem"/>
 
             <Chip v-if="isFilterActive(store.selectedModel)"
                   :label="store.selectedModel"
                   removable @remove="clearFilter('model')"
-                  class="ml-1 text-xs" />
+                  class="ml-1 text-xs"/>
           </div>
 
           <div class="flex align-items-center">
             <Button label="Sampler" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm text-white"
-                    @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }" />
-            <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="w-15rem" />
+                    @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }"/>
+            <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="w-15rem"/>
 
             <Chip v-if="isFilterActive(store.selectedSampler)"
                   :label="store.selectedSampler"
                   removable @remove="clearFilter('sampler')"
-                  class="ml-1 text-xs" />
+                  class="ml-1 text-xs"/>
           </div>
 
           <div class="flex align-items-center">
             <Button label="LoRA" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm text-white"
-                    @click="(e) => { refreshFilters(); loraMenu.toggle(e); }" />
-            <Menu ref="loraMenu" :model="loraItems" :popup="true" class="w-15rem" />
+                    @click="(e) => { refreshFilters(); loraMenu.toggle(e); }"/>
+            <Menu ref="loraMenu" :model="loraItems" :popup="true" class="w-15rem"/>
 
             <Chip v-if="isFilterActive(store.selectedLora)"
                   :label="store.selectedLora"
                   removable @remove="clearFilter('lora')"
-                  class="ml-1 text-xs" />
+                  class="ml-1 text-xs"/>
           </div>
 
           <div class="flex align-items-center">
             <Button label="Stars" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm text-white"
-                    @click="(e) => ratingMenu.toggle(e)" />
+                    @click="(e) => ratingMenu.toggle(e)"/>
             <Menu ref="ratingMenu" :model="ratingItems" :popup="true">
               <template #item="{ item, props }">
                 <a v-if="item.label === 'Any Star Count'" v-bind="props.action" class="flex align-items-center">
@@ -178,7 +179,7 @@ const refreshFilters = () => {
                 class="p-button-rounded p-button-text"
                 @click="toggleSidebar"
                 tooltip="Toggle Metadata"
-                v-if="store.viewMode === 'browser'" />
+                v-if="store.viewMode === 'browser'"/>
       </div>
     </template>
   </Toolbar>
@@ -191,7 +192,7 @@ const refreshFilters = () => {
   -webkit-backdrop-filter: blur(20px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   position: relative;
   z-index: 10;
 }

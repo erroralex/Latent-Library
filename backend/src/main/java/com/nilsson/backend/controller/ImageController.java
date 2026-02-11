@@ -2,9 +2,11 @@ package com.nilsson.backend.controller;
 
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.PathService;
+import com.nilsson.backend.service.ThumbnailService;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * REST Controller for image-centric operations and content delivery.
@@ -28,7 +31,9 @@ import java.util.Map;
  * - Advanced Search: Supports complex filtering by model, sampler, LoRA, and rating.
  * - Metadata Management: Provides access to both cached technical metadata and user-defined ratings.
  * - Content Streaming: Serves local image files as web-accessible resources.
+ * - Thumbnail Delivery: Serves optimized JPEG thumbnails for gallery views.
  * - Filter Discovery: Exposes distinct metadata values to populate frontend filter menus.
+ * - Performance Optimization: Implements aggressive caching headers for static image content.
  */
 @RestController
 @RequestMapping("/api/images")
@@ -37,10 +42,12 @@ public class ImageController {
 
     private final UserDataManager dataManager;
     private final PathService pathService;
+    private final ThumbnailService thumbnailService;
 
-    public ImageController(UserDataManager dataManager, PathService pathService) {
+    public ImageController(UserDataManager dataManager, PathService pathService, ThumbnailService thumbnailService) {
         this.dataManager = dataManager;
         this.pathService = pathService;
+        this.thumbnailService = thumbnailService;
     }
 
     @GetMapping("/search")
@@ -117,7 +124,31 @@ public class ImageController {
             }
 
             return ResponseEntity.ok()
+                    .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())
                     .contentType(MediaType.parseMediaType(contentType))
+                    .body(resource);
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/thumbnail")
+    public ResponseEntity<Resource> getThumbnail(@RequestParam String path) {
+        try {
+            File file = pathService.resolve(path);
+            if (!file.exists()) return ResponseEntity.notFound().build();
+
+            File thumbnail = thumbnailService.getThumbnail(file);
+            if (thumbnail == null || !thumbnail.exists()) {
+                // Fallback to original if thumbnail generation fails
+                return getImageContent(path);
+            }
+
+            Resource resource = new UrlResource(thumbnail.toURI());
+
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())
+                    .contentType(MediaType.IMAGE_JPEG)
                     .body(resource);
         } catch (MalformedURLException e) {
             return ResponseEntity.badRequest().build();

@@ -1,11 +1,11 @@
 /**
  * @file main.js (Electron)
  * @description The main process entry point for the Electron-based desktop application.
- * 
+ *
  * This script manages the application lifecycle, creates the native window, and orchestrates
  * the integration between the Electron frontend and the Spring Boot backend. It handles
  * process spawning, IPC communication for window controls, and graceful shutdown procedures.
- * 
+ *
  * Key responsibilities:
  * - Backend Lifecycle: Spawns the Java Spring Boot process and monitors its health.
  * - Window Management: Configures a frameless, maximized BrowserWindow with custom title bar support.
@@ -13,9 +13,9 @@
  * - Graceful Shutdown: Sends a shutdown signal to the backend before terminating the Electron process.
  * - Development Support: Assumptions for JAR paths in development vs. production environments.
  */
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 const http = require('http');
 
 let mainWindow;
@@ -84,13 +84,13 @@ function checkBackendReady() {
     req.on('error', () => {
         setTimeout(checkBackendReady, 1000);
     });
-    
+
     req.end();
 }
 
 app.on('ready', () => {
     ipcMain.handle('dialog:openDirectory', async () => {
-        const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        const {canceled, filePaths} = await dialog.showOpenDialog(mainWindow, {
             properties: ['openDirectory']
         });
         if (canceled) {
@@ -130,7 +130,7 @@ app.on('will-quit', async (event) => {
     if (backendProcess) {
         event.preventDefault();
         console.log('Requesting backend shutdown...');
-        
+
         const req = http.request({
             hostname: 'localhost',
             port: BACKEND_PORT,
@@ -159,7 +159,7 @@ function killBackendProcess() {
         console.log('Force killing backend process...');
         if (process.platform === 'win32') {
             try {
-                const { execSync } = require('child_process');
+                const {execSync} = require('child_process');
                 execSync(`taskkill /pid ${backendProcess.pid} /f /t`);
             } catch (e) {
                 console.error('Failed to kill backend process:', e);

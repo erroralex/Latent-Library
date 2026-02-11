@@ -12,9 +12,10 @@
  * - Smooth transitions: Uses CSS transitions for fluid movement when the selection changes.
  * - Responsive design: Utilizes ResizeObserver to adapt centering logic to container size changes.
  * - Interactive thumbnails: Allows users to select images directly from the strip.
+ * - Optimized Thumbnails: Uses the dedicated thumbnail API endpoint to reduce bandwidth and memory usage.
  */
-import { useBrowserStore } from '@/stores/browser';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import {useBrowserStore} from '@/stores/browser';
+import {ref, computed, onMounted, onUnmounted} from 'vue';
 
 const store = useBrowserStore();
 const containerRef = ref(null);
@@ -75,11 +76,12 @@ onUnmounted(() => {
            :class="{ 'selected-item': store.selectedFile === file.path }"
            @click="store.selectFile(file)">
 
-        <div class="relative border-round overflow-hidden flex align-items-center justify-content-center" :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
-          <img :src="`http://localhost:8080/api/images/content?path=${encodeURIComponent(file.path)}`"
+        <div class="relative border-round overflow-hidden flex align-items-center justify-content-center"
+             :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
+          <img :src="`http://localhost:8080/api/images/thumbnail?path=${encodeURIComponent(file.path)}`"
                loading="lazy"
                class="w-full h-full"
-               style="object-fit: contain;" />
+               style="object-fit: contain;"/>
         </div>
       </div>
     </div>
@@ -92,7 +94,7 @@ onUnmounted(() => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -5px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
 }
 
 .filmstrip-item {
@@ -138,12 +140,14 @@ onUnmounted(() => {
 }
 
 .transition-transform {
-    transition-property: transform;
+  transition-property: transform;
 }
+
 .duration-500 {
-    transition-duration: 500ms;
+  transition-duration: 500ms;
 }
+
 .ease-in-out {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

@@ -1,175 +1,280 @@
 <script setup>
 /**
  * @file SingleImageViewer.vue
- * @description A high-fidelity image viewing component with advanced zoom and pan capabilities.
+ * @description A high-fidelity image viewing component featuring programmatic loading, advanced zoom/pan, and filmstrip navigation.
  *
- * This component provides a focused viewing experience for a single image. It implements custom
- * mouse wheel zoom logic (zooming towards the cursor) and click-and-drag panning. It also
- * integrates the FilmstripView for quick navigation between images in the current set.
+ * This component provides a professional-grade image viewing experience. It utilizes a programmatic
+ * image loading strategy to ensure reliable state transitions and spinner management, bypassing
+ * common race conditions associated with DOM-based load events.
  *
- * Key functionalities:
- * - Advanced Zoom: Smooth mouse wheel zooming with cursor-relative scaling.
- * - Interactive Panning: Allows users to drag and move the image when zoomed in.
- * - Navigation: Provides on-screen arrows and keyboard support for cycling through images.
- * - Responsive Layout: Dynamically allocates space between the main viewer and the bottom filmstrip.
- * - State Management: Synchronizes with the global browser store for selection and sidebar visibility.
+ * Key features:
+ * - **Programmatic Loader:** Uses `new Image()` to track loading progress, ensuring the UI remains responsive and the "ready" state is accurate.
+ * - **Advanced Zoom & Pan:** Implements cursor-relative zooming and smooth panning for detailed image inspection.
+ * - **Dual-Layer Rendering:** Displays a low-resolution thumbnail as a placeholder while the high-resolution source loads to improve perceived performance.
+ * - **Keyboard & Mouse Integration:** Supports mouse wheel zooming, click-to-toggle sidebar, and escape-to-reset zoom.
+ * - **Navigation Controls:** Integrated directional arrows and a bottom filmstrip for rapid library traversal.
  */
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
-import { useBrowserStore } from '@/stores/browser';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useBrowserStore} from '@/stores/browser';
 import FilmstripView from '@/components/FilmstripView.vue';
+import ProgressSpinner from 'primevue/progressspinner';
 
 const store = useBrowserStore();
 const viewerContainer = ref(null);
 
 const scale = ref(1);
-const translate = ref({ x: 0, y: 0 });
+const translate = ref({x: 0, y: 0});
 const isPanning = ref(false);
 const isDragging = ref(false);
-const startPan = ref({ x: 0, y: 0 });
-const startTranslate = ref({ x: 0, y: 0 });
+const startPan = ref({x: 0, y: 0});
+const startTranslate = ref({x: 0, y: 0});
+
+const isHighResReady = ref(false);
+const hasLoadError = ref(false);
 
 const mainImageUrl = computed(() => {
   if (!store.selectedFile) return null;
   return `http://localhost:8080/api/images/content?path=${encodeURIComponent(store.selectedFile)}`;
 });
 
+const thumbnailImageUrl = computed(() => {
+  if (!store.selectedFile) return null;
+  return `http://localhost:8080/api/images/thumbnail?path=${encodeURIComponent(store.selectedFile)}`;
+});
+
 const imageStyle = computed(() => ({
-    transform: `translate(${translate.value.x}px, ${translate.value.y}px) scale(${scale.value})`,
-    transition: isPanning.value ? 'none' : 'transform 0.1s ease-out',
-    cursor: scale.value > 1 ? (isPanning.value ? 'grabbing' : 'grab') : 'pointer'
+  transform: `translate(${translate.value.x}px, ${translate.value.y}px) scale(${scale.value})`,
+  transition: isPanning.value ? 'none' : 'transform 0.1s ease-out',
+  cursor: scale.value > 1 ? (isPanning.value ? 'grabbing' : 'grab') : 'pointer',
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain'
 }));
 
 const resetZoom = () => {
-    scale.value = 1;
-    translate.value = { x: 0, y: 0 };
-    isPanning.value = false;
-    isDragging.value = false;
+  scale.value = 1;
+  translate.value = {x: 0, y: 0};
+  isPanning.value = false;
+  isDragging.value = false;
 };
 
-watch(() => store.selectedFile, () => {
-    resetZoom();
-});
+watch(mainImageUrl, (newUrl) => {
+  resetZoom();
+  hasLoadError.value = false;
 
-/**
- * Implements cursor-relative zooming.
- * Calculates new translation offsets to ensure the point under the mouse remains stationary during scaling.
- */
+  if (!newUrl) {
+    isHighResReady.value = false;
+    return;
+  }
+
+  isHighResReady.value = false;
+
+  const loader = new Image();
+
+  loader.onload = () => {
+    if (mainImageUrl.value === newUrl) {
+      isHighResReady.value = true;
+    }
+  };
+
+  loader.onerror = () => {
+    if (mainImageUrl.value === newUrl) {
+      console.error("Failed to load image:", newUrl);
+      hasLoadError.value = true;
+      isHighResReady.value = true;
+    }
+  };
+
+  loader.src = newUrl;
+
+  setTimeout(() => {
+    if (mainImageUrl.value === newUrl && !isHighResReady.value) {
+      console.warn("Loader timed out - forcing display");
+      isHighResReady.value = true;
+    }
+  }, 5000);
+
+}, {immediate: true});
+
 const onWheel = (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!viewerContainer.value) return;
 
-    if (!viewerContainer.value) return;
+  const rect = viewerContainer.value.getBoundingClientRect();
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
 
-    const rect = viewerContainer.value.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+  const ZOOM_SENSITIVITY = 0.001;
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 20;
 
-    const ZOOM_SENSITIVITY = 0.001;
-    const MIN_SCALE = 0.5;
-    const MAX_SCALE = 20;
+  const delta = -e.deltaY;
+  const factor = Math.exp(delta * ZOOM_SENSITIVITY);
 
-    const delta = -e.deltaY;
-    const factor = Math.exp(delta * ZOOM_SENSITIVITY);
+  let newScale = scale.value * factor;
+  if (newScale < MIN_SCALE) newScale = MIN_SCALE;
+  if (newScale > MAX_SCALE) newScale = MAX_SCALE;
 
-    let newScale = scale.value * factor;
-    if (newScale < MIN_SCALE) newScale = MIN_SCALE;
-    if (newScale > MAX_SCALE) newScale = MAX_SCALE;
+  const effectiveFactor = newScale / scale.value;
 
-    const effectiveFactor = newScale / scale.value;
+  const newTranslateX = (mouseX - centerX) * (1 - effectiveFactor) + translate.value.x * effectiveFactor;
+  const newTranslateY = (mouseY - centerY) * (1 - effectiveFactor) + translate.value.y * effectiveFactor;
 
-    const newTranslateX = (mouseX - centerX) * (1 - effectiveFactor) + translate.value.x * effectiveFactor;
-    const newTranslateY = (mouseY - centerY) * (1 - effectiveFactor) + translate.value.y * effectiveFactor;
-
-    scale.value = newScale;
-    translate.value = { x: newTranslateX, y: newTranslateY };
+  scale.value = newScale;
+  translate.value = {x: newTranslateX, y: newTranslateY};
 };
 
 const onMouseDown = (e) => {
-    isDragging.value = false;
-    if (scale.value > 1 || e.button === 1) {
-        e.preventDefault();
-        isPanning.value = true;
-        startPan.value = { x: e.clientX, y: e.clientY };
-        startTranslate.value = { ...translate.value };
-    }
+  isDragging.value = false;
+  if (scale.value > 1 || e.button === 1) {
+    e.preventDefault();
+    isPanning.value = true;
+    startPan.value = {x: e.clientX, y: e.clientY};
+    startTranslate.value = {...translate.value};
+  }
 };
 
 const onMouseMove = (e) => {
-    if (isPanning.value) {
-        isDragging.value = true;
-        const dx = e.clientX - startPan.value.x;
-        const dy = e.clientY - startPan.value.y;
-        translate.value = {
-            x: startTranslate.value.x + dx,
-            y: startTranslate.value.y + dy
-        };
-    }
+  if (isPanning.value) {
+    isDragging.value = true;
+    const dx = e.clientX - startPan.value.x;
+    const dy = e.clientY - startPan.value.y;
+    translate.value = {
+      x: startTranslate.value.x + dx,
+      y: startTranslate.value.y + dy
+    };
+  }
 };
 
 const onMouseUp = () => {
-    isPanning.value = false;
+  isPanning.value = false;
 };
 
 const handleImageClick = () => {
-    if (isDragging.value) return;
-    store.toggleSidebar();
+  if (isDragging.value) return;
+  store.toggleSidebar();
 };
 
 const onKeyDown = (e) => {
-    if (e.key === 'Escape') {
-        if (scale.value > 1) {
-            e.preventDefault();
-            e.stopPropagation();
-            resetZoom();
-        }
+  if (e.key === 'Escape') {
+    if (scale.value > 1) {
+      e.preventDefault();
+      e.stopPropagation();
+      resetZoom();
     }
+  }
 };
 
 onMounted(() => {
-    window.addEventListener('keydown', onKeyDown, { capture: true });
+  window.addEventListener('keydown', onKeyDown, {capture: true});
 });
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', onKeyDown, { capture: true });
+  window.removeEventListener('keydown', onKeyDown, {capture: true});
 });
 </script>
 
 <template>
-    <div class="relative h-full">
-      <div class="absolute top-0 left-0 right-0 image-viewer-glass overflow-hidden flex align-items-center justify-content-center"
-           style="bottom: 10rem;"
-           ref="viewerContainer"
-           @wheel="onWheel"
-           @mousedown="onMouseDown"
-           @mousemove="onMouseMove"
-           @mouseup="onMouseUp"
-           @mouseleave="onMouseUp"
-      >
-        <img v-if="mainImageUrl" :src="mainImageUrl"
-             class="max-w-full max-h-full object-contain shadow-8"
-             :style="imageStyle"
-             @click="handleImageClick"
-             draggable="false" />
+  <div class="relative h-full w-full">
+    <svg width="0" height="0" class="absolute">
+      <defs>
+        <linearGradient id="app-spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:rgba(102, 252, 241, 0.8)"/>
+          <stop offset="100%" style="stop-color:rgba(216, 112, 255, 0.8)"/>
+        </linearGradient>
+      </defs>
+    </svg>
 
-        <div v-else class="text-white text-xl">No image selected</div>
-
-        <div class="absolute left-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200 z-2"
-             @click="store.navigate(-1)">
-          <i class="pi pi-chevron-left text-4xl text-white-alpha-50"></i>
-        </div>
-        <div class="absolute right-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200 z-2"
-             @click="store.navigate(1)">
-          <i class="pi pi-chevron-right text-4xl text-white-alpha-50"></i>
-        </div>
+    <div
+        class="absolute top-0 left-0 right-0 bottom-0 image-viewer-glass overflow-hidden flex align-items-center justify-content-center"
+        ref="viewerContainer"
+        @wheel="onWheel"
+        @mousedown="onMouseDown"
+        @mousemove="onMouseMove"
+        @mouseup="onMouseUp"
+        @mouseleave="onMouseUp"
+    >
+      <div v-show="!isHighResReady && mainImageUrl && !hasLoadError"
+           class="absolute z-5 flex align-items-center justify-content-center pointer-events-none"
+           style="transform: translateZ(0); will-change: transform;">
+        <ProgressSpinner style="width: 60px; height: 60px" strokeWidth="4" animationDuration="1s"
+                         aria-label="Loading image"/>
       </div>
 
-      <FilmstripView class="absolute bottom-0 left-0 right-0 w-full" style="height: 10rem;" />
+      <img v-if="thumbnailImageUrl && !isHighResReady"
+           :src="thumbnailImageUrl"
+           class="absolute inset-0 z-0"
+           :style="imageStyle"
+           decoding="async"
+           draggable="false"/>
+
+      <img v-if="mainImageUrl"
+           :key="mainImageUrl"
+           :src="mainImageUrl"
+           class="absolute inset-0 z-1 shadow-8"
+           :class="{ 'opacity-100': isHighResReady, 'opacity-0': !isHighResReady }"
+           style="transition: opacity 0.3s ease;"
+           :style="imageStyle"
+           @click="handleImageClick"
+           draggable="false"/>
+
+      <div v-if="hasLoadError" class="absolute z-2 flex flex-column align-items-center text-red-400">
+        <i class="pi pi-exclamation-triangle text-4xl mb-2"></i>
+        <span>Failed to load image</span>
+      </div>
+
+      <div v-if="!mainImageUrl" class="text-white text-xl z-2">No image selected</div>
+
+      <div
+          class="absolute left-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200 z-2"
+          @click="store.navigate(-1)">
+        <i class="pi pi-chevron-left text-4xl text-white-alpha-50"></i>
+      </div>
+      <div
+          class="absolute right-0 top-0 bottom-0 w-4rem flex align-items-center justify-content-center hover:surface-white-alpha-10 cursor-pointer transition-colors transition-duration-200 z-2"
+          @click="store.navigate(1)">
+        <i class="pi pi-chevron-right text-4xl text-white-alpha-50"></i>
+      </div>
     </div>
+
+    <FilmstripView class="absolute bottom-0 left-0 right-0 w-full z-3" style="height: 10rem;"/>
+  </div>
 </template>
 
 <style scoped>
 .image-viewer-glass {
   background: rgba(0, 0, 0, 0.2);
+}
+
+:deep(.p-progress-spinner-circle) {
+  stroke: url(#app-spinner-gradient) !important;
+  stroke-linecap: round;
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite;
+  will-change: stroke-dasharray, stroke-dashoffset;
+}
+
+@keyframes p-progress-spinner-dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -35px;
+  }
+  100% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -124px;
+  }
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
+.opacity-100 {
+  opacity: 1;
 }
 </style>
