@@ -10,14 +10,17 @@ import java.nio.file.InvalidPathException;
 import java.util.Map;
 
 /**
- * Global exception handler for the application.
+ * Global exception handler for the application, providing centralized error management across all controllers.
  * <p>
- * This class provides a centralized mechanism for intercepting and handling exceptions thrown by
- * any controller. It ensures that the API returns consistent, well-formatted error responses
- * to the frontend, improving debuggability and user experience.
+ * This class utilizes Spring's {@code @ControllerAdvice} to intercept exceptions thrown during request
+ * processing. It ensures that the API returns consistent, well-formatted JSON error responses to the
+ * frontend, which improves both the user experience and the ease of debugging.
  * <p>
  * Handled Exceptions:
- * - {@code InvalidPathException}: Returns a 400 Bad Request when a file system path is malformed.
+ * <ul>
+ *   <li>{@link InvalidPathException}: Intercepted when a malformed or illegal file system path is
+ *   provided by the client. Returns a {@code 400 Bad Request} with a descriptive message.</li>
+ * </ul>
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {

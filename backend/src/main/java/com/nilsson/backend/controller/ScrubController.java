@@ -18,19 +18,24 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * REST Controller for the Metadata Scrubber utility.
+ * REST Controller for the Metadata Scrubber utility, providing privacy-focused image processing.
  * <p>
- * This controller manages the lifecycle of image metadata removal. It provides endpoints for
- * uploading images to a temporary staging area, generating web-accessible previews, and
- * performing the "scrubbing" operation. The scrubbing process involves re-encoding the image
- * using {@code ImageIO}, which effectively strips all non-pixel data (EXIF, XMP, and custom
- * PNG chunks) from the resulting file.
+ * This controller manages the lifecycle of image metadata removal, allowing users to strip sensitive
+ * generation parameters (EXIF, XMP, and custom PNG chunks) from their images before sharing.
+ * The scrubbing process is achieved by re-encoding the image using Java's {@code ImageIO} API,
+ * which effectively discards all non-pixel data and produces a "clean" version of the file.
  * <p>
- * Key functionalities:
- * - Temporary Staging: Manages a local {@code data/temp} directory for transient files.
- * - Image Upload: Handles multipart file uploads with unique UUID-based naming.
- * - Metadata Stripping: Re-renders images to remove embedded generation parameters.
- * - Secure Delivery: Serves the cleaned images as downloadable attachments.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Temporary Staging:</b> Manages a secure, transient storage area in {@code data/temp} for
+ *   uploaded files and processed results.</li>
+ *   <li><b>Secure Uploads:</b> Handles multipart file uploads, assigning unique UUID-based identifiers
+ *   to prevent filename collisions and unauthorized access.</li>
+ *   <li><b>Metadata Stripping:</b> Performs the core scrubbing operation by reading the image into
+ *   memory and writing it back to disk in a standard format (PNG or JPG).</li>
+ *   <li><b>Resource Delivery:</b> Serves the cleaned images as downloadable attachments with
+ *   appropriate HTTP headers.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/scrub")

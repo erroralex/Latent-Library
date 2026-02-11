@@ -20,20 +20,26 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * REST Controller for image-centric operations and content delivery.
+ * REST Controller for image-centric operations, metadata management, and high-performance content delivery.
  * <p>
- * This controller serves as the primary API for interacting with individual images and the indexed library.
- * It provides endpoints for high-performance searching (utilizing FTS5), metadata retrieval, and user
- * interactions such as star ratings. It also handles the streaming of raw image content to the frontend,
- * ensuring correct MIME types are detected and served.
+ * This controller serves as the primary interface for interacting with individual images within the indexed library.
+ * It leverages a combination of SQLite FTS5 for rapid searching and a dedicated metadata cache to provide
+ * a responsive user experience. The controller handles complex filtering logic, user-driven ratings,
+ * and the secure streaming of both raw image data and optimized thumbnails.
  * <p>
- * Key functionalities:
- * - Advanced Search: Supports complex filtering by model, sampler, LoRA, and rating.
- * - Metadata Management: Provides access to both cached technical metadata and user-defined ratings.
- * - Content Streaming: Serves local image files as web-accessible resources.
- * - Thumbnail Delivery: Serves optimized JPEG thumbnails for gallery views.
- * - Filter Discovery: Exposes distinct metadata values to populate frontend filter menus.
- * - Performance Optimization: Implements aggressive caching headers for static image content.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Advanced Search:</b> Provides a robust search API supporting full-text queries and structured filters
+ *   for AI-specific metadata like Models, Samplers, and LoRAs.</li>
+ *   <li><b>Metadata & Ratings:</b> Manages the retrieval of technical image metadata and allows users to
+ *   persistently rate images, which are then integrated into the search index.</li>
+ *   <li><b>Content Streaming:</b> Efficiently serves local image files as web resources, implementing
+ *   aggressive HTTP caching (Immutable/Max-Age) to minimize redundant transfers.</li>
+ *   <li><b>Thumbnail Management:</b> Interfaces with the {@link ThumbnailService} to deliver low-latency
+ *   previews, falling back to original content only when necessary.</li>
+ *   <li><b>Filter Discovery:</b> Exposes distinct metadata values present in the database to dynamically
+ *   populate frontend UI components.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/images")
@@ -141,7 +147,6 @@ public class ImageController {
 
             File thumbnail = thumbnailService.getThumbnail(file);
             if (thumbnail == null || !thumbnail.exists()) {
-                // Fallback to original if thumbnail generation fails
                 return getImageContent(path);
             }
 

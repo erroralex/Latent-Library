@@ -14,10 +14,15 @@ import javax.sql.DataSource;
  * used to persist application state that must survive restarts, such as the last visited directory,
  * UI preferences, and tool-specific configurations (e.g., Speed Sorter target paths).
  * <p>
- * Key functionalities:
- * - Persistent Key-Value Store: Implements a generic mechanism for storing and retrieving string-based settings.
- * - Default Value Support: Provides a safe retrieval method that returns a fallback value if a key is missing.
- * - Atomic Updates: Uses {@code INSERT OR REPLACE} to ensure settings are updated or created efficiently.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Persistent Key-Value Store:</b> Implements a generic mechanism for storing and
+ *   retrieving string-based settings, abstracting away the underlying SQL.</li>
+ *   <li><b>Default Value Support:</b> Provides a safe retrieval method that returns a fallback
+ *   value if a requested key is missing from the database.</li>
+ *   <li><b>Atomic Updates:</b> Utilizes {@code INSERT OR REPLACE} to ensure settings are
+ *   updated or created efficiently without requiring explicit existence checks.</li>
+ * </ul>
  */
 @Repository
 public class SettingsRepository {

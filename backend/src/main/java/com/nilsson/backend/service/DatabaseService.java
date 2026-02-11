@@ -16,20 +16,30 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
- * Core infrastructure service for database lifecycle management and persistence.
+ * Core infrastructure service for database lifecycle management, persistence, and schema evolution.
  * <p>
  * This service initializes and maintains the SQLite database connection pool using HikariCP.
  * It ensures that the database is stored in a portable, user-specific directory and handles
  * automated schema migrations via Flyway. It also configures critical SQLite performance
- * and concurrency settings, such as Write-Ahead Logging (WAL) mode.
+ * and concurrency settings, such as Write-Ahead Logging (WAL) mode, to support high-concurrency
+ * indexing and search operations.
  * <p>
- * Key functionalities:
- * - Portable Storage: Resolves and creates the {@code .aitoolbox} directory in the user's home folder.
- * - Connection Pooling: Manages a high-performance HikariCP pool optimized for SQLite.
- * - Schema Migration: Executes Flyway migrations on startup to ensure database integrity.
- * - Resource Management: Implements {@code DisposableBean} for graceful pool shutdown.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Portable Storage:</b> Resolves and creates the {@code data} directory in the application's
+ *   root folder to ensure data portability.</li>
+ *   <li><b>Connection Pooling:</b> Manages a high-performance HikariCP pool optimized for SQLite,
+ *   configuring appropriate timeouts and journal modes.</li>
+ *   <li><b>Schema Migration:</b> Executes Flyway migrations on startup to ensure the database
+ *   schema is always up-to-date and consistent.</li>
+ *   <li><b>Resource Management:</b> Implements {@link DisposableBean} to ensure the connection
+ *   pool is gracefully shut down when the application context is closed.</li>
+ *   <li><b>Data Maintenance:</b> Provides administrative functions to clear all application data
+ *   and reclaim disk space via SQLite's {@code VACUUM} command.</li>
+ * </ul>
  */
 @Service
 public class DatabaseService implements DisposableBean {
@@ -70,7 +80,6 @@ public class DatabaseService implements DisposableBean {
 
     private static String resolvePortableDbUrl() {
         try {
-            // Check for "data" folder in current working directory (Portable Mode)
             Path appDir = Paths.get(".").resolve(DATA_DIR_NAME).toAbsolutePath().normalize();
 
             if (!Files.exists(appDir)) {
@@ -113,5 +122,26 @@ public class DatabaseService implements DisposableBean {
 
         flyway.migrate();
         logger.info("Flyway migration completed successfully.");
+    }
+
+    public void clearAllData() {
+        try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
+            stmt.execute("DELETE FROM images");
+            stmt.execute("DELETE FROM collections");
+            stmt.execute("DELETE FROM pinned_folders");
+            stmt.execute("DELETE FROM settings");
+            stmt.execute("DELETE FROM image_metadata");
+            stmt.execute("DELETE FROM image_tags");
+            stmt.execute("DELETE FROM collection_images");
+            stmt.execute("DELETE FROM collection_exclusions");
+            stmt.execute("DELETE FROM metadata_fts");
+
+            stmt.execute("VACUUM");
+
+            logger.info("Database cleared and vacuumed.");
+        } catch (SQLException e) {
+            logger.error("Failed to clear database", e);
+            throw new RuntimeException(e);
+        }
     }
 }

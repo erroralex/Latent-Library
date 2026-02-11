@@ -11,6 +11,7 @@
  * - Vue Router: Client-side navigation.
  * - PrimeVue: UI components and theme configuration (Aura Dark Green).
  * - ToastService: Global notification system.
+ * - ConfirmationService: Global confirmation dialog system.
  * - Tooltip: Custom directive for UI hints.
  * - Global CSS: Imports base styles, icons, and utility classes (PrimeFlex).
  */
@@ -18,6 +19,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 
 import 'primevue/resources/themes/aura-dark-green/theme.css'
@@ -35,6 +37,7 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
+app.use(ConfirmationService)
 
 app.directive('tooltip', Tooltip);
 

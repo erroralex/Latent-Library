@@ -10,18 +10,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Repository for managing granular image metadata.
+ * Repository for managing granular technical metadata associated with images.
  * <p>
- * This class provides persistent storage for the key-value pairs extracted from image files. It manages
- * the {@code image_metadata} table, which stores technical generation parameters (e.g., "Steps",
- * "Sampler", "CFG Scale"). This data is used for both detailed display in the UI and as the
- * source for the FTS5 search index.
+ * This class provides persistent storage for the key-value pairs extracted from image files,
+ * such as generation parameters (e.g., "Steps", "Sampler", "CFG Scale"). It manages the
+ * {@code image_metadata} table, which serves as the primary source for both detailed
+ * metadata display in the UI and the generation of tokens for the SQLite FTS5 search index.
  * <p>
- * Key functionalities:
- * - Metadata Persistence: Saves a map of metadata keys and values for a specific image ID.
- * - Atomic Updates: Implements a delete-then-insert strategy within a transaction to ensure metadata consistency.
- * - Retrieval: Fetches all metadata associated with an image as a {@code Map<String, String>}.
- * - Discovery: Provides distinct values for specific metadata keys to support frontend filter menus.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Metadata Persistence:</b> Saves a comprehensive map of metadata keys and values
+ *   for a specific image ID, ensuring technical data is cached for rapid access.</li>
+ *   <li><b>Atomic Updates:</b> Implements a transactional delete-then-insert strategy to
+ *   ensure metadata consistency and prevent stale data during re-indexing.</li>
+ *   <li><b>Retrieval:</b> Fetches all metadata associated with an image as a {@link Map},
+ *   allowing for efficient rendering of technical details in the frontend.</li>
+ *   <li><b>Discovery:</b> Provides distinct values for specific metadata keys (e.g., a list
+ *   of all unique Models used) to dynamically populate UI filter menus.</li>
+ * </ul>
  */
 @Repository
 public class ImageMetadataRepository {

@@ -21,25 +21,27 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 /**
- * Service for generating, caching, and retrieving image thumbnails.
- *
- * <p>This service provides a high-performance mechanism for managing image thumbnails. It utilizes
+ * Service for generating, caching, and retrieving image thumbnails with resource-aware concurrency.
+ * <p>
+ * This service provides a high-performance mechanism for managing image thumbnails. It utilizes
  * a striped locking mechanism to minimize contention when multiple threads attempt to access or
  * generate thumbnails for different files. To prevent system resource exhaustion during heavy
  * image processing, it employs a semaphore-based throttling mechanism that limits the number of
  * concurrent resizing operations.
- *
- * <p>Key features include:
+ * <p>
+ * Key Responsibilities:
  * <ul>
- *   <li><b>Striped Locking:</b> Reduces lock contention by hashing file paths to a fixed set of locks.</li>
- *   <li><b>Resource Throttling:</b> Uses a {@link java.util.concurrent.Semaphore} to limit CPU-intensive image resizing.</li>
- *   <li><b>Virtual Thread Support:</b> Provides a non-blocking preloading mechanism using Java 21+ virtual threads.</li>
- *   <li><b>Persistent Caching:</b> Stores generated thumbnails in a dedicated directory within the user's home folder.</li>
- *   <li><b>Cache Invalidation:</b> Uses a combination of file path and last modified timestamp to ensure thumbnails are updated when source images change.</li>
+ *   <li><b>Striped Locking:</b> Reduces lock contention by hashing file paths to a fixed set of
+ *   locks, allowing parallel generation of thumbnails for different files.</li>
+ *   <li><b>Resource Throttling:</b> Uses a {@link Semaphore} to limit CPU-intensive image resizing
+ *   tasks, ensuring the system remains responsive during bulk indexing.</li>
+ *   <li><b>Virtual Thread Support:</b> Provides a non-blocking preloading mechanism using Java 21+
+ *   virtual threads to fire off hundreds of generation tasks efficiently.</li>
+ *   <li><b>Persistent Caching:</b> Stores generated thumbnails in a dedicated {@code data/thumbnails}
+ *   directory, using SHA-256 hashes of the file path and modification time for cache keys.</li>
+ *   <li><b>Cache Invalidation:</b> Automatically detects changes to source images by including the
+ *   last modified timestamp in the cache key, ensuring thumbnails are always up-to-date.</li>
  * </ul>
- *
- * <p>The service leverages the Thumbnailator library for high-quality image resizing and
- * TwelveMonkeys ImageIO plugins for extended format support.
  */
 @Service
 public class ThumbnailService {
@@ -55,7 +57,6 @@ public class ThumbnailService {
     private final Path thumbnailCacheDir;
 
     public ThumbnailService() {
-        // Use local "data/thumbnails" folder for portability
         this.thumbnailCacheDir = Paths.get(".").resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
         try {
             if (!Files.exists(thumbnailCacheDir)) {
@@ -73,10 +74,6 @@ public class ThumbnailService {
         this.cpuPermits = new Semaphore(Math.max(2, cores - 2));
     }
 
-    /**
-     * Retrieves a thumbnail file, generating it if necessary.
-     * Thread-safe and non-blocking for OS threads (uses ReentrantLock).
-     */
     public File getThumbnail(File sourceFile) {
         if (sourceFile == null || !sourceFile.exists()) {
             return null;
@@ -115,11 +112,6 @@ public class ThumbnailService {
         }
     }
 
-    /**
-     * Java 21 Feature: Preloads thumbnails for a list of files using Virtual Threads.
-     * This allows us to fire off hundreds of tasks immediately, letting the Semaphore
-     * manage the actual CPU load.
-     */
     public void preloadCache(List<File> files) {
         if (files == null || files.isEmpty()) return;
 

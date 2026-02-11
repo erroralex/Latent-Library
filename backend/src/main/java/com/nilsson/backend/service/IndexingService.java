@@ -18,24 +18,25 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * Service responsible for background image indexing and real-time file system monitoring.
- *
- * <p>This service acts as the central orchestrator for synchronizing the local file system with
- * the application's database. It manages the lifecycle of image metadata and thumbnails by
- * performing initial directory scans, background indexing of metadata, and maintaining
- * consistency through real-time file system monitoring.
- *
- * <p>Key responsibilities include:
+ * Service responsible for background image indexing, library reconciliation, and real-time file system monitoring.
+ * <p>
+ * This service acts as the central orchestrator for synchronizing the local file system with the application's
+ * database. It manages the lifecycle of image metadata and thumbnails by performing initial directory scans,
+ * background indexing of metadata, and maintaining consistency through real-time file system monitoring.
+ * <p>
+ * Key Responsibilities:
  * <ul>
- *   <li><b>Initial Indexing:</b> Scans user-defined folders to populate the database with image metadata and trigger thumbnail generation.</li>
- *   <li><b>Library Reconciliation:</b> Periodically verifies the database against the file system to remove "ghost" records of deleted files.</li>
- *   <li><b>Real-time Monitoring:</b> Utilizes the Java {@link java.nio.file.WatchService} to detect file creation, modification, and deletion events, ensuring the application state remains current.</li>
- *   <li><b>Concurrency Management:</b> Leverages Java 21+ Virtual Threads via {@link java.util.concurrent.Executors#newVirtualThreadPerTaskExecutor()} to handle I/O-bound indexing tasks efficiently without blocking platform threads.</li>
- *   <li><b>Event Debouncing:</b> Implements a debouncing mechanism for file system events to prevent redundant processing during rapid file operations.</li>
+ *   <li><b>Initial Indexing:</b> Scans user-defined folders to populate the database with image metadata
+ *   and trigger thumbnail generation, respecting exclusion rules.</li>
+ *   <li><b>Library Reconciliation:</b> Periodically verifies the database against the file system to
+ *   identify and remove "ghost" records of files that have been deleted or moved externally.</li>
+ *   <li><b>Real-time Monitoring:</b> Utilizes the Java {@link WatchService} to detect file creation,
+ *   modification, and deletion events, ensuring the application state remains current without manual refreshes.</li>
+ *   <li><b>Concurrency Management:</b> Leverages Java 21+ Virtual Threads to handle I/O-bound indexing
+ *   tasks efficiently, allowing for high-throughput processing without blocking platform threads.</li>
+ *   <li><b>Event Debouncing:</b> Implements a sophisticated debouncing mechanism for file system events
+ *   to prevent redundant processing during rapid file operations (e.g., saving a file multiple times).</li>
  * </ul>
- *
- * <p>The service coordinates with {@link MetadataService} for extraction, {@link ThumbnailService}
- * for image processing, and {@link UserDataManager} for persistence.
  */
 @Service
 public class IndexingService {
@@ -50,7 +51,7 @@ public class IndexingService {
     private final PathService pathService;
     private final ThumbnailService thumbnailService;
     private final ExecutorService executor;
-    private final FtsService ftsService; // Added FtsService dependency
+    private final FtsService ftsService;
 
     private WatchService watchService;
     private Thread watchThread;
@@ -63,7 +64,7 @@ public class IndexingService {
                            UserDataManager dataManager,
                            PathService pathService,
                            ThumbnailService thumbnailService,
-                           FtsService ftsService) { // Inject FtsService
+                           FtsService ftsService) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
@@ -118,11 +119,18 @@ public class IndexingService {
         executor.submit(ghostCleanupTask);
     }
 
-    /**
-     * Scans a folder for images, triggering parallel thumbnail generation and metadata indexing.
-     */
     public void indexFolder(File folder) {
         if (folder == null || !folder.isDirectory()) return;
+        
+        String folderPath = pathService.getNormalizedAbsolutePath(folder);
+        List<String> excludedPaths = dataManager.getExcludedPaths();
+        for (String excluded : excludedPaths) {
+            String normalizedExcluded = excluded.replace("\\", "/");
+            if (folderPath.startsWith(normalizedExcluded)) {
+                logger.info("Skipping excluded folder: {}", folderPath);
+                return;
+            }
+        }
 
         logger.info("Indexing folder: {}", folder.getName());
 
@@ -138,7 +146,6 @@ public class IndexingService {
                       }
                   });
 
-            // Process remaining files
             if (!batch.isEmpty()) {
                 processAndClearBatch(batch);
             }
@@ -180,6 +187,16 @@ public class IndexingService {
         stopWatching();
 
         if (directory == null || !directory.exists() || !directory.isDirectory()) return;
+        
+        String folderPath = pathService.getNormalizedAbsolutePath(directory);
+        List<String> excludedPaths = dataManager.getExcludedPaths();
+        for (String excluded : excludedPaths) {
+            String normalizedExcluded = excluded.replace("\\", "/");
+            if (folderPath.startsWith(normalizedExcluded)) {
+                logger.info("Skipping watch for excluded folder: {}", folderPath);
+                return;
+            }
+        }
 
         try {
             this.watchService = FileSystems.getDefault().newWatchService();

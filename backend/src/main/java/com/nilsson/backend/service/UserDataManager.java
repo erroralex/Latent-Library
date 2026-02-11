@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.nio.file.InvalidPathException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,19 +27,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * High-level facade service for managing user data, application state, and complex business logic.
+ * High-level facade service for managing user data, application state, and complex business logic orchestration.
  * <p>
- * This service acts as the primary orchestrator for the application's data layer. It aggregates
- * functionality from multiple specialized services and repositories to provide a unified API
- * for the controller layer. It handles complex operations such as multi-filter searching,
- * file movement detection (via hashing), and metadata value normalization.
+ * This service acts as the primary orchestrator for the application's data layer, aggregating functionality
+ * from multiple specialized services and repositories to provide a unified API for the controller layer.
+ * It handles complex operations such as multi-filter searching, file movement detection via hashing,
+ * and metadata value normalization for UI display.
  * <p>
- * Key functionalities:
- * - Unified Data Access: Provides a single entry point for images, collections, tags, and settings.
- * - Advanced Search Orchestration: Combines FTS5 search with relational filtering and DTO mapping.
- * - File Integrity: Implements SHA-256 hashing to detect file moves and maintain database consistency.
- * - Metadata Normalization: Cleans and formats raw metadata values (e.g., LoRAs, Samplers) for UI display.
- * - System Integration: Manages OS-level operations like moving files to the system trash.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Unified Data Access:</b> Provides a single entry point for interacting with images,
+ *   collections, tags, and application settings.</li>
+ *   <li><b>Advanced Search Orchestration:</b> Combines SQLite FTS5 search with relational filtering
+ *   and DTO mapping to deliver responsive search results.</li>
+ *   <li><b>File Integrity & Tracking:</b> Implements SHA-256 hashing to detect when files have been
+ *   moved or renamed, maintaining database consistency without re-indexing.</li>
+ *   <li><b>Metadata Normalization:</b> Cleans and formats raw metadata values (e.g., LoRAs, Samplers)
+ *   to ensure a consistent and user-friendly experience in the frontend.</li>
+ *   <li><b>System Integration:</b> Manages OS-level operations such as moving files to the system trash
+ *   and resolving platform-specific file paths.</li>
+ *   <li><b>Application State:</b> Persists and retrieves user preferences, such as the last visited
+ *   folder and excluded directory paths.</li>
+ * </ul>
  */
 @Service
 public class UserDataManager {
@@ -348,6 +359,31 @@ public class UserDataManager {
     public void setLastFolder(File folder) {
         if (folder != null) {
             settingsRepo.set("last_folder", pathService.getNormalizedAbsolutePath(folder));
+        }
+    }
+
+    public void clearDatabase() {
+        db.clearAllData();
+    }
+
+    public List<String> getExcludedPaths() {
+        String raw = settingsRepo.get("excluded_paths", "");
+        if (raw == null || raw.isBlank()) return new ArrayList<>();
+        return new ArrayList<>(Arrays.asList(raw.split(";")));
+    }
+
+    public void addExcludedPath(String path) {
+        List<String> current = getExcludedPaths();
+        if (!current.contains(path)) {
+            current.add(path);
+            settingsRepo.set("excluded_paths", String.join(";", current));
+        }
+    }
+
+    public void removeExcludedPath(String path) {
+        List<String> current = getExcludedPaths();
+        if (current.remove(path)) {
+            settingsRepo.set("excluded_paths", String.join(";", current));
         }
     }
 }

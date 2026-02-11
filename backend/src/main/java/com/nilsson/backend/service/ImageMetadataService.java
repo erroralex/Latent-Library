@@ -9,18 +9,25 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * Service for managing the lifecycle and caching of image-specific metadata.
+ * Service for managing the lifecycle, persistence, and caching of image-specific technical metadata.
  * <p>
- * This service provides a high-level interface for retrieving and persisting technical metadata.
- * It implements a caching strategy that prioritizes database-stored metadata over expensive
- * file-system extraction. It also ensures that whenever metadata is cached, the corresponding
- * search index (FTS) is updated to reflect the new data.
+ * This service provides a high-level interface for retrieving and persisting technical metadata
+ * extracted from AI-generated images. It implements a caching strategy that prioritizes
+ * database-stored metadata over expensive file-system extraction. It also ensures that
+ * whenever metadata is cached, the corresponding search index (FTS) is updated to reflect
+ * the new data.
  * <p>
- * Key functionalities:
- * - Transparent Caching: Automatically extracts and saves metadata if not already present in the DB.
- * - Index Synchronization: Coordinates with {@code FtsService} to keep search results up to date.
- * - Transactional Integrity: Ensures that metadata persistence and indexing occur atomically.
- * - Metadata Discovery: Provides a quick check for the existence of cached data for a given path.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Transparent Caching:</b> Automatically extracts and saves metadata to the database
+ *   if it is not already present, reducing subsequent I/O overhead.</li>
+ *   <li><b>Index Synchronization:</b> Coordinates with the {@link FtsService} to keep the
+ *   SQLite FTS5 search index synchronized with the latest metadata.</li>
+ *   <li><b>Transactional Integrity:</b> Ensures that metadata persistence and search indexing
+ *   occur atomically within a single transaction.</li>
+ *   <li><b>Metadata Discovery:</b> Provides efficient checks for the existence of cached
+ *   metadata for specific file paths.</li>
+ * </ul>
  */
 @Service
 public class ImageMetadataService {

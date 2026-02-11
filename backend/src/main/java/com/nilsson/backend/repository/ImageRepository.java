@@ -11,19 +11,27 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Repository for managing core image entities and their persistent state.
+ * Repository for managing core image entities and their persistent state within the library.
  * <p>
  * This class serves as the primary data access layer for the {@code images} table. It handles the
- * registration of new images, path updates (for file moves), and user-driven state changes like
- * ratings and "starred" status. It also supports hash-based lookups to detect and reconcile
- * file movements across the local file system.
+ * registration of new images, path updates for file movements, and user-driven state changes
+ * such as ratings and "starred" status. It also supports hash-based lookups to detect and
+ * reconcile file movements across the local file system, ensuring metadata is preserved
+ * even when files are renamed or moved externally.
  * <p>
- * Key functionalities:
- * - Identity Management: Resolves file paths to internal database IDs.
- * - File Move Detection: Uses SHA-256 hashes to find existing records when a file is moved.
- * - Batch Processing: Provides a streaming mechanism ({@code forEachFilePath}) for library-wide operations.
- * - Rating & Star Logic: Manages the {@code rating} and {@code is_starred} flags for image organization.
- * - Atomic Registration: Implements {@code getOrCreateId} to ensure thread-safe image indexing.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Identity Management:</b> Resolves absolute file system paths to internal database IDs
+ *   for relational associations.</li>
+ *   <li><b>File Move Detection:</b> Utilizes SHA-256 hashes to identify existing records when a
+ *   file is moved, allowing for seamless path updates without data loss.</li>
+ *   <li><b>Batch Processing:</b> Provides a streaming mechanism for library-wide operations,
+ *   enabling efficient reconciliation and maintenance tasks.</li>
+ *   <li><b>Organization Logic:</b> Manages the {@code rating} and {@code is_starred} flags,
+ *   which are central to the application's filtering and collection systems.</li>
+ *   <li><b>Atomic Registration:</b> Implements thread-safe image indexing using {@code INSERT OR IGNORE}
+ *   and transactional ID retrieval.</li>
+ * </ul>
  */
 @Repository
 public class ImageRepository {

@@ -10,19 +10,24 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Orchestration service for parsing text-based image generation metadata.
+ * Orchestration service for parsing text-based image generation metadata into structured data.
  * <p>
  * This class acts as a high-level router that identifies the specific format of a metadata string
- * and delegates the parsing to the appropriate {@code MetadataStrategy}. It supports a wide
+ * and delegates the parsing to the appropriate {@link MetadataStrategy}. It supports a wide
  * range of AI generation tools by detecting unique signatures in both structured JSON
  * (ComfyUI, InvokeAI, SwarmUI) and unstructured text blocks (Automatic1111, NovelAI).
  * <p>
- * Key functionalities:
- * - Format Detection: Analyzes raw text to determine the originating software (e.g., ComfyUI vs. A1111).
- * - Strategy Routing: Dispatches metadata to specialized strategy implementations for deep parsing.
- * - ComfyUI Graph Traversal: Implements specialized logic to handle both UI-schema and API-schema
- * JSON structures used by ComfyUI.
- * - Fallback Logic: Provides a safe, empty result if no recognizable metadata format is found.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Format Detection:</b> Analyzes raw text to determine the originating software
+ *   (e.g., ComfyUI vs. A1111) based on unique structural markers.</li>
+ *   <li><b>Strategy Routing:</b> Dispatches metadata to specialized strategy implementations
+ *   for deep parsing of tool-specific parameters.</li>
+ *   <li><b>ComfyUI Graph Traversal:</b> Implements specialized logic to handle both UI-schema
+ *   and API-schema JSON structures used by ComfyUI, extracting parameters from the node graph.</li>
+ *   <li><b>Fallback Logic:</b> Provides a safe, empty result if no recognizable metadata format
+ *   is found, ensuring the application remains robust.</li>
+ * </ul>
  */
 @Service
 public class TextParamsParser {

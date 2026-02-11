@@ -12,18 +12,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for the Speed Sorter utility.
+ * REST Controller for the Speed Sorter utility, designed for high-throughput image organization.
  * <p>
- * This controller facilitates rapid image organization by managing source and target directory
- * configurations and executing file move/delete operations. It is designed to support a
- * high-throughput workflow where users can triage images using keyboard shortcuts.
+ * This controller facilitates rapid image triage by managing source and target directory
+ * configurations and executing atomic file operations. It is optimized for a workflow where
+ * users can quickly move images to pre-defined "hot" folders or delete them, often using
+ * keyboard shortcuts in the frontend.
  * <p>
- * Key functionalities:
- * - Configuration Management: Stores and retrieves user-defined input and target folder paths.
- * - Rapid File Movement: Executes atomic file moves between directories, ensuring unique filenames.
- * - Trash Integration: Leverages system-native trash/recycle bin for safe file deletion.
- * - Undo Support: Provides an endpoint to revert the most recent move operation.
- * - Directory Listing: Returns a sorted list of images from the configured input directory.
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Configuration Management:</b> Persists and retrieves user-defined input and target
+ *   folder paths using the {@link UserDataManager}.</li>
+ *   <li><b>Rapid File Movement:</b> Executes atomic file moves between directories, automatically
+ *   generating unique filenames to prevent data loss during collisions.</li>
+ *   <li><b>Trash Integration:</b> Interfaces with the system-native trash/recycle bin for safe
+ *   file deletion, allowing for recovery if needed.</li>
+ *   <li><b>Undo Support:</b> Provides a mechanism to revert the most recent move operation,
+ *   restoring the file to its original location.</li>
+ *   <li><b>Directory Listing:</b> Returns a sorted list of images from the configured input
+ *   directory, prioritized by modification date.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/speedsorter")
