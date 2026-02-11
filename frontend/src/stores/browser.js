@@ -144,6 +144,8 @@ export const useBrowserStore = defineStore('browser', {
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
+                    // Force gallery view when opening a collection to see the content
+                    this.setViewMode('gallery');
                 } else {
                     this.selectedFile = null;
                     this.currentMetadata = {};

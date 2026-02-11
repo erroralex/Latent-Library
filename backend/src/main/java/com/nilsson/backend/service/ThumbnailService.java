@@ -45,7 +45,7 @@ import java.util.stream.IntStream;
 public class ThumbnailService {
 
     private static final Logger logger = LoggerFactory.getLogger(ThumbnailService.class);
-    private static final String THUMBNAIL_DIR = ".aitoolbox/thumbnails";
+    private static final String THUMBNAIL_DIR = "data/thumbnails";
     private static final int THUMBNAIL_SIZE = 300;
     private static final double OUTPUT_QUALITY = 0.85;
 
@@ -55,7 +55,8 @@ public class ThumbnailService {
     private final Path thumbnailCacheDir;
 
     public ThumbnailService() {
-        this.thumbnailCacheDir = Paths.get(System.getProperty("user.home")).resolve(THUMBNAIL_DIR);
+        // Use local "data/thumbnails" folder for portability
+        this.thumbnailCacheDir = Paths.get(".").resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
         try {
             if (!Files.exists(thumbnailCacheDir)) {
                 Files.createDirectories(thumbnailCacheDir);

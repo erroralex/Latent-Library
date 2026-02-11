@@ -44,15 +44,24 @@ public class FtsService {
     public void updateFtsIndex(int imageId) {
         String metadataText = metadataRepository.getMetadata(imageId).entrySet().stream()
                 .map(entry -> {
-                    if ("Loras".equals(entry.getKey())) {
-                        return Arrays.stream(entry.getValue().split(","))
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+
+                    if ("Loras".equals(key)) {
+                        return Arrays.stream(value.split(","))
                                 .map(String::trim)
                                 .filter(s -> !s.isEmpty())
                                 .map(this::cleanLoraName)
                                 .map(loraName -> formatFtsToken("Loras", loraName))
                                 .collect(Collectors.joining(" "));
                     }
-                    return formatFtsToken(entry.getKey(), entry.getValue());
+
+                    // Index prompts as raw text to allow natural language search
+                    if ("Prompt".equals(key) || "Negative".equals(key)) {
+                        return value;
+                    }
+
+                    return formatFtsToken(key, value);
                 })
                 .collect(Collectors.joining(" "));
 
