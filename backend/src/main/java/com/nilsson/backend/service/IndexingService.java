@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Service responsible for background image indexing and real-time file system monitoring.
@@ -54,6 +56,7 @@ public class IndexingService {
     private Thread watchThread;
 
     private final Map<String, Long> pendingEvents = new ConcurrentHashMap<>();
+    private final ReentrantLock dbLock = new ReentrantLock();
 
     public IndexingService(ImageRepository imageRepo,
                            MetadataService metaService,
@@ -121,22 +124,41 @@ public class IndexingService {
     public void indexFolder(File folder) {
         if (folder == null || !folder.isDirectory()) return;
 
-        File[] filesArr = folder.listFiles(this::isImageFile);
-        if (filesArr != null && filesArr.length > 0) {
-            List<File> files = Arrays.asList(filesArr);
-            logger.info("Indexing folder: {} ({} files)", folder.getName(), files.size());
+        logger.info("Indexing folder: {}", folder.getName());
 
-            Thread.ofVirtual().start(() -> thumbnailService.preloadCache(files));
+        try (Stream<Path> stream = Files.list(folder.toPath())) {
+            List<File> batch = new ArrayList<>(BATCH_SIZE);
+            
+            stream.filter(path -> isImageFile(path.toFile()))
+                  .forEach(path -> {
+                      batch.add(path.toFile());
+                      if (batch.size() >= BATCH_SIZE) {
+                          processAndClearBatch(new ArrayList<>(batch));
+                          batch.clear();
+                      }
+                  });
 
-            startIndexing(files, null);
+            // Process remaining files
+            if (!batch.isEmpty()) {
+                processAndClearBatch(batch);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to stream files from folder: {}", folder.getAbsolutePath(), e);
         }
+    }
+
+    private void processAndClearBatch(List<File> files) {
+        if (files.isEmpty()) return;
+
+        Thread.ofVirtual().start(() -> thumbnailService.preloadCache(files));
+
+        startIndexing(files, null);
     }
 
     public void startIndexing(List<File> files, Consumer<BatchResult> onBatchResult) {
         if (files == null || files.isEmpty()) return;
 
         Runnable task = () -> {
-            logger.info("Starting background metadata indexing for {} files...", files.size());
             int total = files.size();
             for (int i = 0; i < total; i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, total);
@@ -150,7 +172,6 @@ public class IndexingService {
 
                 Thread.yield();
             }
-            logger.info("Background metadata indexing completed for {} files.", total);
         };
         executor.submit(task);
     }
@@ -261,7 +282,14 @@ public class IndexingService {
     private void handleFileCreation(File file) {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
-            dataManager.cacheMetadata(file, meta);
+            
+            dbLock.lock();
+            try {
+                dataManager.cacheMetadata(file, meta);
+            } finally {
+                dbLock.unlock();
+            }
+            
             thumbnailService.getThumbnail(file);
             logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
@@ -272,7 +300,14 @@ public class IndexingService {
     private void handleFileDeletion(File file) {
         try {
             String path = pathService.getNormalizedAbsolutePath(file);
-            imageRepo.deleteByPath(path);
+            
+            dbLock.lock();
+            try {
+                imageRepo.deleteByPath(path);
+            } finally {
+                dbLock.unlock();
+            }
+            
             logger.debug("Deleted file from disk and DB: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing deleted file: {}", file.getName(), e);
@@ -291,13 +326,17 @@ public class IndexingService {
         for (File file : batch) {
             try {
                 Map<String, String> meta = metaService.getExtractedData(file);
-                dataManager.cacheMetadata(file, meta);
-
-                int rating = dataManager.getRating(file);
+                
+                dbLock.lock();
+                try {
+                    dataManager.cacheMetadata(file, meta);
+                    int rating = dataManager.getRating(file);
+                    ratingMap.put(file, rating);
+                } finally {
+                    dbLock.unlock();
+                }
 
                 metadataMap.put(file, meta);
-                ratingMap.put(file, rating);
-
                 thumbnailService.getThumbnail(file);
             } catch (Exception e) {
                 logger.error("Failed to index file: {}", file.getAbsolutePath(), e);

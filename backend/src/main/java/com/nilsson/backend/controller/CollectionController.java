@@ -98,41 +98,23 @@ public class CollectionController {
             return ResponseEntity.badRequest().build();
         }
 
-        return dataManager.getCollectionDetails(name)
-                .map(details -> {
-                    if (details.isSmart() && details.filters() != null) {
-                        Map<String, String> filtersMap = new HashMap<>();
-                        if (details.filters().models() != null && !details.filters().models().isEmpty()) {
-                            filtersMap.put("Model", details.filters().models().get(0));
-                        }
-                        if (details.filters().loras() != null && !details.filters().loras().isEmpty()) {
-                            filtersMap.put("Loras", details.filters().loras().get(0));
-                        }
-                        if (details.filters().samplers() != null && !details.filters().samplers().isEmpty()) {
-                            filtersMap.put("Sampler", details.filters().samplers().get(0));
-                        }
-                        if (details.filters().rating() != null && !details.filters().rating().isBlank()) {
-                            filtersMap.put("Rating", details.filters().rating());
-                        }
+        // Use the unified service method which handles both static and smart collections correctly.
+        // This ensures that smart collections are refreshed with their full set of filters
+        // (not just the first one) and that the logic is consistent with the backend service layer.
+        List<File> files = dataManager.getFilesFromCollection(name);
 
-                        String prompt = details.filters().prompt() != null ? String.join(" ", details.filters().prompt()) : "";
-
-                        return ResponseEntity.ok(dataManager.findFilesWithFilters(prompt, filtersMap, 0, 2000).join());
-                    } else {
-                        List<ImageDTO> result = dataManager.getFilesFromCollection(name).stream()
-                                .map(file -> {
-                                    int rating = dataManager.getRating(file);
-                                    String model = "";
-                                    if (dataManager.hasCachedMetadata(file)) {
-                                        Map<String, String> meta = dataManager.getCachedMetadata(file);
-                                        model = meta.getOrDefault("Model", "");
-                                    }
-                                    return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
-                                })
-                                .collect(Collectors.toList());
-                        return ResponseEntity.ok(result);
+        List<ImageDTO> dtos = files.stream()
+                .map(file -> {
+                    int rating = dataManager.getRating(file);
+                    String model = "";
+                    if (dataManager.hasCachedMetadata(file)) {
+                        Map<String, String> meta = dataManager.getCachedMetadata(file);
+                        model = meta.getOrDefault("Model", "");
                     }
+                    return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
                 })
-                .orElse(ResponseEntity.notFound().build());
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 }
