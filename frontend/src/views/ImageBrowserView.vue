@@ -16,16 +16,24 @@
  */
 import {onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
-import {useRoute} from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
+import axios from 'axios';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
 import VirtualGallery from '@/components/VirtualGallery.vue';
 import SingleImageViewer from '@/components/SingleImageViewer.vue';
+import CustomContextMenu from '@/components/CustomContextMenu.vue';
+import {useToast} from 'primevue/usetoast';
 
 const store = useBrowserStore();
 const route = useRoute();
+const router = useRouter();
+const toast = useToast();
 const containerRef = ref(null);
 const virtualGalleryRef = ref(null);
+const cm = ref();
+const menuModel = ref([]);
+const contextMenuSelection = ref(null);
 
 const handleKeydown = (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -80,6 +88,136 @@ const handleKeydown = (e) => {
   }
 };
 
+const onContextMenu = async (payload) => {
+  const { event, file } = payload;
+  contextMenuSelection.value = file;
+
+  // Fetch collections for the submenu
+  let collections = [];
+  try {
+    const res = await axios.get('/api/collections');
+    collections = res.data;
+  } catch (e) {
+    console.error("Failed to fetch collections for context menu", e);
+  }
+
+  const addToCollectionItems = collections.map(colName => ({
+    label: colName,
+    icon: 'pi pi-folder',
+    command: () => addToCollection(colName, file.path)
+  }));
+
+  // Add "Create New Collection" option
+  addToCollectionItems.unshift({
+    label: 'Create New Collection...',
+    icon: 'pi pi-plus',
+    command: () => createNewCollection(file.path)
+  });
+
+  if (addToCollectionItems.length > 1) {
+      addToCollectionItems.splice(1, 0, { separator: true });
+  }
+
+  const items = [];
+
+  // "Add to Collection" is always available
+  items.push({
+    label: 'Add to Collection',
+    icon: 'pi pi-plus',
+    items: addToCollectionItems
+  });
+
+  // "Blacklist" only if inside a collection
+  if (store.activeCollection) {
+    items.push({
+      label: 'Blacklist (Remove)',
+      icon: 'pi pi-ban',
+      command: () => blacklistImage(store.activeCollection, file.path)
+    });
+  }
+
+  items.push({ separator: true });
+
+  items.push({
+    label: 'Open in Explorer',
+    icon: 'pi pi-external-link',
+    command: () => openInExplorer(file.path)
+  });
+
+  items.push({
+    label: 'Delete (Trash)',
+    icon: 'pi pi-trash',
+    command: () => deleteImage(file.path)
+  });
+
+  menuModel.value = items;
+
+  if (cm.value) {
+    cm.value.show(event);
+  }
+};
+
+const addToCollection = async (collectionName, path) => {
+  try {
+    await axios.post(`/api/collections/${collectionName}/images`, null, { params: { path } });
+    toast.add({ severity: 'success', summary: 'Added', detail: `Added to ${collectionName}`, life: 2000 });
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add to collection', life: 3000 });
+  }
+};
+
+const createNewCollection = (path) => {
+    store.collectionToEdit = null; // Ensure we are creating new
+    router.push('/collections');
+    // Ideally we would pass the image path to pre-select it, but for now just navigating is fine.
+    // Or we could use a query param to trigger the dialog immediately.
+};
+
+const blacklistImage = async (collectionName, path) => {
+  try {
+    await axios.post(`/api/collections/${collectionName}/blacklist`, null, { params: { path } });
+    toast.add({ severity: 'success', summary: 'Removed', detail: `Removed from ${collectionName}`, life: 2000 });
+    // Refresh the current view to hide the removed image
+    store.loadCollection(collectionName);
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to blacklist image', life: 3000 });
+  }
+};
+
+const openInExplorer = async (path) => {
+  try {
+    await axios.post('/api/system/show-in-explorer', null, { params: { path } });
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to open explorer', life: 3000 });
+  }
+};
+
+const deleteImage = async (path) => {
+  if (!confirm("Are you sure you want to move this file to the trash?")) return;
+
+  try {
+    await axios.post('/api/speedsorter/delete', null, { params: { path } });
+    toast.add({ severity: 'success', summary: 'Deleted', detail: 'Moved to trash', life: 2000 });
+
+    // Remove from local store to update UI immediately
+    const index = store.files.findIndex(f => f.path === path);
+    if (index !== -1) {
+      store.files.splice(index, 1);
+      // If the deleted file was selected, select the next one
+      if (store.selectedFile === path) {
+        if (store.files.length > 0) {
+          const nextIndex = Math.min(index, store.files.length - 1);
+          store.selectFile(store.files[nextIndex]);
+        } else {
+          store.selectedFile = null;
+        }
+      }
+    }
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete file', life: 3000 });
+  }
+};
+
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown);
 
@@ -98,6 +236,12 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+});
+
+watch(() => route.query.collection, async (newCollection) => {
+  if (newCollection) {
+    await store.loadCollection(newCollection);
+  }
 });
 
 watch(() => store.viewMode, (newMode) => {
@@ -131,8 +275,8 @@ watch(() => store.imageFocusRequested, (requested) => {
              (store.viewMode === 'gallery' && store.isSidebarOpen) ? 'flex-grow-1 w-auto' : 'w-full'
            ]"
            ref="containerRef" tabindex="0" style="outline: none;">
-        <VirtualGallery v-if="store.viewMode === 'gallery'" ref="virtualGalleryRef"/>
-        <SingleImageViewer v-else/>
+        <VirtualGallery v-if="store.viewMode === 'gallery'" ref="virtualGalleryRef" @contextmenu="onContextMenu"/>
+        <SingleImageViewer v-else @contextmenu="onContextMenu"/>
       </div>
 
       <Transition name="sidebar-slide">
@@ -145,6 +289,8 @@ watch(() => store.imageFocusRequested, (requested) => {
         </div>
       </Transition>
     </div>
+
+    <CustomContextMenu ref="cm" :model="menuModel"/>
   </div>
 </template>
 

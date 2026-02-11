@@ -156,6 +156,16 @@ const onKeyDown = (e) => {
   }
 };
 
+const emit = defineEmits(['contextmenu']);
+
+const onRightClick = (event) => {
+  if (store.selectedFile) {
+    // Find the full file object from the store if possible, or construct a partial one
+    const fileObj = store.files.find(f => f.path === store.selectedFile) || { path: store.selectedFile };
+    emit('contextmenu', {event, file: fileObj});
+  }
+};
+
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown, {capture: true});
 });
@@ -166,7 +176,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative h-full w-full image-viewer-glass">
+  <div class="relative h-full w-full image-viewer-glass" @contextmenu.prevent="onRightClick">
     <div
         class="absolute top-0 left-0 right-0 overflow-hidden flex align-items-center justify-content-center"
         style="bottom: 10rem"

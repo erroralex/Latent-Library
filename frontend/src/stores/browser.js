@@ -40,6 +40,7 @@ export const useBrowserStore = defineStore('browser', {
         selectedSampler: null,
         selectedLora: null,
         selectedRating: null,
+        activeCollection: null, // New state for active collection filter
 
         lastFolderPath: null,
         navRefreshKey: 0,
@@ -107,6 +108,7 @@ export const useBrowserStore = defineStore('browser', {
             this.files = [];
             this.page = 0;
             this.hasMore = false;
+            this.activeCollection = null; // Clear active collection when loading a folder
 
             try {
                 const response = await axios.post('/api/library/scan', null, {
@@ -133,14 +135,15 @@ export const useBrowserStore = defineStore('browser', {
 
         async loadCollection(collectionName) {
             this.isLoading = true;
-            this.searchQuery = `collection: ${collectionName}`;
+            this.activeCollection = collectionName; // Set active collection
+            this.searchQuery = ''; // Clear search query so user can search WITHIN collection
             this.files = [];
             this.page = 0;
-            this.hasMore = false;
+            this.hasMore = true; // Enable pagination for collections
 
             try {
-                const response = await axios.post('/api/collections/images', {name: collectionName});
-                this.files = response.data;
+                // Initial load using the search endpoint which now supports collection filtering
+                await this.fetchPage();
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
@@ -209,6 +212,7 @@ export const useBrowserStore = defineStore('browser', {
                     sampler: this.selectedSampler,
                     lora: this.selectedLora,
                     rating: this.selectedRating,
+                    collection: this.activeCollection, // Pass active collection
                     page: this.page,
                     size: this.pageSize
                 }
@@ -228,12 +232,19 @@ export const useBrowserStore = defineStore('browser', {
 
         clearSearch() {
             this.searchQuery = '';
-            const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating;
+            const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.activeCollection;
+            
             if (!isAnyFilterActive && this.lastFolderPath) {
                 this.loadFolder(this.lastFolderPath);
             } else {
+                // If collection is active, just reload it without search query
                 this.search('');
             }
+        },
+        
+        clearCollection() {
+            this.activeCollection = null;
+            this.clearSearch();
         },
 
         setFilter(type, value) {
@@ -243,7 +254,7 @@ export const useBrowserStore = defineStore('browser', {
                 if (type === 'lora') this.selectedLora = null;
                 if (type === 'rating') this.selectedRating = null;
 
-                const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.searchQuery;
+                const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.searchQuery || this.activeCollection;
 
                 if (!isAnyFilterActive && this.lastFolderPath) {
                     this.loadFolder(this.lastFolderPath);

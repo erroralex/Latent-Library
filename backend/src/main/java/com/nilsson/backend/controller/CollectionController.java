@@ -60,7 +60,7 @@ public class CollectionController {
 
     @PutMapping("/{name}")
     public ResponseEntity<Void> updateCollection(@PathVariable String name, @RequestBody CreateCollectionRequest request) {
-        dataManager.updateCollection(request);
+        dataManager.updateCollection(name, request);
         return ResponseEntity.ok().build();
     }
 
@@ -83,6 +83,20 @@ public class CollectionController {
             return ResponseEntity.badRequest().build();
         }
     }
+    
+    @PostMapping("/{name}/blacklist")
+    public ResponseEntity<Void> blacklistImageFromCollection(@PathVariable String name, @RequestParam String path) {
+        try {
+            File file = pathService.resolve(path);
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+            dataManager.blacklistImageFromCollection(name, file);
+            return ResponseEntity.ok().build();
+        } catch (InvalidPathException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
     @GetMapping("/static-images")
     public ResponseEntity<List<String>> getStaticCollectionImages(@RequestParam String name) {
@@ -98,9 +112,6 @@ public class CollectionController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Use the unified service method which handles both static and smart collections correctly.
-        // This ensures that smart collections are refreshed with their full set of filters
-        // (not just the first one) and that the logic is consistent with the backend service layer.
         List<File> files = dataManager.getFilesFromCollection(name);
 
         List<ImageDTO> dtos = files.stream()

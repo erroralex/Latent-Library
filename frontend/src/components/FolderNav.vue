@@ -158,7 +158,7 @@ const onNodeSelect = async (node) => {
 };
 
 const onCustomContextMenu = (event, node) => {
-  if (!node || node.type === 'separator') return;
+  if (!node || node.type === 'separator' || node.type === 'root') return;
 
   contextMenuSelection.value = node;
 

@@ -40,6 +40,7 @@ const menuModel = ref([]);
 const contextMenuSelection = ref(null);
 
 const newCollectionName = ref('');
+const originalCollectionName = ref(''); // Track original name for renaming
 const isSmartCollection = ref(false);
 const prompt = ref('');
 const selectedModels = ref([]);
@@ -91,12 +92,14 @@ const loraItems = computed(() => store.availableLoras.map(item => ({
   command: () => addFilter('lora', item)
 })));
 const ratingItems = [
-  {label: 'Any', command: () => selectedRating.value = null},
+  {label: 'None (Unrated)', command: () => selectedRating.value = 0},
+  {label: 'Any Star (> 0)', command: () => selectedRating.value = 'Any Star Count'},
   ...[1, 2, 3, 4, 5].map(i => ({label: `${i} Star${i > 1 ? 's' : ''}`, command: () => selectedRating.value = i}))
 ];
 
 const resetForm = () => {
   newCollectionName.value = '';
+  originalCollectionName.value = '';
   isSmartCollection.value = false;
   prompt.value = '';
   selectedModels.value = [];
@@ -117,13 +120,18 @@ const editCollection = async (name) => {
     const data = response.data;
 
     newCollectionName.value = data.name;
+    originalCollectionName.value = data.name; // Store original name
     isSmartCollection.value = data.isSmart;
 
     if (data.filters) {
       selectedModels.value = data.filters.models || [];
       selectedLoras.value = data.filters.loras || [];
       selectedSamplers.value = data.filters.samplers || [];
-      selectedRating.value = data.filters.rating ? parseInt(data.filters.rating) : null;
+
+      if (data.filters.rating === '0') selectedRating.value = 0;
+      else if (data.filters.rating === 'Any Star Count') selectedRating.value = 'Any Star Count';
+      else selectedRating.value = data.filters.rating ? parseInt(data.filters.rating) : null;
+
       prompt.value = data.filters.prompt ? data.filters.prompt.join(', ') : '';
     } else {
       selectedModels.value = [];
@@ -154,14 +162,15 @@ const saveCollection = async () => {
       models: selectedModels.value,
       loras: selectedLoras.value,
       samplers: selectedSamplers.value,
-      rating: selectedRating.value ? String(selectedRating.value) : null,
+      rating: selectedRating.value !== null ? String(selectedRating.value) : null,
       prompt: prompt.value.split(',').map(p => p.trim()).filter(Boolean),
     } : null,
   };
 
   try {
     if (isEditing.value) {
-      await axios.put(`/api/collections/${newCollectionName.value}`, collectionData);
+      // Use originalCollectionName in the URL to identify the resource to update
+      await axios.put(`/api/collections/${originalCollectionName.value}`, collectionData);
       toast.add({severity: 'success', summary: 'Success', detail: 'Collection updated!', life: 3000});
     } else {
       await axios.post('/api/collections', collectionData);
@@ -263,7 +272,7 @@ onMounted(() => {
         <div class="p-fluid">
           <div class="p-field">
             <label for="collectionName" class="text-white font-semibold">Name</label>
-            <InputText id="collectionName" v-model="newCollectionName" class="glass-input mt-2" :disabled="isEditing"/>
+            <InputText id="collectionName" v-model="newCollectionName" class="glass-input mt-2"/>
           </div>
 
           <div class="p-field-checkbox mt-4 flex align-items-center">
@@ -316,7 +325,9 @@ onMounted(() => {
                         @remove="removeFilter('lora', lora)"/>
                   <Chip v-for="sampler in selectedSamplers" :key="sampler" :label="sampler" removable
                         @remove="removeFilter('sampler', sampler)"/>
-                  <Chip v-if="selectedRating" :label="`${selectedRating} Stars`" removable
+                  <Chip v-if="selectedRating !== null"
+                        :label="selectedRating === 0 ? 'Unrated' : (selectedRating === 'Any Star Count' ? 'Any Star' : `${selectedRating} Stars`)"
+                        removable
                         @remove="selectedRating = null"/>
                 </div>
               </div>

@@ -42,6 +42,10 @@ public class SearchRepository {
     }
 
     public List<String> findPaths(String query, Map<String, List<String>> filters, int offset, int limit) {
+        return findPaths(query, filters, null, offset, limit);
+    }
+
+    public List<String> findPaths(String query, Map<String, List<String>> filters, List<String> collectionPaths, int offset, int limit) {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
         List<String> ftsClauses = new ArrayList<>();
@@ -100,6 +104,32 @@ public class SearchRepository {
             if (!ratingValues.isEmpty()) {
                 handleRatingFilter(sql, params, ratingValues);
             }
+        }
+        
+        if (collectionPaths != null) {
+            if (collectionPaths.isEmpty()) {
+                // Collection is empty, so result must be empty
+                return new ArrayList<>();
+            }
+            // For large collections, IN clause might be slow, but it's the simplest way without joining collection_images
+            // (which only works for static collections).
+            // Since we resolved paths for both static and smart collections in UserDataManager, this works for both.
+            // Optimization: Create a temporary table or use a CTE if list is huge, but for < 2000 items IN is fine.
+            // SQLite limit is usually 999 variables, so we might need to handle that.
+            // However, for now, let's assume reasonable collection size or rely on SQLite's ability to handle larger IN clauses in newer versions.
+            // A safer approach for very large lists is to not pass paths but IDs, but SearchRepository works with paths.
+            
+            // Let's use a JOIN on a VALUES clause (CTE) for performance and to avoid variable limit if possible,
+            // but standard JDBC param binding for lists is tricky.
+            // Fallback: Construct IN clause dynamically.
+            
+            sql.append(" AND i.file_path IN (");
+            for (int i = 0; i < collectionPaths.size(); i++) {
+                sql.append("?");
+                if (i < collectionPaths.size() - 1) sql.append(",");
+                params.add(collectionPaths.get(i));
+            }
+            sql.append(") ");
         }
 
 

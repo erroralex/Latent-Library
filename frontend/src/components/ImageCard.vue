@@ -30,7 +30,7 @@ const imageUrl = computed(() => `http://localhost:8080/api/images/thumbnail?path
 const emit = defineEmits(['contextmenu']);
 
 const onRightClick = (event) => {
-  emit('contextmenu', {event, path: props.file.path});
+  emit('contextmenu', {event, file: props.file});
 };
 
 </script>

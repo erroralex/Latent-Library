@@ -54,8 +54,8 @@ public class CollectionService {
     }
 
     @Transactional
-    public void updateCollection(CreateCollectionRequest request) {
-        collectionRepository.update(request.name(), request.isSmart(), request.filters());
+    public void updateCollection(String oldName, CreateCollectionRequest request) {
+        collectionRepository.update(oldName, request.name(), request.isSmart(), request.filters());
         if (request.isSmart()) {
             collectionRepository.removeAllImages(request.name());
             populateSmartCollection(request);
@@ -90,7 +90,7 @@ public class CollectionService {
             for (String path : matchingPaths) {
                 int id = imageRepository.getIdByPath(path);
                 if (id > 0) {
-                    collectionRepository.addImage(request.name(), id);
+                    collectionRepository.addSmartImage(request.name(), id);
                 }
             }
         }
@@ -103,6 +103,14 @@ public class CollectionService {
     public void addImageToCollection(String collectionName, int imageId) {
         if (collectionName != null && imageId > 0) {
             collectionRepository.addImage(collectionName, imageId);
+            // If it was blacklisted, remove it from blacklist (force include overrides exclude)
+            collectionRepository.removeExclusion(collectionName, imageId);
+        }
+    }
+    
+    public void blacklistImageFromCollection(String collectionName, int imageId) {
+        if (collectionName != null && imageId > 0) {
+            collectionRepository.addExclusion(collectionName, imageId);
         }
     }
 
