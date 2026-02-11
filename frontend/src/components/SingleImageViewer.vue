@@ -34,12 +34,12 @@ const hasLoadError = ref(false);
 
 const mainImageUrl = computed(() => {
   if (!store.selectedFile) return null;
-  return `http://localhost:8080/api/images/content?path=${encodeURIComponent(store.selectedFile)}`;
+  return `/api/images/content?path=${encodeURIComponent(store.selectedFile)}`;
 });
 
 const thumbnailImageUrl = computed(() => {
   if (!store.selectedFile) return null;
-  return `http://localhost:8080/api/images/thumbnail?path=${encodeURIComponent(store.selectedFile)}`;
+  return `/api/images/thumbnail?path=${encodeURIComponent(store.selectedFile)}`;
 });
 
 const imageStyle = computed(() => ({
@@ -58,43 +58,11 @@ const resetZoom = () => {
   isDragging.value = false;
 };
 
-watch(mainImageUrl, (newUrl) => {
+watch(mainImageUrl, () => {
   resetZoom();
-  hasLoadError.value = false;
-
-  if (!newUrl) {
-    isHighResReady.value = false;
-    return;
-  }
-
   isHighResReady.value = false;
-
-  const loader = new Image();
-
-  loader.onload = () => {
-    if (mainImageUrl.value === newUrl) {
-      isHighResReady.value = true;
-    }
-  };
-
-  loader.onerror = () => {
-    if (mainImageUrl.value === newUrl) {
-      console.error("Failed to load image:", newUrl);
-      hasLoadError.value = true;
-      isHighResReady.value = true;
-    }
-  };
-
-  loader.src = newUrl;
-
-  setTimeout(() => {
-    if (mainImageUrl.value === newUrl && !isHighResReady.value) {
-      console.warn("Loader timed out - forcing display");
-      isHighResReady.value = true;
-    }
-  }, 5000);
-
-}, {immediate: true});
+  hasLoadError.value = false;
+});
 
 const onWheel = (e) => {
   e.preventDefault();
@@ -196,7 +164,7 @@ onUnmounted(() => {
         @mouseup="onMouseUp"
         @mouseleave="onMouseUp"
     >
-      <div v-show="!isHighResReady && mainImageUrl && !hasLoadError"
+      <div v-show="store.selectedFile && !isHighResReady && !hasLoadError"
            class="absolute z-5 flex align-items-center justify-content-center pointer-events-none"
            style="transform: translateZ(0); will-change: transform;">
         <ProgressSpinner style="width: 60px; height: 60px" strokeWidth="4" animationDuration="1s"
@@ -217,6 +185,8 @@ onUnmounted(() => {
            :class="{ 'opacity-100': isHighResReady, 'opacity-0': !isHighResReady }"
            style="transition: opacity 0.3s ease;"
            :style="imageStyle"
+           @load="isHighResReady = true"
+           @error="hasLoadError = true; isHighResReady = true"
            @click="handleImageClick"
            draggable="false"/>
 

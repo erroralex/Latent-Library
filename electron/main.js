@@ -44,7 +44,7 @@ function createWindow() {
     mainWindow.show();
 
     mainWindow.loadURL(`http://localhost:${BACKEND_PORT}`);
-
+    //mainWindow.webContents.openDevTools();
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
