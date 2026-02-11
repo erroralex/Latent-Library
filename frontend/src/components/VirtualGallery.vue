@@ -112,6 +112,12 @@ const handleGalleryItemDoubleClick = (file) => {
   store.setSidebarOpen(true);
 };
 
+const emit = defineEmits(['contextmenu']);
+
+const onImageContextMenu = (payload) => {
+  emit('contextmenu', payload);
+};
+
 defineExpose({gridCols});
 </script>
 
@@ -128,7 +134,7 @@ defineExpose({gridCols});
                :class="{ 'outline-active': store.selectedFile === file.path }"
                @click="store.selectFile(file)"
                @dblclick="handleGalleryItemDoubleClick(file)">
-            <ImageCard :file="file"/>
+            <ImageCard :file="file" @contextmenu="onImageContextMenu"/>
           </div>
         </div>
       </template>

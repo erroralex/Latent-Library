@@ -62,6 +62,10 @@ const clearFilter = (type) => {
   store.setFilter(type, null);
 };
 
+const clearCollection = () => {
+  store.clearCollection();
+};
+
 const isFilterActive = (val) => val && val !== 'All';
 
 const refreshFilters = () => {
@@ -95,12 +99,20 @@ const refreshFilters = () => {
                   tooltip="Browser View"/>
         </div>
 
-        <span class="p-input-icon-left p-input-icon-right mr-2">
-            <i class="pi pi-search"/>
-            <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input"
-                       @keyup.enter="onSearch"/>
-            <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
-        </span>
+        <div class="flex align-items-center gap-2 mr-2">
+          <Chip v-if="store.activeCollection"
+                :label="store.activeCollection"
+                icon="pi pi-folder"
+                removable @remove="clearCollection"
+                class="collection-chip text-xs"/>
+
+          <span class="p-input-icon-left p-input-icon-right">
+              <i class="pi pi-search"/>
+              <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input"
+                         @keyup.enter="onSearch"/>
+              <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
+          </span>
+        </div>
 
         <div class="flex gap-2 align-items-center">
 
@@ -209,6 +221,12 @@ const refreshFilters = () => {
   outline: none !important;
   border-color: transparent !important;
   border-image: var(--app-grad-hover) 1 !important;
+}
+
+.collection-chip {
+  background: rgba(102, 252, 241, 0.15) !important;
+  color: #66fcf1 !important;
+  border: 1px solid rgba(102, 252, 241, 0.3) !important;
 }
 
 :deep(.p-toolbar) {

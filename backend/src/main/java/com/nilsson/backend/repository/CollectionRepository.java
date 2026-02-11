@@ -85,21 +85,24 @@ public class CollectionRepository {
                 .update();
     }
 
-    public void update(String name, boolean isSmart, CreateCollectionRequest.CollectionFilters filters) {
-        if (name == null || name.isBlank()) return;
+    public void update(String oldName, String newName, boolean isSmart, CreateCollectionRequest.CollectionFilters filters) {
+        if (oldName == null || oldName.isBlank()) return;
+        if (newName == null || newName.isBlank()) newName = oldName;
+        
         String filtersJson = null;
         if (isSmart && filters != null) {
             try {
                 filtersJson = objectMapper.writeValueAsString(filters);
             } catch (JsonProcessingException e) {
-                logger.error("Error serializing collection filters for collection: {}", name, e);
+                logger.error("Error serializing collection filters for collection: {}", newName, e);
             }
         }
 
-        jdbcClient.sql("UPDATE collections SET is_smart = ?, filters_json = ? WHERE name = ?")
+        jdbcClient.sql("UPDATE collections SET name = ?, is_smart = ?, filters_json = ? WHERE name = ?")
+                .param(newName.trim())
                 .param(isSmart)
                 .param(filtersJson)
-                .param(name.trim())
+                .param(oldName.trim())
                 .update();
     }
 
@@ -112,7 +115,8 @@ public class CollectionRepository {
 
     public void addImage(String collectionName, int imageId) {
         if (collectionName == null) return;
-        String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at) SELECT id, ?, ? FROM collections WHERE name = ?";
+        // Set is_manual = 1 for explicit additions
+        String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 1 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)
                 .param(System.currentTimeMillis())
@@ -122,7 +126,8 @@ public class CollectionRepository {
 
     public void removeAllImages(String collectionName) {
         if (collectionName == null) return;
-        String sql = "DELETE FROM collection_images WHERE collection_id = (SELECT id FROM collections WHERE name = ?)";
+        // Only remove non-manual images (smart population)
+        String sql = "DELETE FROM collection_images WHERE collection_id = (SELECT id FROM collections WHERE name = ?) AND is_manual = 0";
         jdbcClient.sql(sql)
                 .param(collectionName.trim())
                 .update();
@@ -130,10 +135,54 @@ public class CollectionRepository {
 
     public List<String> getFilePaths(String collectionName) {
         if (collectionName == null) return List.of();
-        String sql = "SELECT i.file_path FROM images i JOIN collection_images ci ON i.id = ci.image_id JOIN collections c ON ci.collection_id = c.id WHERE c.name = ? ORDER BY ci.added_at DESC";
+        // Exclude blacklisted images
+        String sql = """
+            SELECT i.file_path 
+            FROM images i 
+            JOIN collection_images ci ON i.id = ci.image_id 
+            JOIN collections c ON ci.collection_id = c.id 
+            WHERE c.name = ? 
+            AND i.id NOT IN (
+                SELECT ce.image_id 
+                FROM collection_exclusions ce 
+                JOIN collections c2 ON ce.collection_id = c2.id 
+                WHERE c2.name = ?
+            )
+            ORDER BY ci.added_at DESC
+        """;
         return jdbcClient.sql(sql)
+                .param(collectionName.trim())
                 .param(collectionName.trim())
                 .query(String.class)
                 .list();
+    }
+    
+    public void addExclusion(String collectionName, int imageId) {
+        if (collectionName == null) return;
+        String sql = "INSERT OR IGNORE INTO collection_exclusions (collection_id, image_id) SELECT id, ? FROM collections WHERE name = ?";
+        jdbcClient.sql(sql)
+                .param(imageId)
+                .param(collectionName.trim())
+                .update();
+    }
+    
+    public void removeExclusion(String collectionName, int imageId) {
+        if (collectionName == null) return;
+        String sql = "DELETE FROM collection_exclusions WHERE collection_id = (SELECT id FROM collections WHERE name = ?) AND image_id = ?";
+        jdbcClient.sql(sql)
+                .param(collectionName.trim())
+                .param(imageId)
+                .update();
+    }
+    
+    public void addSmartImage(String collectionName, int imageId) {
+        if (collectionName == null) return;
+        // is_manual = 0 for smart population
+        String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 0 FROM collections WHERE name = ?";
+        jdbcClient.sql(sql)
+                .param(imageId)
+                .param(System.currentTimeMillis())
+                .param(collectionName.trim())
+                .update();
     }
 }

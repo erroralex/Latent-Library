@@ -56,6 +56,7 @@ public class ImageController {
             @RequestParam(required = false) String sampler,
             @RequestParam(required = false) String lora,
             @RequestParam(required = false) String rating,
+            @RequestParam(required = false) String collection,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
@@ -66,6 +67,10 @@ public class ImageController {
 
         if (rating != null && !rating.isEmpty()) {
             filters.put("Rating", rating);
+        }
+        
+        if (collection != null && !collection.isEmpty()) {
+            filters.put("Collection", collection);
         }
 
         int offset = page * size;

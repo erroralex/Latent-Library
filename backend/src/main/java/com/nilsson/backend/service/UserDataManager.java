@@ -138,13 +138,24 @@ public class UserDataManager {
     public CompletableFuture<List<ImageDTO>> findFilesWithFilters(String query, Map<String, String> filters, int offset, int limit) {
         return CompletableFuture.supplyAsync(() -> {
             Map<String, List<String>> listFilters = new java.util.HashMap<>();
+            String collectionName = null;
+            
             if (filters != null) {
-                filters.forEach((k, v) -> {
-                    listFilters.put(k, Collections.singletonList(v));
-                });
+                for (Map.Entry<String, String> entry : filters.entrySet()) {
+                    if ("Collection".equals(entry.getKey())) {
+                        collectionName = entry.getValue();
+                    } else {
+                        listFilters.put(entry.getKey(), Collections.singletonList(entry.getValue()));
+                    }
+                }
+            }
+            
+            List<String> collectionPaths = null;
+            if (collectionName != null) {
+                collectionPaths = collectionService.getFilePathsFromCollection(collectionName);
             }
 
-            List<String> paths = searchRepository.findPaths(query, listFilters, offset, limit);
+            List<String> paths = searchRepository.findPaths(query, listFilters, collectionPaths, offset, limit);
             return paths.stream()
                     .map(path -> {
                         File file = pathService.resolve(path);
@@ -296,8 +307,8 @@ public class UserDataManager {
         collectionService.createCollection(request);
     }
 
-    public void updateCollection(CreateCollectionRequest request) {
-        collectionService.updateCollection(request);
+    public void updateCollection(String oldName, CreateCollectionRequest request) {
+        collectionService.updateCollection(oldName, request);
     }
 
     public void deleteCollection(String name) {
@@ -307,6 +318,11 @@ public class UserDataManager {
     public void addImageToCollection(String collectionName, File file) {
         int id = getOrCreateImageIdInternal(file);
         collectionService.addImageToCollection(collectionName, id);
+    }
+    
+    public void blacklistImageFromCollection(String collectionName, File file) {
+        int id = getOrCreateImageIdInternal(file);
+        collectionService.blacklistImageFromCollection(collectionName, id);
     }
 
     public List<File> getFilesFromCollection(String collectionName) {
