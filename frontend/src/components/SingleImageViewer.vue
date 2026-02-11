@@ -17,7 +17,6 @@
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
 import FilmstripView from '@/components/FilmstripView.vue';
-import ProgressSpinner from 'primevue/progressspinner';
 
 const store = useBrowserStore();
 const viewerContainer = ref(null);
@@ -31,6 +30,7 @@ const startTranslate = ref({x: 0, y: 0});
 
 const isHighResReady = ref(false);
 const hasLoadError = ref(false);
+const loadRequestId = ref(0);
 
 const mainImageUrl = computed(() => {
   if (!store.selectedFile) return null;
@@ -66,21 +66,24 @@ watch(mainImageUrl, (newUrl) => {
 
   if (!newUrl) return;
 
+  // Use a request ID to ignore callbacks from stale requests (rapid navigation)
+  const requestId = ++loadRequestId.value;
+
   const img = new Image();
   img.onload = () => {
-    // Ensure we are still looking at the same image
-    if (mainImageUrl.value === newUrl) {
+    if (loadRequestId.value === requestId) {
       isHighResReady.value = true;
     }
   };
   img.onerror = () => {
-    if (mainImageUrl.value === newUrl) {
+    if (loadRequestId.value === requestId) {
       hasLoadError.value = true;
       isHighResReady.value = true; // Stop spinner even on error
     }
   };
   img.src = newUrl;
 }, { immediate: true });
+
 
 const onWheel = (e) => {
   e.preventDefault();
@@ -163,18 +166,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative h-full w-full">
-    <svg width="0" height="0" class="absolute">
-      <defs>
-        <linearGradient id="app-spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:rgba(102, 252, 241, 0.8)"/>
-          <stop offset="100%" style="stop-color:rgba(216, 112, 255, 0.8)"/>
-        </linearGradient>
-      </defs>
-    </svg>
-
+  <div class="relative h-full w-full image-viewer-glass">
     <div
-        class="absolute top-0 left-0 right-0 bottom-0 image-viewer-glass overflow-hidden flex align-items-center justify-content-center"
+        class="absolute top-0 left-0 right-0 overflow-hidden flex align-items-center justify-content-center"
+        style="bottom: 10rem"
         ref="viewerContainer"
         @wheel="onWheel"
         @mousedown="onMouseDown"
@@ -182,14 +177,8 @@ onUnmounted(() => {
         @mouseup="onMouseUp"
         @mouseleave="onMouseUp"
     >
-      <div v-show="store.selectedFile && !isHighResReady && !hasLoadError"
-           class="absolute z-5 flex align-items-center justify-content-center pointer-events-none"
-           style="transform: translateZ(0); will-change: transform;">
-        <ProgressSpinner style="width: 60px; height: 60px" strokeWidth="4" animationDuration="1s"
-                         aria-label="Loading image"/>
-      </div>
-
-      <img v-if="thumbnailImageUrl && !isHighResReady"
+      <!-- Thumbnail: Removed !isHighResReady check so it stays visible until covered by high-res -->
+      <img v-if="thumbnailImageUrl"
            :src="thumbnailImageUrl"
            class="absolute inset-0 z-0"
            :style="imageStyle"
@@ -232,28 +221,6 @@ onUnmounted(() => {
 <style scoped>
 .image-viewer-glass {
   background: rgba(0, 0, 0, 0.2);
-}
-
-:deep(.p-progress-spinner-circle) {
-  stroke: url(#app-spinner-gradient) !important;
-  stroke-linecap: round;
-  animation: p-progress-spinner-dash 1.5s ease-in-out infinite;
-  will-change: stroke-dasharray, stroke-dashoffset;
-}
-
-@keyframes p-progress-spinner-dash {
-  0% {
-    stroke-dasharray: 1, 200;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    stroke-dasharray: 89, 200;
-    stroke-dashoffset: -35px;
-  }
-  100% {
-    stroke-dasharray: 89, 200;
-    stroke-dashoffset: -124px;
-  }
 }
 
 .opacity-0 {

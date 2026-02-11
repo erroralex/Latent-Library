@@ -77,10 +77,6 @@ const handleKeydown = (e) => {
         store.setSidebarOpen(true);
       }
       break;
-
-    case 'Escape':
-      if (store.viewMode === 'browser') store.setViewMode('gallery');
-      break;
   }
 };
 
