@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,19 +17,23 @@ import java.util.function.Consumer;
 
 /**
  * Service responsible for background image indexing and real-time file system monitoring.
- * <p>
- * This service acts as the bridge between the local file system and the application's database.
- * It implements a robust indexing pipeline that handles initial folder scans, background
- * metadata extraction, and live updates via the Java {@code WatchService}. It utilizes
- * Virtual Threads (Project Loom) to ensure high-concurrency I/O operations without
- * blocking the main application threads.
- * <p>
- * Key functionalities:
- * - Library Reconciliation: Synchronizes the database with the disk, removing "ghost" records for deleted files.
- * - Background Indexing: Processes large batches of images in the background with configurable batch sizes.
- * - Real-time Monitoring: Watches active directories for file creation, deletion, and modification events.
- * - Event Debouncing: Implements a debouncing mechanism to prevent redundant processing of rapid file system events.
- * - Metadata Integration: Coordinates with {@code MetadataService} and {@code UserDataManager} to cache technical data.
+ *
+ * <p>This service acts as the central orchestrator for synchronizing the local file system with
+ * the application's database. It manages the lifecycle of image metadata and thumbnails by
+ * performing initial directory scans, background indexing of metadata, and maintaining
+ * consistency through real-time file system monitoring.
+ *
+ * <p>Key responsibilities include:
+ * <ul>
+ *   <li><b>Initial Indexing:</b> Scans user-defined folders to populate the database with image metadata and trigger thumbnail generation.</li>
+ *   <li><b>Library Reconciliation:</b> Periodically verifies the database against the file system to remove "ghost" records of deleted files.</li>
+ *   <li><b>Real-time Monitoring:</b> Utilizes the Java {@link java.nio.file.WatchService} to detect file creation, modification, and deletion events, ensuring the application state remains current.</li>
+ *   <li><b>Concurrency Management:</b> Leverages Java 21+ Virtual Threads via {@link java.util.concurrent.Executors#newVirtualThreadPerTaskExecutor()} to handle I/O-bound indexing tasks efficiently without blocking platform threads.</li>
+ *   <li><b>Event Debouncing:</b> Implements a debouncing mechanism for file system events to prevent redundant processing during rapid file operations.</li>
+ * </ul>
+ *
+ * <p>The service coordinates with {@link MetadataService} for extraction, {@link ThumbnailService}
+ * for image processing, and {@link UserDataManager} for persistence.
  */
 @Service
 public class IndexingService {
@@ -45,6 +46,7 @@ public class IndexingService {
     private final MetadataService metaService;
     private final UserDataManager dataManager;
     private final PathService pathService;
+    private final ThumbnailService thumbnailService;
     private final ExecutorService executor;
 
     private WatchService watchService;
@@ -55,11 +57,13 @@ public class IndexingService {
     public IndexingService(ImageRepository imageRepo,
                            MetadataService metaService,
                            UserDataManager dataManager,
-                           PathService pathService) {
+                           PathService pathService,
+                           ThumbnailService thumbnailService) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
         this.pathService = pathService;
+        this.thumbnailService = thumbnailService;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -108,13 +112,20 @@ public class IndexingService {
         executor.submit(ghostCleanupTask);
     }
 
+    /**
+     * Scans a folder for images, triggering parallel thumbnail generation and metadata indexing.
+     */
     public void indexFolder(File folder) {
         if (folder == null || !folder.isDirectory()) return;
 
-        File[] files = folder.listFiles(this::isImageFile);
-        if (files != null && files.length > 0) {
-            logger.info("Indexing folder: {} ({} files)", folder.getName(), files.length);
-            startIndexing(Arrays.asList(files), null);
+        File[] filesArr = folder.listFiles(this::isImageFile);
+        if (filesArr != null && filesArr.length > 0) {
+            List<File> files = Arrays.asList(filesArr);
+            logger.info("Indexing folder: {} ({} files)", folder.getName(), files.size());
+
+            Thread.ofVirtual().start(() -> thumbnailService.preloadCache(files));
+
+            startIndexing(files, null);
         }
     }
 
@@ -122,7 +133,7 @@ public class IndexingService {
         if (files == null || files.isEmpty()) return;
 
         Runnable task = () -> {
-            logger.info("Starting background indexing for {} files...", files.size());
+            logger.info("Starting background metadata indexing for {} files...", files.size());
             int total = files.size();
             for (int i = 0; i < total; i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, total);
@@ -136,7 +147,7 @@ public class IndexingService {
 
                 Thread.yield();
             }
-            logger.info("Background indexing completed for {} files.", total);
+            logger.info("Background metadata indexing completed for {} files.", total);
         };
         executor.submit(task);
     }
@@ -248,6 +259,7 @@ public class IndexingService {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
             dataManager.cacheMetadata(file, meta);
+            thumbnailService.getThumbnail(file);
             logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing new file: {}", file.getName(), e);
@@ -281,6 +293,8 @@ public class IndexingService {
 
             metadataMap.put(file, meta);
             ratingMap.put(file, rating);
+
+            thumbnailService.getThumbnail(file);
         }
 
         return new BatchResult(metadataMap, ratingMap);

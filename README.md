@@ -5,8 +5,9 @@
 ![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)
 ![PrimeVue](https://img.shields.io/badge/PrimeVue-3-06C167?style=for-the-badge&logo=primevue&logoColor=white)
 ![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Electron](https://img.shields.io/badge/Electron-30-47848F?style=for-the-badge&logo=electron&logoColor=white)
 
-A robust, high-performance asset manager designed specifically for the AI image generation ecosystem. It unifies metadata parsing across fragmented formats, providing **SQL-backed search**, **collections**, **live folder monitoring**, and **deep node inspection** in a modern, dark-themed web interface.
+A robust, high-performance desktop asset manager designed specifically for the AI image generation ecosystem. It unifies metadata parsing across fragmented formats, providing **SQL-backed search**, **Smart Collections**, **live folder monitoring**, and **deep node inspection** in a modern, dark-themed desktop interface.
 
 ---
 
@@ -41,9 +42,9 @@ A robust, high-performance asset manager designed specifically for the AI image 
 
 Designed for the privacy-conscious artist, this application operates on a strictly "Local-First" philosophy.
 
-* **Local Web Server:** The application runs as a local web server on your machine.
+* **Desktop Application:** Runs as a standalone desktop app via Electron, managing its own backend lifecycle.
 * **100% Offline / No Telemetry:** There are no "cloud sync" features, analytics, or background API calls. Your prompts and generation data never leave your machine.
-* **Privacy Scrubbing:** The integrated **Scrubber View** allows you to sanitize images before sharing them on social media. It strips hidden generation metadata (Prompts, ComfyUI Workflows, Seed data) while preserving the visual image quality.
+* **Privacy Scrubbing:** Integrated **Scrubber View** allows you to sanitize images before sharing. It strips hidden generation metadata (Prompts, ComfyUI Workflows, Seed data) while preserving visual quality.
 
 ---
 
@@ -54,62 +55,70 @@ Designed for the privacy-conscious artist, this application operates on a strict
   * **Automatic1111 / Forge:** Robust parsing of standard "Steps: XX, Sampler: XX" text blocks.
   * **Others:** Native support for **InvokeAI**, **SwarmUI**, and **NovelAI**.
 * **Library Management:**
-  * **Collections:** Create virtual collections to organize images across different folders without moving files.
-  * **Pinned Folders:** Bookmark frequently accessed directories for quick navigation.
-  * **Star Ratings:** Rate images (1-5 stars) and filter/sort by rating.
+  * **Smart Collections:** Create dynamic collections based on metadata filters (e.g., "All images using Flux model with > 4 stars").
+  * **Pinned Folders:** Bookmark frequently accessed directories for rapid navigation.
+  * **Star Ratings:** Rate images (1-5 stars) with instant filtering.
 * **Speed Sorting:** A dedicated mode for processing high-volume generation batches.
-  * **Hotkeys:** Instantly move images to configurable target folders or collections.
-  * **Recycle Bin:** Safely move unwanted results to the OS trash.
+  * **Hotkeys:** Instantly move images to configurable target folders using numeric keys (1-5).
+  * **Recycle Bin:** Safely move unwanted results to the OS trash (Recycle Bin/Trash).
 * **Performance:**
-  * **Live Monitoring:** Automatically detects and indexes file additions or deletions in real-time.
-  * **Virtualization:** Uses virtual scrolling to handle folders with thousands of images without performance degradation.
-  * **Background Indexing:** Dedicated non-blocking threads process metadata extraction to keep the UI buttery smooth.
+  * **FTS5 Search:** Powered by SQLite's Full-Text Search for near-instant results across tens of thousands of images.
+  * **Virtualization:** Uses virtual scrolling to handle massive folders without UI lag.
+  * **Project Loom:** Leverages Java 21 Virtual Threads for non-blocking background indexing.
 * **Modern UX:**
-  * **Dark Theme:** "Deep Neon Cinematic" CSS styling for a professional look.
-  * **Responsive:** Works on desktop and mobile browsers within your local network.
+  * **Dark Theme:** "Deep Neon Cinematic" glassmorphism styling.
+  * **Image Comparator:** Side-by-side comparison tool with a draggable slider.
 
 ---
 
 ## 🛠️ Technical Architecture
 
-The application is built as a modern web application with a Spring Boot backend and a Vue.js frontend.
+The application is built as a hybrid desktop application combining a Spring Boot backend with a Vue.js frontend, packaged via Electron.
 
-* **Backend (Java 21 + Spring Boot):**
-  * **REST API:** Exposes endpoints for file management, metadata extraction, and system operations.
-  * **SQLite:** Uses SQLite to store metadata index and collections.
-  * **Metadata Extractor:** Uses `metadata-extractor` library for robust EXIF/PNG chunk parsing.
-  * **Virtual Threads:** Leverages Java 21 virtual threads for high-concurrency I/O operations.
+* **Backend (Java 21 + Spring Boot 3.3):**
+  * **SQLite + FTS5:** High-performance local indexing and relational storage.
+  * **Virtual Threads:** Optimized for heavy I/O tasks (file scanning and metadata extraction).
+  * **Flyway:** Automated database schema migrations.
+  * **Metadata Extractor:** Deep inspection of PNG/JPEG/WebP chunks.
 
 * **Frontend (Vue 3 + PrimeVue):**
-  * **Vite:** Fast build tool and development server.
-  * **Pinia:** State management for the application.
-  * **PrimeVue:** Comprehensive UI component library.
-  * **Axios:** HTTP client for API communication.
+  * **Pinia:** Centralized state management for the image library and UI state.
+  * **PrimeVue:** Premium UI component library with custom dark-green theme.
+  * **Vite:** Modern build pipeline for the frontend assets.
+
+* **Desktop (Electron):**
+  * **Process Management:** Automatically spawns and terminates the Spring Boot backend.
+  * **Native Integration:** Provides access to native folder selection dialogs and OS file explorer.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-* Java 21 or higher
-* Node.js 18 or higher (for frontend development)
+* **Java 21 (LTS)** or higher
+* **Node.js 18** or higher
 
-### Running the Application
+### Running in Development Mode
 
-1. **Backend:**
+1. **Build the Backend:**
    ```bash
    cd backend
-   ./mvnw spring-boot:run
+   ./mvnw clean package
    ```
 
-2. **Frontend:**
+2. **Start the Frontend:**
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
 
-3. Open your browser and navigate to `http://localhost:5173`.
+3. **Launch Electron:**
+   ```bash
+   cd electron
+   npm install
+   npm start
+   ```
 
 ---
 
@@ -121,7 +130,7 @@ Distributed under the **MIT License**. Free for personal and commercial use.
 
 ## 💖 Support the Project
 
-If the **AI Toolbox Web** has streamlined your workflow, consider supporting its ongoing development. Your contributions help maintain compatibility with new AI platforms and node structures.
+If **AI Toolbox** has streamlined your workflow, consider supporting its ongoing development.
 
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/erroralex)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/error_alex)

@@ -1,20 +1,21 @@
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import axios from 'axios';
 
 /**
  * @file browser.js
  * @description The central state management hub for the Image Browser application.
- * 
+ *
  * This Pinia store orchestrates the data flow and UI state for the entire browsing experience.
  * It manages the image library (files), selection state, metadata caching, search/filter criteria,
  * and view configurations. It acts as the single source of truth for all browser-related components.
- * 
+ *
  * Key responsibilities:
- * - Library Management: Handles folder scanning and collection loading via backend APIs.
- * - Search & Filtering: Maintains active filter states (Model, Sampler, LoRA, Rating) and executes paginated search queries.
- * - Metadata Orchestration: Fetches and caches detailed metadata for the currently selected image.
- * - Navigation Logic: Implements directional navigation (Next/Previous) and view mode switching.
- * - Pagination: Manages infinite scroll state, including page offsets and loading indicators.
+ * - **Library Management:** Handles folder scanning and collection loading via backend APIs.
+ * - **Search & Filtering:** Maintains active filter states (Model, Sampler, LoRA, Rating) and executes paginated search queries.
+ * - **Metadata Orchestration:** Fetches and caches detailed metadata for the currently selected image.
+ * - **Navigation Logic:** Implements directional navigation (Next/Previous) and view mode switching.
+ * - **Pagination:** Manages infinite scroll state, including page offsets and loading indicators.
+ * - **Preloading:** Manages background preloading of adjacent images for smoother navigation.
  */
 export const useBrowserStore = defineStore('browser', {
     state: () => ({
@@ -28,7 +29,7 @@ export const useBrowserStore = defineStore('browser', {
         currentTags: [],
         cardSize: 160,
         isSidebarOpen: false,
-        
+
         availableModels: [],
         availableSamplers: [],
         availableLoras: [],
@@ -55,7 +56,7 @@ export const useBrowserStore = defineStore('browser', {
                 await this.loadFolder(this.lastFolderPath);
             }
         },
-        
+
         refreshNav() {
             this.navRefreshKey++;
         },
@@ -76,14 +77,14 @@ export const useBrowserStore = defineStore('browser', {
             this.files = [];
             this.page = 0;
             this.hasMore = false;
-            
+
             try {
                 const response = await axios.post('/api/library/scan', null, {
-                    params: { path }
+                    params: {path}
                 });
                 this.files = response.data;
                 this.searchQuery = '';
-                
+
                 this.lastFolderPath = path;
                 localStorage.setItem('lastFolder', path);
 
@@ -99,7 +100,7 @@ export const useBrowserStore = defineStore('browser', {
                 this.isLoading = false;
             }
         },
-        
+
         async loadCollection(collectionName) {
             this.isLoading = true;
             this.searchQuery = `collection: ${collectionName}`;
@@ -108,9 +109,9 @@ export const useBrowserStore = defineStore('browser', {
             this.hasMore = false;
 
             try {
-                const response = await axios.post('/api/collections/images', { name: collectionName });
+                const response = await axios.post('/api/collections/images', {name: collectionName});
                 this.files = response.data;
-                
+
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
                 } else {
@@ -135,7 +136,7 @@ export const useBrowserStore = defineStore('browser', {
 
             try {
                 await this.fetchPage();
-                
+
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
                 } else {
@@ -169,8 +170,8 @@ export const useBrowserStore = defineStore('browser', {
         },
 
         async fetchPage() {
-             const response = await axios.get('/api/images/search', {
-                params: { 
+            const response = await axios.get('/api/images/search', {
+                params: {
                     query: this.searchQuery,
                     model: this.selectedModel,
                     sampler: this.selectedSampler,
@@ -180,12 +181,12 @@ export const useBrowserStore = defineStore('browser', {
                     size: this.pageSize
                 }
             });
-            
+
             const newFiles = response.data;
             if (newFiles.length < this.pageSize) {
                 this.hasMore = false;
             }
-            
+
             if (this.page === 0) {
                 this.files = newFiles;
             } else {
@@ -202,7 +203,7 @@ export const useBrowserStore = defineStore('browser', {
                 this.search('');
             }
         },
-        
+
         setFilter(type, value) {
             if (value === null) {
                 if (type === 'model') this.selectedModel = null;
@@ -222,7 +223,7 @@ export const useBrowserStore = defineStore('browser', {
                 if (type === 'sampler') this.selectedSampler = value;
                 if (type === 'lora') this.selectedLora = value;
                 if (type === 'rating') this.selectedRating = value;
-                
+
                 this.search(this.searchQuery);
             }
         },
@@ -232,6 +233,24 @@ export const useBrowserStore = defineStore('browser', {
             if (this.selectedFile === path) return;
             this.selectedFile = path;
             this.fetchMetadata(path);
+            this.preloadAdjacentImages(path);
+        },
+
+        preloadAdjacentImages(currentPath) {
+            if (!this.files.length) return;
+            const currentIndex = this.files.findIndex(f => f.path === currentPath);
+            if (currentIndex === -1) return;
+
+            const nextIndex = (currentIndex + 1) % this.files.length;
+            const prevIndex = (currentIndex - 1 + this.files.length) % this.files.length;
+
+            const preload = (path) => {
+                const img = new Image();
+                img.src = `http://localhost:8080/api/images/content?path=${encodeURIComponent(path)}`;
+            };
+
+            preload(this.files[nextIndex].path);
+            preload(this.files[prevIndex].path);
         },
 
         async fetchMetadata(path) {
@@ -242,7 +261,7 @@ export const useBrowserStore = defineStore('browser', {
             }
             try {
                 const response = await axios.get('/api/images/metadata', {
-                    params: { path }
+                    params: {path}
                 });
                 this.currentMetadata = response.data;
                 this.currentRating = response.data.rating || 0;
@@ -257,10 +276,10 @@ export const useBrowserStore = defineStore('browser', {
             if (!this.selectedFile) return;
             try {
                 await axios.post('/api/images/rating', null, {
-                    params: { path: this.selectedFile, rating }
+                    params: {path: this.selectedFile, rating}
                 });
                 this.currentRating = rating;
-                
+
                 const fileIndex = this.files.findIndex(f => f.path === this.selectedFile);
                 if (fileIndex !== -1) {
                     this.files[fileIndex].rating = rating;
@@ -289,9 +308,9 @@ export const useBrowserStore = defineStore('browser', {
                 this.selectFile(this.files[0]);
                 return;
             }
-            
+
             let newIndex = currentIndex + direction;
-            
+
             if (Math.abs(direction) === 1) {
                 if (newIndex < 0) newIndex = this.files.length - 1;
                 if (newIndex >= this.files.length) newIndex = 0;
@@ -299,7 +318,7 @@ export const useBrowserStore = defineStore('browser', {
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= this.files.length) newIndex = this.files.length - 1;
             }
-            
+
             this.selectFile(this.files[newIndex]);
         }
     }

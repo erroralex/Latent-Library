@@ -13,7 +13,7 @@
  * - Auto-closing: Implements global listeners to close the menu on clicks, scrolls, or subsequent context menu actions.
  * - Flexible Schema: Supports labels, icons, separators, and conditional visibility for menu items.
  */
-import { ref, onBeforeUnmount } from 'vue';
+import {ref, onBeforeUnmount} from 'vue';
 
 const props = defineProps({
   model: {
@@ -43,7 +43,7 @@ const show = (event) => {
   setTimeout(() => {
     window.addEventListener('click', closeMenu);
     window.addEventListener('contextmenu', closeMenu);
-    window.addEventListener('scroll', hide, { capture: true });
+    window.addEventListener('scroll', hide, {capture: true});
   }, 50);
 };
 
@@ -51,7 +51,7 @@ const hide = () => {
   visible.value = false;
   window.removeEventListener('click', closeMenu);
   window.removeEventListener('contextmenu', closeMenu);
-  window.removeEventListener('scroll', hide, { capture: true });
+  window.removeEventListener('scroll', hide, {capture: true});
 };
 
 const closeMenu = () => {
@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
   hide();
 });
 
-defineExpose({ show, hide });
+defineExpose({show, hide});
 </script>
 
 <template>

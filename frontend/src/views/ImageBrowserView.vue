@@ -8,15 +8,15 @@
  * global keyboard shortcuts for navigation and view control, ensuring a fluid user experience.
  *
  * Key functionalities:
- * - View Orchestration: Toggles between VirtualGallery and SingleImageViewer based on application state.
- * - Keyboard Navigation: Implements a comprehensive set of hotkeys (Arrows, WASD, Enter, Escape, G, B) for rapid browsing.
- * - State Synchronization: Integrates with the Pinia store to handle folder initialization, collection loading, and search.
- * - Layout Management: Controls the visibility of the MetadataSidebar and ensures the main viewer retains focus.
- * - Deep Linking: Supports direct navigation to specific collections via URL query parameters.
+ * - **View Orchestration:** Toggles between VirtualGallery and SingleImageViewer based on application state.
+ * - **Keyboard Navigation:** Implements a comprehensive set of hotkeys (Arrows, WASD, Enter, Escape, G, B) for rapid browsing.
+ * - **State Synchronization:** Integrates with the Pinia store to handle folder initialization, collection loading, and search.
+ * - **Layout Management:** Controls the visibility of the MetadataSidebar and ensures the main viewer retains focus.
+ * - **Deep Linking:** Supports direct navigation to specific collections via URL query parameters.
  */
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { useBrowserStore } from '@/stores/browser';
-import { useRoute } from 'vue-router';
+import {onMounted, onUnmounted, ref, watch} from 'vue';
+import {useBrowserStore} from '@/stores/browser';
+import {useRoute} from 'vue-router';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
 import VirtualGallery from '@/components/VirtualGallery.vue';
@@ -36,7 +36,7 @@ const handleKeydown = (e) => {
 
   const cols = (store.viewMode === 'gallery' && virtualGalleryRef.value) ? virtualGalleryRef.value.gridCols : 1;
 
-  switch(e.key) {
+  switch (e.key) {
     case 'ArrowLeft':
     case 'a':
     case 'A':
@@ -88,15 +88,15 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeydown);
 
   if (route.query.collection) {
-      if (store.availableModels.length === 0) {
-          await store.loadFilters();
-      }
-      await store.loadCollection(route.query.collection);
+    if (store.availableModels.length === 0) {
+      await store.loadFilters();
+    }
+    await store.loadCollection(route.query.collection);
   } else {
-      await store.initialize();
-      if (store.files.length === 0) {
-        store.search('');
-      }
+    await store.initialize();
+    if (store.files.length === 0) {
+      store.search('');
+    }
   }
 });
 
@@ -110,7 +110,7 @@ watch(() => store.viewMode, (newMode) => {
   } else {
     store.setSidebarOpen(false);
   }
-}, { immediate: true });
+}, {immediate: true});
 
 watch(() => store.imageFocusRequested, (requested) => {
   if (requested) {
@@ -127,17 +127,39 @@ watch(() => store.imageFocusRequested, (requested) => {
 
 <template>
   <div class="flex flex-column h-full overflow-hidden">
-    <BrowserToolbar class="flex-shrink-0" />
+    <BrowserToolbar class="flex-shrink-0"/>
 
-    <div class="flex-grow-1 overflow-hidden flex">
-      <div class="flex-grow-1 h-full" ref="containerRef" tabindex="0" style="outline: none;">
-        <VirtualGallery v-if="store.viewMode === 'gallery'" ref="virtualGalleryRef" />
-        <SingleImageViewer v-else />
+    <div class="flex-grow-1 overflow-hidden relative flex">
+      <div class="h-full transition-all duration-300"
+           :class="[
+             (store.viewMode === 'gallery' && store.isSidebarOpen) ? 'flex-grow-1 w-auto' : 'w-full'
+           ]"
+           ref="containerRef" tabindex="0" style="outline: none;">
+        <VirtualGallery v-if="store.viewMode === 'gallery'" ref="virtualGalleryRef"/>
+        <SingleImageViewer v-else/>
       </div>
 
-      <div v-if="store.isSidebarOpen" class="flex-shrink-0 shadow-8 z-5">
-        <MetadataSidebar />
-      </div>
+      <Transition name="sidebar-slide">
+        <div v-if="store.isSidebarOpen"
+             class="h-full shadow-8 z-5"
+             :class="[
+               store.viewMode === 'gallery' ? 'relative flex-shrink-0' : 'absolute top-0 right-0'
+             ]">
+          <MetadataSidebar/>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
+
+<style scoped>
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+  transform: translateX(100%);
+}
+</style>

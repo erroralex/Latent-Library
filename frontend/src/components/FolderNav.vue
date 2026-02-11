@@ -12,14 +12,14 @@
  * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
  * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
-import { ref, onMounted, watch } from 'vue';
+import {ref, onMounted, watch} from 'vue';
 import axios from 'axios';
-import { useBrowserStore } from '@/stores/browser';
-import { useRouter } from 'vue-router';
+import {useBrowserStore} from '@/stores/browser';
+import {useRouter} from 'vue-router';
 import Tree from 'primevue/tree';
 import CustomContextMenu from './CustomContextMenu.vue';
 import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
+import {useToast} from 'primevue/usetoast';
 
 const store = useBrowserStore();
 const router = useRouter();
@@ -34,7 +34,7 @@ const cm = ref();
 const menuModel = ref([]);
 
 watch(() => store.navRefreshKey, () => {
-    loadTree();
+  loadTree();
 });
 
 const loadTree = async () => {
@@ -45,50 +45,77 @@ const loadTree = async () => {
     const colChildren = colRes.data.map(c => ({
       key: `col-${c}`, label: c, data: c, icon: 'pi pi-folder', type: 'collection', leaf: true
     }));
-    rootNodes.push({ key: 'collections', label: 'Collections', icon: 'pi pi-list', children: colChildren, type: 'root', leaf: false });
-  } catch (e) { console.error("Error loading collections", e); }
+    rootNodes.push({
+      key: 'collections',
+      label: 'Collections',
+      icon: 'pi pi-list',
+      children: colChildren,
+      type: 'root',
+      leaf: false
+    });
+  } catch (e) {
+    console.error("Error loading collections", e);
+  }
 
-  rootNodes.push({ key: 'sep-1', type: 'separator', selectable: false });
+  rootNodes.push({key: 'sep-1', type: 'separator', selectable: false});
 
   try {
     const pinRes = await axios.get('/api/folders/pinned');
     const pinChildren = pinRes.data.map(p => ({
       key: `pinned-${p.path}`, label: p.name || p.path, data: p, icon: 'pi pi-bookmark', type: 'pinned', leaf: false
     }));
-    rootNodes.push({ key: 'pinned', label: 'Pinned', icon: 'pi pi-bookmark', children: pinChildren, type: 'root', leaf: false });
-  } catch (e) { console.error("Error loading pinned", e); }
+    rootNodes.push({
+      key: 'pinned',
+      label: 'Pinned',
+      icon: 'pi pi-bookmark',
+      children: pinChildren,
+      type: 'root',
+      leaf: false
+    });
+  } catch (e) {
+    console.error("Error loading pinned", e);
+  }
 
-  rootNodes.push({ key: 'sep-2', type: 'separator', selectable: false });
+  rootNodes.push({key: 'sep-2', type: 'separator', selectable: false});
 
   try {
     const driveRes = await axios.get('/api/folders/roots');
     const driveChildren = driveRes.data.map(d => ({
       key: `drive-${d.path}`, label: d.name || d.path, data: d, icon: 'pi pi-server', type: 'folder', leaf: false
     }));
-    rootNodes.push({ key: 'drives', label: 'This PC', icon: 'pi pi-desktop', children: driveChildren, type: 'root', leaf: false });
-  } catch (e) { console.error("Error loading drives", e); }
+    rootNodes.push({
+      key: 'drives',
+      label: 'This PC',
+      icon: 'pi pi-desktop',
+      children: driveChildren,
+      type: 'root',
+      leaf: false
+    });
+  } catch (e) {
+    console.error("Error loading drives", e);
+  }
 
   nodes.value = rootNodes;
-  expandedKeys.value = { 'collections': true, 'pinned': true, 'drives': true };
+  expandedKeys.value = {'collections': true, 'pinned': true, 'drives': true};
 
   if (store.lastFolderPath) {
-      setTimeout(() => {
-          selectNodeByPath(store.lastFolderPath);
-      }, 500);
+    setTimeout(() => {
+      selectNodeByPath(store.lastFolderPath);
+    }, 500);
   }
 };
 
 const selectNodeByPath = (path) => {
-    const pinnedNode = nodes.value.find(n => n.key === 'pinned')?.children?.find(c => c.data.path === path);
-    if (pinnedNode) {
-        selectedKey.value = { [pinnedNode.key]: true };
-        return;
-    }
+  const pinnedNode = nodes.value.find(n => n.key === 'pinned')?.children?.find(c => c.data.path === path);
+  if (pinnedNode) {
+    selectedKey.value = {[pinnedNode.key]: true};
+    return;
+  }
 
-    const driveNode = nodes.value.find(n => n.key === 'drives')?.children?.find(c => c.data.path === path);
-    if (driveNode) {
-        selectedKey.value = { [driveNode.key]: true };
-    }
+  const driveNode = nodes.value.find(n => n.key === 'drives')?.children?.find(c => c.data.path === path);
+  if (driveNode) {
+    selectedKey.value = {[driveNode.key]: true};
+  }
 };
 
 const onNodeExpand = async (node) => {
@@ -96,7 +123,7 @@ const onNodeExpand = async (node) => {
   if (!actualNode.data?.path || actualNode._loaded) return;
   actualNode.loading = true;
   try {
-    const res = await axios.get('/api/folders/children', { params: { path: actualNode.data.path } });
+    const res = await axios.get('/api/folders/children', {params: {path: actualNode.data.path}});
     actualNode.children = res.data.map(f => ({
       key: `${actualNode.key}-${f.name}`,
       label: f.name || f.path,
@@ -108,18 +135,22 @@ const onNodeExpand = async (node) => {
     }));
     actualNode._loaded = true;
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not access folder.', life: 3000 });
-  } finally { actualNode.loading = false; }
+    toast.add({severity: 'error', summary: 'Error', detail: 'Could not access folder.', life: 3000});
+  } finally {
+    actualNode.loading = false;
+  }
 };
 
 const onNodeSelect = async (node) => {
   const actualNode = node.node || node;
   if (actualNode.type === 'collection') {
-      router.push({ path: '/browser', query: { collection: actualNode.data } });
-  }
-  else if (actualNode.data?.path) {
-    try { await store.loadFolder(actualNode.data.path); }
-    catch (e) { toast.add({ severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000 }); }
+    router.push({path: '/browser', query: {collection: actualNode.data}});
+  } else if (actualNode.data?.path) {
+    try {
+      await store.loadFolder(actualNode.data.path);
+    } catch (e) {
+      toast.add({severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000});
+    }
   }
 };
 
@@ -153,7 +184,7 @@ const onCustomContextMenu = (event, node) => {
       command: () => removeCollection(node.data),
       visible: node.type === 'collection'
     },
-    { separator: true },
+    {separator: true},
     {
       label: 'Show in Explorer',
       icon: 'pi pi-external-link',
@@ -173,23 +204,34 @@ const onCustomContextMenu = (event, node) => {
   }
 };
 
-const pinFolder = async (path) => { await axios.post('/api/folders/pin', null, {params: {path}}); loadTree(); };
-const unpinFolder = async (path) => { await axios.post('/api/folders/unpin', null, {params: {path}}); loadTree(); };
+const pinFolder = async (path) => {
+  await axios.post('/api/folders/pin', null, {params: {path}});
+  loadTree();
+};
+const unpinFolder = async (path) => {
+  await axios.post('/api/folders/unpin', null, {params: {path}});
+  loadTree();
+};
 const removeCollection = async (name) => {
-    try {
-        await axios.delete(`/api/collections/${name}`);
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000 });
-        store.refreshNav();
-    } catch (e) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000 });
-    }
+  try {
+    await axios.delete(`/api/collections/${name}`);
+    toast.add({severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000});
+    store.refreshNav();
+  } catch (e) {
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000});
+  }
 };
 const editCollection = (name) => {
-    store.collectionToEdit = name;
-    router.push('/collections');
+  store.collectionToEdit = name;
+  router.push('/collections');
 };
-const openInSpeedSorter = async (path) => { await axios.post('/api/speedsorter/config/input', null, {params: {path}}); router.push('/speedsorter'); };
-const openInExplorer = async (path) => { await axios.post('/api/system/open-folder', null, {params: {path}}); };
+const openInSpeedSorter = async (path) => {
+  await axios.post('/api/speedsorter/config/input', null, {params: {path}});
+  router.push('/speedsorter');
+};
+const openInExplorer = async (path) => {
+  await axios.post('/api/system/open-folder', null, {params: {path}});
+};
 
 onMounted(loadTree);
 </script>
@@ -198,7 +240,8 @@ onMounted(loadTree);
   <div class="folder-nav-glass h-full flex flex-column"
        style="width: 290px; min-width: 300px;">
     <Toast/>
-    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center gap-2" style="background: rgba(255,255,255,0.02)">
+    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center gap-2"
+         style="background: rgba(255,255,255,0.02)">
       <img src="@/assets/icon.png" alt="Logo" style="width: 24px; height: 24px;">
       <span class="text-gradient">Library</span>
     </div>
@@ -214,19 +257,20 @@ onMounted(loadTree);
           @node-select="onNodeSelect"
       >
         <template #default="slotProps">
-            <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
-            <div v-else class="w-full h-full flex align-items-center" @contextmenu.prevent.stop="onCustomContextMenu($event, slotProps.node)">
-                <span class="p-treenode-label">{{ slotProps.node.label }}</span>
-            </div>
+          <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
+          <div v-else class="w-full h-full flex align-items-center"
+               @contextmenu.prevent.stop="onCustomContextMenu($event, slotProps.node)">
+            <span class="p-treenode-label">{{ slotProps.node.label }}</span>
+          </div>
         </template>
       </Tree>
     </div>
 
     <div class="p-2 mt-auto border-top-1 border-white-alpha-10 flex justify-content-center">
-        <img src="@/assets/alx_logo.png" alt="ALX Logo" style="height: 60px; opacity: 0.9;">
+      <img src="@/assets/alx_logo.png" alt="ALX Logo" style="height: 60px; opacity: 0.9;">
     </div>
 
-    <CustomContextMenu ref="cm" :model="menuModel" />
+    <CustomContextMenu ref="cm" :model="menuModel"/>
   </div>
 </template>
 
@@ -236,7 +280,7 @@ onMounted(loadTree);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 5px 0 30px rgba(0,0,0,0.3);
+  box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .text-gradient {
@@ -363,6 +407,7 @@ onMounted(loadTree);
   color: #6b7280;
   margin-right: 0.25rem;
 }
+
 :deep(.p-tree .p-tree-toggler:hover) {
   color: white;
   background: transparent;
