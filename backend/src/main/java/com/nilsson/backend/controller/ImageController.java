@@ -103,6 +103,19 @@ public class ImageController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/rename")
+    public ResponseEntity<Void> renameImage(@RequestParam String path, @RequestParam String newName) {
+        validatePath(path);
+        File file = pathService.resolve(path);
+
+        if (!file.exists()) {
+            throw new ResourceNotFoundException("Image", path);
+        }
+
+        dataManager.renameFile(file, newName);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/content")
     public ResponseEntity<Resource> getImageContent(@RequestParam String path) {
         validatePath(path);

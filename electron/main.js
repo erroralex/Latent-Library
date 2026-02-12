@@ -20,11 +20,13 @@ const http = require('http');
 
 let mainWindow;
 let backendProcess;
+let backendPort = null; // Dynamic port
 
-const BACKEND_PORT = 8080;
 const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
 
 function createWindow() {
+    if (!backendPort) return;
+
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
@@ -43,7 +45,7 @@ function createWindow() {
     mainWindow.maximize();
     mainWindow.show();
 
-    mainWindow.loadURL(`http://localhost:${BACKEND_PORT}`);
+    mainWindow.loadURL(`http://localhost:${backendPort}`);
     //mainWindow.webContents.openDevTools();
     mainWindow.on('closed', function () {
         mainWindow = null;
@@ -62,7 +64,19 @@ function startBackend() {
     });
 
     backendProcess.stdout.on('data', (data) => {
-        console.log(`Backend: ${data}`);
+        const output = data.toString();
+        console.log(`Backend: ${output}`);
+
+        // Parse port from Spring Boot log
+        // Example: Tomcat started on port 51399 (http) with context path '/'
+        if (!backendPort) {
+            const match = output.match(/Tomcat started on port (\d+) \(http\)/);
+            if (match) {
+                backendPort = parseInt(match[1]);
+                console.log(`Backend detected on port: ${backendPort}`);
+                createWindow();
+            }
+        }
     });
 
     backendProcess.stderr.on('data', (data) => {
@@ -72,22 +86,6 @@ function startBackend() {
     backendProcess.on('close', (code) => {
         console.log(`Backend process exited with code ${code}`);
     });
-}
-
-function checkBackendReady() {
-    const req = http.get(`http://localhost:${BACKEND_PORT}/api/folders/roots`, (res) => {
-        if (res.statusCode === 200) {
-            createWindow();
-        } else {
-            setTimeout(checkBackendReady, 1000);
-        }
-    });
-
-    req.on('error', () => {
-        setTimeout(checkBackendReady, 1000);
-    });
-
-    req.end();
 }
 
 app.on('ready', () => {
@@ -121,7 +119,6 @@ app.on('ready', () => {
     });
 
     startBackend();
-    checkBackendReady();
 });
 
 app.on('window-all-closed', function () {
@@ -129,13 +126,13 @@ app.on('window-all-closed', function () {
 });
 
 app.on('will-quit', async (event) => {
-    if (backendProcess) {
+    if (backendProcess && backendPort) {
         event.preventDefault();
         console.log('Requesting backend shutdown...');
 
         const req = http.request({
             hostname: 'localhost',
-            port: BACKEND_PORT,
+            port: backendPort,
             path: '/api/system/shutdown',
             method: 'POST'
         }, (res) => {
@@ -153,6 +150,8 @@ app.on('will-quit', async (event) => {
         });
 
         req.end();
+    } else {
+        killBackendProcess();
     }
 });
 

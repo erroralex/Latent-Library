@@ -13,12 +13,11 @@
  * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
 import {ref, onMounted, watch} from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import {useBrowserStore} from '@/stores/browser';
 import {useRouter} from 'vue-router';
 import Tree from 'primevue/tree';
 import CustomContextMenu from './CustomContextMenu.vue';
-import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -51,7 +50,7 @@ const loadTree = async () => {
   const rootNodes = [];
 
   try {
-    const colRes = await axios.get('/api/collections');
+    const colRes = await api.get('/collections');
     const colChildren = colRes.data.map(c => ({
       key: `col-${c}`, label: c, data: c, icon: 'pi pi-folder', type: 'collection', leaf: true
     }));
@@ -70,7 +69,7 @@ const loadTree = async () => {
   rootNodes.push({key: 'sep-1', type: 'separator', selectable: false});
 
   try {
-    const pinRes = await axios.get('/api/folders/pinned');
+    const pinRes = await api.get('/folders/pinned');
     const pinChildren = pinRes.data.map(p => ({
       key: `pinned-${p.path}`, label: p.name || p.path, data: p, icon: 'pi pi-bookmark', type: 'pinned', leaf: false
     }));
@@ -89,7 +88,7 @@ const loadTree = async () => {
   rootNodes.push({key: 'sep-2', type: 'separator', selectable: false});
 
   try {
-    const driveRes = await axios.get('/api/folders/roots');
+    const driveRes = await api.get('/folders/roots');
     const driveChildren = driveRes.data.map(d => ({
       key: `drive-${d.path}`, label: d.name || d.path, data: d, icon: 'pi pi-server', type: 'folder', leaf: false
     }));
@@ -133,7 +132,7 @@ const onNodeExpand = async (node) => {
   if (!actualNode.data?.path || actualNode._loaded) return;
   actualNode.loading = true;
   try {
-    const res = await axios.get('/api/folders/children', {params: {path: actualNode.data.path}});
+    const res = await api.get('/folders/children', {params: {path: actualNode.data.path}});
     actualNode.children = res.data.map(f => ({
       key: `${actualNode.key}-${f.name}`,
       label: f.name || f.path,
@@ -145,7 +144,7 @@ const onNodeExpand = async (node) => {
     }));
     actualNode._loaded = true;
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Could not access folder.', life: 3000});
+    // Error handled by api interceptor
   } finally {
     actualNode.loading = false;
   }
@@ -162,7 +161,7 @@ const onNodeSelect = async (node) => {
         router.push('/');
       }
     } catch (e) {
-      toast.add({severity: 'error', summary: 'Error', detail: 'Could not load folder contents', life: 2000});
+      // Error handled by api interceptor
     }
   }
 };
@@ -218,20 +217,20 @@ const onCustomContextMenu = (event, node) => {
 };
 
 const pinFolder = async (path) => {
-  await axios.post('/api/folders/pin', null, {params: {path}});
+  await api.post('/folders/pin', null, {params: {path}});
   loadTree();
 };
 const unpinFolder = async (path) => {
-  await axios.post('/api/folders/unpin', null, {params: {path}});
+  await api.post('/folders/unpin', null, {params: {path}});
   loadTree();
 };
 const removeCollection = async (name) => {
   try {
-    await axios.delete(`/api/collections/${name}`);
+    await api.delete(`/collections/${name}`);
     toast.add({severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000});
     store.refreshNav();
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000});
+    // Error handled by api interceptor
   }
 };
 const editCollection = (name) => {
@@ -239,17 +238,17 @@ const editCollection = (name) => {
   router.push('/collections');
 };
 const openInSpeedSorter = async (path) => {
-  await axios.post('/api/speedsorter/config/input', null, {params: {path}});
+  await api.post('/speedsorter/config/input', null, {params: {path}});
   router.push('/speedsorter');
 };
 const openInExplorer = async (path) => {
-  await axios.post('/api/system/open-folder', null, {params: {path}});
+  await api.post('/system/open-folder', null, {params: {path}});
 };
 
 const openSettings = async () => {
   showSettings.value = true;
   try {
-    const res = await axios.get('/api/system/excluded-paths');
+    const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
   } catch (e) {
     console.error("Failed to load excluded paths", e);
@@ -258,9 +257,9 @@ const openSettings = async () => {
 
 const openDataFolder = async () => {
   try {
-    await axios.post('/api/system/open-data-folder');
+    await api.post('/system/open-data-folder');
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to open data folder', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -272,11 +271,11 @@ const clearDatabase = () => {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await axios.post('/api/system/clear-database');
+        await api.post('/system/clear-database');
         toast.add({severity: 'success', summary: 'Success', detail: 'Database cleared', life: 3000});
         store.initialize(); // Reload
       } catch (e) {
-        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to clear database', life: 3000});
+        // Error handled by api interceptor
       }
     }
   });
@@ -290,10 +289,10 @@ const clearThumbnails = () => {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await axios.post('/api/system/clear-thumbnails');
+        await api.post('/system/clear-thumbnails');
         toast.add({severity: 'success', summary: 'Success', detail: 'Thumbnails cleared', life: 3000});
       } catch (e) {
-        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to clear thumbnails', life: 3000});
+        // Error handled by api interceptor
       }
     }
   });
@@ -302,11 +301,11 @@ const clearThumbnails = () => {
 const addExcludedPath = async () => {
   if (!newExcludedPath.value) return;
   try {
-    await axios.post('/api/system/excluded-paths', null, {params: {path: newExcludedPath.value}});
+    await api.post('/system/excluded-paths', null, {params: {path: newExcludedPath.value}});
     excludedPaths.value.push(newExcludedPath.value);
     newExcludedPath.value = '';
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to add path', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -327,10 +326,10 @@ const selectExcludedFolder = async () => {
 
 const removeExcludedPath = async (path) => {
   try {
-    await axios.delete('/api/system/excluded-paths', {params: {path}});
+    await api.delete('/system/excluded-paths', {params: {path}});
     excludedPaths.value = excludedPaths.value.filter(p => p !== path);
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to remove path', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -340,7 +339,6 @@ onMounted(loadTree);
 <template>
   <div class="folder-nav-glass h-full flex flex-column"
        style="width: 290px; min-width: 300px;">
-    <Toast/>
     <ConfirmDialog></ConfirmDialog>
 
     <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center justify-content-between"

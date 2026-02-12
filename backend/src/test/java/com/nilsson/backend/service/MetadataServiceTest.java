@@ -1,6 +1,5 @@
-package com.nilsson.imagetoolbox.service;
+package com.nilsson.backend.service;
 
-import com.nilsson.backend.service.MetadataService;
 import com.nilsson.backend.strategy.ComfyUIStrategy;
 import org.junit.jupiter.api.Test;
 

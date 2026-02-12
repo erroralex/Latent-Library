@@ -13,6 +13,7 @@ export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],
         selectedFile: null,
+        selectedFiles: new Set(), // Multi-selection support
         viewMode: 'browser',
         searchQuery: '',
         isLoading: false,
@@ -49,7 +50,7 @@ export const useBrowserStore = defineStore('browser', {
             for (let i = 0; i < retries; i++) {
                 try {
                     // Raw axios call to avoid global interceptor toasts
-                    await axios.get('http://localhost:8080/api/images/filters');
+                    await axios.get('/api/images/filters');
                     return true;
                 } catch (e) {
                     console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
@@ -65,10 +66,18 @@ export const useBrowserStore = defineStore('browser', {
                 await this.waitForBackend();
 
                 await this.loadFilters();
-                this.lastFolderPath = localStorage.getItem('lastFolder');
-                if (this.lastFolderPath) {
-                    await this.loadFolder(this.lastFolderPath);
+                
+                // Fetch last folder from backend settings instead of localStorage
+                try {
+                    const res = await api.get('/system/last-folder');
+                    if (res.data && res.data.path) {
+                        this.lastFolderPath = res.data.path;
+                        await this.loadFolder(this.lastFolderPath);
+                    }
+                } catch (e) {
+                    console.warn("Failed to load last folder setting", e);
                 }
+                
             } catch (error) {
                 console.error("Initialization failed:", error);
                 // Note: The global interceptor in api.js will handle the visual notification
@@ -107,12 +116,13 @@ export const useBrowserStore = defineStore('browser', {
                 this.searchQuery = '';
 
                 this.lastFolderPath = path;
-                localStorage.setItem('lastFolder', path);
+                // No need to set localStorage anymore, backend handles persistence via scanFolder -> setLastFolder
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
                 } else {
                     this.selectedFile = null;
+                    this.selectedFiles.clear();
                     this.currentMetadata = {};
                 }
             } catch (error) {
@@ -138,12 +148,14 @@ export const useBrowserStore = defineStore('browser', {
                     this.setViewMode('gallery');
                 } else {
                     this.selectedFile = null;
+                    this.selectedFiles.clear();
                     this.currentMetadata = {};
                 }
             } catch (error) {
                 console.error('Failed to load collection:', error);
                 this.files = [];
                 this.selectedFile = null;
+                this.selectedFiles.clear();
             } finally {
                 this.isLoading = false;
             }
@@ -163,6 +175,7 @@ export const useBrowserStore = defineStore('browser', {
                     this.selectFile(this.files[0]);
                 } else {
                     this.selectedFile = null;
+                    this.selectedFiles.clear();
                     this.currentMetadata = {};
                 }
 
@@ -257,12 +270,52 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
-        async selectFile(file) {
+        async selectFile(file, multiSelect = false, rangeSelect = false) {
             const path = file.path || file;
-            if (this.selectedFile === path) return;
-            this.selectedFile = path;
-            this.fetchMetadata(path);
-            this.preloadAdjacentImages(path);
+
+            if (multiSelect) {
+                if (this.selectedFiles.has(path)) {
+                    this.selectedFiles.delete(path);
+                    if (this.selectedFile === path) {
+                        // If we deselected the primary file, pick another one from the set if available
+                        const iterator = this.selectedFiles.values();
+                        const next = iterator.next();
+                        this.selectedFile = next.done ? null : next.value;
+                    }
+                } else {
+                    this.selectedFiles.add(path);
+                    this.selectedFile = path; // Update primary selection to latest click
+                }
+            } else if (rangeSelect && this.selectedFile) {
+                // Find index of current primary selection
+                const startIdx = this.files.findIndex(f => f.path === this.selectedFile);
+                const endIdx = this.files.findIndex(f => f.path === path);
+
+                if (startIdx !== -1 && endIdx !== -1) {
+                    const min = Math.min(startIdx, endIdx);
+                    const max = Math.max(startIdx, endIdx);
+                    
+                    // Add all files in range to selection
+                    for (let i = min; i <= max; i++) {
+                        this.selectedFiles.add(this.files[i].path);
+                    }
+                    this.selectedFile = path; // Update primary to the clicked one
+                }
+            } else {
+                // Single selection mode
+                this.selectedFiles.clear();
+                this.selectedFiles.add(path);
+                this.selectedFile = path;
+            }
+
+            // Only fetch metadata if we have a valid primary selection
+            if (this.selectedFile) {
+                this.fetchMetadata(this.selectedFile);
+                this.preloadAdjacentImages(this.selectedFile);
+            } else {
+                this.currentMetadata = {};
+                this.currentRating = 0;
+            }
         },
 
         preloadAdjacentImages(currentPath) {
@@ -277,7 +330,7 @@ export const useBrowserStore = defineStore('browser', {
             const preload = (path) => {
                 const img = new Image();
                 // Ensure this URL matches your backend serving strategy
-                img.src = `http://localhost:8080/api/images/content?path=${encodeURIComponent(path)}`;
+                img.src = `/api/images/content?path=${encodeURIComponent(path)}`;
             };
 
             preload(this.files[nextIndex].path);
