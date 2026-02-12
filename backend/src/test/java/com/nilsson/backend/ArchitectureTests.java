@@ -11,31 +11,22 @@ import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
 
 /**
- * Enforces architectural standards and best practices across the codebase.
+ * ArchitectureTests is responsible for validating the structural integrity and coding standards of the backend application.
+ * It utilizes ArchUnit to enforce rules such as dependency injection patterns, logging frameworks, exception handling,
+ * and the use of modern Java APIs. These tests ensure that the codebase remains maintainable, testable, and consistent
+ * with the defined architectural principles.
  */
 @AnalyzeClasses(packages = "com.nilsson.backend", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTests {
 
-    /**
-     * Enforce Constructor Injection.
-     * Field injection (@Autowired on fields) is considered harmful as it hides dependencies
-     * and makes testing difficult.
-     */
     @ArchTest
     static final ArchRule no_field_injection = fields()
             .should().notBeAnnotatedWith("org.springframework.beans.factory.annotation.Autowired")
             .because("Constructor injection should be used instead of field injection for better testability and immutability.");
 
-    /**
-     * Enforce SLF4J over java.util.logging.
-     */
     @ArchTest
     static final ArchRule no_java_util_logging = NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
-    /**
-     * Prevent throwing raw RuntimeException or Exception.
-     * Custom exceptions or specific standard exceptions should be used.
-     */
     @ArchTest
     static final ArchRule no_generic_exceptions = NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
 

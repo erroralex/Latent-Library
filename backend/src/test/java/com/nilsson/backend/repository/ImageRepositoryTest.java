@@ -15,6 +15,13 @@ import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * ImageRepositoryTest provides integration tests for the ImageRepository, focusing on
+ * the persistence and management of image records in the SQLite database. It verifies
+ * core functionalities such as idempotent ID generation for image paths, path updates
+ * for file renames, and retrieval of image identifiers. The tests use a temporary
+ * database file and the application's schema to ensure realistic database interactions.
+ */
 class ImageRepositoryTest {
 
     private DataSource dataSource;
@@ -30,7 +37,6 @@ class ImageRepositoryTest {
         DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource(connectionString);
         this.dataSource = driverManagerDataSource;
 
-        // Manually create schema
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
             String schema = new String(getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes());
             stmt.executeUpdate(schema);
@@ -41,7 +47,6 @@ class ImageRepositoryTest {
 
     @AfterEach
     void tearDown() {
-        // In-memory or temp file DB will be cleaned up automatically.
     }
 
     @Test

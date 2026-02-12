@@ -15,6 +15,13 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TagRepositoryTest provides integration tests for the TagRepository, verifying the
+ * persistence and retrieval of image tags in the SQLite database. It covers scenarios
+ * such as adding multiple tags to an image, retrieving the set of tags associated
+ * with a specific image ID, and removing individual tags, ensuring that the
+ * many-to-many relationship between images and tags is correctly managed.
+ */
 class TagRepositoryTest {
 
     private ImageRepository imageRepository;
