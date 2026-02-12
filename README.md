@@ -94,31 +94,7 @@ The application is built as a hybrid desktop application combining a Spring Boot
 
 ## 🚀 Getting Started
 
-### Prerequisites
-* **Java 21 (LTS)** or higher
-* **Node.js 18** or higher
-
-### Running in Development Mode
-
-1. **Build the Backend:**
-   ```bash
-   cd backend
-   ./mvnw clean package
-   ```
-
-2. **Start the Frontend:**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-3. **Launch Electron:**
-   ```bash
-   cd electron
-   npm install
-   npm start
-   ```
+[![Download Portable Zip](https://img.shields.io/badge/Download-Portable_Zip-2ea44f?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/erroralex/ai-toolbox/releases/latest)
 
 ---
 

@@ -15,7 +15,7 @@
  */
 import {useBrowserStore} from '@/stores/browser';
 import {computed, ref} from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import Sidebar from 'primevue/sidebar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -48,9 +48,9 @@ const loras = computed(() => {
 const openFileLocation = async () => {
   if (!store.selectedFile) return;
   try {
-    await axios.post('/api/system/show-in-explorer', null, {params: {path: store.selectedFile}});
+    await api.post('/system/show-in-explorer', null, {params: {path: store.selectedFile}});
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Could not open file location.', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -63,6 +63,23 @@ const formattedRawMeta = computed(() => {
     return meta.value.Raw;
   }
 });
+
+const resetRating = () => {
+  store.setRating(0);
+};
+
+const setRating = (rating, event) => {
+  store.setRating(rating);
+  if (event && event.target) {
+    // Attempt to blur the button itself, or its closest button ancestor
+    const button = event.target.closest('button');
+    if (button) {
+      button.blur();
+    } else {
+      event.target.blur();
+    }
+  }
+};
 
 </script>
 
@@ -82,12 +99,15 @@ const formattedRawMeta = computed(() => {
     </div>
 
     <div class="flex-grow-1 overflow-y-auto p-3 custom-scrollbar">
-      <div class="flex justify-content-center gap-1 mb-3">
-        <Button v-for="i in 5" :key="i"
-                :icon="i <= store.currentRating ? 'pi pi-star-fill' : 'pi pi-star'"
-                class="p-button-text p-button-warning p-0 w-2rem h-2rem"
-                :class="{ 'text-yellow-500': i <= store.currentRating }"
-                @click="store.setRating(i)"/>
+      <div class="flex flex-column align-items-center mb-3">
+        <div class="flex justify-content-center gap-1">
+          <Button v-for="i in 5" :key="i"
+                  :icon="i <= store.currentRating ? 'pi pi-star-fill' : 'pi pi-star'"
+                  class="p-button-text p-button-warning p-0 w-2rem h-2rem star-btn"
+                  :class="{ 'text-yellow-500': i <= store.currentRating }"
+                  @click="(e) => setRating(i, e)"/>
+        </div>
+        <span class="text-xs text-500 cursor-pointer hover:text-white mt-1" @click="resetRating">Reset</span>
       </div>
 
       <div class="text-gradient font-bold text-xl mb-3 text-center">Metadata</div>
@@ -289,5 +309,11 @@ const formattedRawMeta = computed(() => {
 
 .text-yellow-500 {
   color: #eab308 !important;
+}
+
+/* Explicitly remove focus outline for star buttons */
+.star-btn:focus {
+  box-shadow: none !important;
+  outline: none !important;
 }
 </style>
