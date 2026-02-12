@@ -16,10 +16,10 @@
  */
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button';
+import Toast from 'primevue/toast';
 import { ref } from "vue";
 import FolderNav from '@/components/FolderNav.vue';
 import { useBrowserStore } from '@/stores/browser';
-import { onMounted } from 'vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -79,6 +79,7 @@ const closeWindow = () => {
 
 <template>
   <div class="layout-wrapper h-screen flex flex-column overflow-hidden">
+    <Toast position="bottom-right" />
     <header class="menubar-glass flex align-items-center px-5 py-3 gap-5 draggable-header">
       <div class="flex align-items-center gap-3 mr-5 no-drag">
         <img src="@/assets/icon.png" alt="Logo" style="height: 42px;" />

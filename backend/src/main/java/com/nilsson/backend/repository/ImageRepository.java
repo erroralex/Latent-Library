@@ -1,5 +1,7 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -44,6 +46,9 @@ public class ImageRepository {
     }
 
     public int getIdByPath(String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path cannot be empty for ID retrieval.");
+        }
         return jdbcClient.sql("SELECT id FROM images WHERE file_path = ?")
                 .param(path)
                 .query(Integer.class)
@@ -52,6 +57,9 @@ public class ImageRepository {
     }
 
     public List<String> findPathsByHash(String hash) {
+        if (hash == null || hash.isBlank()) {
+            throw new ValidationException("Hash cannot be empty for path lookup.");
+        }
         return jdbcClient.sql("SELECT file_path FROM images WHERE file_hash = ?")
                 .param(hash)
                 .query(String.class)
@@ -59,6 +67,9 @@ public class ImageRepository {
     }
 
     public void updatePath(String oldPath, String newPath) {
+        if (oldPath == null || oldPath.isBlank() || newPath == null || newPath.isBlank()) {
+            throw new ValidationException("Both old and new paths are required for update.");
+        }
         jdbcClient.sql("UPDATE images SET file_path = ? WHERE file_path = ?")
                 .param(newPath)
                 .param(oldPath)
@@ -67,6 +78,10 @@ public class ImageRepository {
 
     @Transactional
     public int getOrCreateId(String path, String hash) {
+        if (path == null || path.isBlank() || hash == null || hash.isBlank()) {
+            throw new ValidationException("Path and hash are required for registration.");
+        }
+
         jdbcClient.sql("INSERT OR IGNORE INTO images(file_path, file_hash, last_scanned) VALUES(?, ?, ?)")
                 .param(path)
                 .param(hash)
@@ -77,16 +92,22 @@ public class ImageRepository {
                 .param(path)
                 .query(Integer.class)
                 .optional()
-                .orElseThrow(() -> new IllegalStateException("Failed to get ID for " + path));
+                .orElseThrow(() -> new ApplicationException("System failed to retrieve ID for registered path: " + path));
     }
 
     public void deleteByPath(String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path is required for deletion.");
+        }
         jdbcClient.sql("DELETE FROM images WHERE file_path = ?")
                 .param(path)
                 .update();
     }
 
     public void forEachFilePath(Consumer<String> action) {
+        if (action == null) {
+            throw new ValidationException("Consumer action cannot be null.");
+        }
         jdbcClient.sql("SELECT file_path FROM images")
                 .query(String.class)
                 .list()
@@ -94,6 +115,9 @@ public class ImageRepository {
     }
 
     public int getRating(String path) {
+        if (path == null || path.isBlank()) {
+            return 0;
+        }
         return jdbcClient.sql("SELECT rating FROM images WHERE file_path = ?")
                 .param(path)
                 .query(Integer.class)
@@ -102,6 +126,9 @@ public class ImageRepository {
     }
 
     public void setRating(int id, int rating) {
+        if (id <= 0) {
+            throw new ValidationException("Invalid image ID provided for rating update.");
+        }
         jdbcClient.sql("UPDATE images SET rating = ?, is_starred = ? WHERE id = ?")
                 .param(rating)
                 .param(rating > 0)

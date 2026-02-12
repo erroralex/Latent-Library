@@ -1,26 +1,13 @@
-/**
- * @file main.js
- * @description The entry point for the AI Toolbox frontend application.
- * 
- * This script initializes the Vue 3 application instance, configures global plugins,
- * and mounts the root component to the DOM. It orchestrates the integration of
- * state management (Pinia), routing (Vue Router), and the UI component library (PrimeVue).
- * 
- * Key initializations:
- * - Pinia: Global state management.
- * - Vue Router: Client-side navigation.
- * - PrimeVue: UI components and theme configuration (Aura Dark Green).
- * - ToastService: Global notification system.
- * - ConfirmationService: Global confirmation dialog system.
- * - Tooltip: Custom directive for UI hints.
- * - Global CSS: Imports base styles, icons, and utility classes (PrimeFlex).
- */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
+
+// Import Vue3Toastify for global error notifications
+import Vue3Toastify, { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 
 import 'primevue/resources/themes/aura-dark-green/theme.css'
 import 'primeicons/primeicons.css'
@@ -38,6 +25,15 @@ app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
 app.use(ConfirmationService)
+
+// Configure generic Toast notifications (for errors/system messages)
+app.use(Vue3Toastify, {
+    autoClose: 4000,
+    position: 'bottom-right',
+    theme: 'dark',
+    clearOnUrlChange: false,
+    transition: 'slide',
+});
 
 app.directive('tooltip', Tooltip);
 

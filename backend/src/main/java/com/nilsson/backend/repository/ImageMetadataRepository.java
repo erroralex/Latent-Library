@@ -1,5 +1,6 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ValidationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,9 @@ public class ImageMetadataRepository {
     }
 
     public boolean hasMetadata(int imageId) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for metadata check.");
+        }
         return jdbcClient.sql("SELECT 1 FROM image_metadata WHERE image_id = ? LIMIT 1")
                 .param(imageId)
                 .query(Integer.class)
@@ -47,6 +51,9 @@ public class ImageMetadataRepository {
     }
 
     public Map<String, String> getMetadata(int imageId) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for metadata retrieval.");
+        }
         return jdbcClient.sql("SELECT key, value FROM image_metadata WHERE image_id = ?")
                 .param(imageId)
                 .query(rs -> {
@@ -60,6 +67,13 @@ public class ImageMetadataRepository {
 
     @Transactional
     public void saveMetadata(int imageId, Map<String, String> meta) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for metadata persistence.");
+        }
+        if (meta == null) {
+            throw new ValidationException("Metadata map cannot be null.");
+        }
+
         jdbcClient.sql("DELETE FROM image_metadata WHERE image_id = ?")
                 .param(imageId)
                 .update();
@@ -74,6 +88,9 @@ public class ImageMetadataRepository {
     }
 
     public List<String> getDistinctValues(String key) {
+        if (key == null || key.isBlank()) {
+            throw new ValidationException("Metadata key is required to fetch distinct values.");
+        }
         return jdbcClient.sql("SELECT DISTINCT value FROM image_metadata WHERE key = ? ORDER BY value ASC")
                 .param(key)
                 .query(String.class)

@@ -1,5 +1,6 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ValidationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -42,12 +43,18 @@ public class PinnedFolderRepository {
     }
 
     public void addPinnedFolder(String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Folder path cannot be empty for pinning.");
+        }
         jdbcClient.sql("INSERT OR IGNORE INTO pinned_folders(path) VALUES(?)")
                 .param(path)
                 .update();
     }
 
     public void removePinnedFolder(String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Folder path cannot be empty for unpinning.");
+        }
         jdbcClient.sql("DELETE FROM pinned_folders WHERE path = ?")
                 .param(path)
                 .update();

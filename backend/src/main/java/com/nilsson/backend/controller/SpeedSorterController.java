@@ -1,5 +1,8 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,26 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for the Speed Sorter utility, designed for high-throughput image organization.
- * <p>
- * This controller facilitates rapid image triage by managing source and target directory
- * configurations and executing atomic file operations. It is optimized for a workflow where
- * users can quickly move images to pre-defined "hot" folders or delete them, often using
- * keyboard shortcuts in the frontend.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Configuration Management:</b> Persists and retrieves user-defined input and target
- *   folder paths using the {@link UserDataManager}.</li>
- *   <li><b>Rapid File Movement:</b> Executes atomic file moves between directories, automatically
- *   generating unique filenames to prevent data loss during collisions.</li>
- *   <li><b>Trash Integration:</b> Interfaces with the system-native trash/recycle bin for safe
- *   file deletion, allowing for recovery if needed.</li>
- *   <li><b>Undo Support:</b> Provides a mechanism to revert the most recent move operation,
- *   restoring the file to its original location.</li>
- *   <li><b>Directory Listing:</b> Returns a sorted list of images from the configured input
- *   directory, prioritized by modification date.</li>
- * </ul>
+ * REST Controller for the Speed Sorter utility.
  */
 @RestController
 @RequestMapping("/api/speedsorter")
@@ -69,7 +53,7 @@ public class SpeedSorterController {
             dataManager.setSetting("speed_input_dir", folder.getAbsolutePath());
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.badRequest().build();
+        throw new ValidationException("Input path must be a valid directory.");
     }
 
     @PostMapping("/config/target")
@@ -79,7 +63,7 @@ public class SpeedSorterController {
             dataManager.setSetting("speed_target_" + index, folder.getAbsolutePath());
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.badRequest().build();
+        throw new ValidationException("Invalid target index or directory path.");
     }
 
     @GetMapping("/files")
@@ -108,29 +92,34 @@ public class SpeedSorterController {
     @PostMapping("/move")
     public ResponseEntity<String> moveFile(@RequestParam("source") String sourcePath, @RequestParam("targetIndex") int targetIndex) {
         String targetPathStr = dataManager.getSetting("speed_target_" + targetIndex, null);
-        if (targetPathStr == null) return ResponseEntity.badRequest().body("Target not set");
+        if (targetPathStr == null) {
+            throw new ValidationException("Target slot " + targetIndex + " is not configured.");
+        }
 
         File source = new File(sourcePath);
         File targetDir = new File(targetPathStr);
 
-        if (!source.exists() || !targetDir.exists()) return ResponseEntity.badRequest().body("File or target missing");
+        if (!source.exists()) throw new ResourceNotFoundException("Source file", sourcePath);
+        if (!targetDir.exists()) throw new ResourceNotFoundException("Target directory", targetPathStr);
 
         File dest = generateUniqueDest(targetDir, source.getName());
         try {
             Files.move(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return ResponseEntity.ok(dest.getAbsolutePath());
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Move failed: " + e.getMessage());
+            throw new ApplicationException("Failed to move file: " + e.getMessage());
         }
     }
 
     @PostMapping("/delete")
     public ResponseEntity<String> deleteFile(@RequestParam("path") String path) {
         File file = new File(path);
+        if (!file.exists()) throw new ResourceNotFoundException("File", path);
+
         if (dataManager.moveFileToTrash(file)) {
             return ResponseEntity.ok("Deleted");
         }
-        return ResponseEntity.internalServerError().body("Delete failed");
+        throw new ApplicationException("Failed to delete file (System Trash operation failed).");
     }
 
     @PostMapping("/undo")
@@ -138,13 +127,13 @@ public class SpeedSorterController {
         File current = new File(sourcePath);
         File original = new File(originalPath);
 
-        if (!current.exists()) return ResponseEntity.badRequest().body("File not found");
+        if (!current.exists()) throw new ResourceNotFoundException("File to undo", sourcePath);
 
         try {
             Files.move(current.toPath(), original.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return ResponseEntity.ok("Undone");
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Undo failed");
+            throw new ApplicationException("Undo failed: " + e.getMessage());
         }
     }
 

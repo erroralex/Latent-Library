@@ -2,6 +2,9 @@ package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -24,10 +27,15 @@ import java.util.Map;
 @Service
 public class InvokeAIStrategy implements MetadataStrategy {
 
+    private static final Logger log = LoggerFactory.getLogger(InvokeAIStrategy.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public Map<String, String> parse(String text) {
+        if (text == null || text.isBlank()) {
+            return new HashMap<>();
+        }
+
         Map<String, String> results = new HashMap<>();
         try {
             JsonNode root = mapper.readTree(text);
@@ -37,28 +45,34 @@ public class InvokeAIStrategy implements MetadataStrategy {
                 extract(field.getKey(), field.getValue(), root, results);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to parse InvokeAI metadata block", e);
+            throw new ApplicationException("System failed to parse InvokeAI generation parameters from JSON block.", e);
         }
         return results;
     }
 
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {
-        if (!value.isTextual()) return;
-        String text = value.asText();
+        try {
+            if (!value.isTextual()) return;
+            String text = value.asText();
 
-        if (key.equals("model_name") || key.equals("model_weights")) {
-            results.put("Model", text);
-        } else if (key.equals("positive_prompt") || (key.equals("prompt") && !results.containsKey("Prompt"))) {
-            results.put("Prompt", text);
-        } else if (key.equals("negative_prompt")) {
-            results.put("Negative", text);
-        } else if (key.equals("cfg_scale") || key.equals("cfg_rescale_multiplier")) {
-            results.put("CFG", text);
-        } else if ((key.equals("sampler_name") || key.equals("scheduler")) && !results.containsKey("Sampler")) {
-            results.put("Sampler", text);
-        } else if (key.equals("variant") && !results.containsKey("Model")) {
-            results.put("Model", text);
+            if (key.equals("model_name") || key.equals("model_weights")) {
+                results.put("Model", text);
+            } else if (key.equals("positive_prompt") || (key.equals("prompt") && !results.containsKey("Prompt"))) {
+                results.put("Prompt", text);
+            } else if (key.equals("negative_prompt")) {
+                results.put("Negative", text);
+            } else if (key.equals("cfg_scale") || key.equals("cfg_rescale_multiplier")) {
+                results.put("CFG", text);
+            } else if ((key.equals("sampler_name") || key.equals("scheduler")) && !results.containsKey("Sampler")) {
+                results.put("Sampler", text);
+            } else if (key.equals("variant") && !results.containsKey("Model")) {
+                results.put("Model", text);
+            }
+        } catch (Exception e) {
+            log.error("Error during InvokeAI JSON extraction for key: {}", key, e);
+            // Non-throwing catch to allow processing other keys if one value is malformed
         }
     }
 }

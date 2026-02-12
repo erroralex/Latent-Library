@@ -2,6 +2,9 @@ package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -26,10 +29,15 @@ import java.util.Map;
 @Service
 public class SwarmUIStrategy implements MetadataStrategy {
 
+    private static final Logger log = LoggerFactory.getLogger(SwarmUIStrategy.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public Map<String, String> parse(String text) {
+        if (text == null || text.isBlank()) {
+            return new HashMap<>();
+        }
+
         Map<String, String> results = new HashMap<>();
         try {
             JsonNode root = mapper.readTree(text);
@@ -39,32 +47,38 @@ public class SwarmUIStrategy implements MetadataStrategy {
                 extract(field.getKey(), field.getValue(), root, results);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to parse SwarmUI metadata block", e);
+            throw new ApplicationException("System failed to parse SwarmUI generation parameters from JSON block.", e);
         }
         return results;
     }
 
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {
-        if (!value.isTextual() && !value.isNumber()) return;
-        String text = value.asText();
+        try {
+            if (!value.isTextual() && !value.isNumber()) return;
+            String text = value.asText();
 
-        if (key.equals("model") && text.length() > 4 && !text.contains("{")) {
-            results.put("Model", text);
-        } else if (key.equals("sampler")) {
-            results.put("Sampler", text);
-        } else if (key.equals("prompt") && text.length() > 5) {
-            if (!results.containsKey("Prompt")) {
-                results.put("Prompt", text);
+            if (key.equals("model") && text.length() > 4 && !text.contains("{")) {
+                results.put("Model", text);
+            } else if (key.equals("sampler")) {
+                results.put("Sampler", text);
+            } else if (key.equals("prompt") && text.length() > 5) {
+                if (!results.containsKey("Prompt")) {
+                    results.put("Prompt", text);
+                }
+            } else if (key.equals("negativeprompt")) {
+                results.put("Negative", text);
+            } else if (key.equals("cfgscale")) {
+                results.put("CFG", text);
+            } else if (key.equals("steps")) {
+                results.put("Steps", text);
+            } else if (key.equals("seed")) {
+                results.put("Seed", text);
             }
-        } else if (key.equals("negativeprompt")) {
-            results.put("Negative", text);
-        } else if (key.equals("cfgscale")) {
-            results.put("CFG", text);
-        } else if (key.equals("steps")) {
-            results.put("Steps", text);
-        } else if (key.equals("seed")) {
-            results.put("Seed", text);
+        } catch (Exception e) {
+            log.error("Error during SwarmUI JSON extraction for key: {}", key, e);
+            // Non-throwing catch to allow processing of other keys in the JSON tree
         }
     }
 }

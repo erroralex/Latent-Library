@@ -1,5 +1,6 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.service.FtsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,14 @@ public class SearchRepository {
     }
 
     public List<String> findPaths(String query, Map<String, List<String>> filters, List<String> collectionPaths, int offset, int limit) {
+        // Validation for pagination parameters
+        if (offset < 0) {
+            throw new ValidationException("Offset cannot be negative.");
+        }
+        if (limit <= 0) {
+            throw new ValidationException("Limit must be greater than zero.");
+        }
+
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
         List<String> ftsClauses = new ArrayList<>();
@@ -112,12 +121,12 @@ public class SearchRepository {
                 handleRatingFilter(sql, params, ratingValues);
             }
         }
-        
+
         if (collectionPaths != null) {
             if (collectionPaths.isEmpty()) {
                 return new ArrayList<>();
             }
-            
+
             sql.append(" AND i.file_path IN (");
             for (int i = 0; i < collectionPaths.size(); i++) {
                 sql.append("?");

@@ -1,5 +1,6 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -35,6 +36,9 @@ public class SettingsRepository {
     }
 
     public String get(String key, String defaultValue) {
+        if (key == null || key.isBlank()) {
+            throw new ValidationException("Settings key cannot be empty for retrieval.");
+        }
         return jdbcClient.sql("SELECT value FROM settings WHERE key = ?")
                 .param(key)
                 .query(String.class)
@@ -43,6 +47,9 @@ public class SettingsRepository {
     }
 
     public void set(String key, String value) {
+        if (key == null || key.isBlank()) {
+            throw new ValidationException("Settings key cannot be empty for persistence.");
+        }
         jdbcClient.sql("INSERT OR REPLACE INTO settings(key, value) VALUES(?, ?)")
                 .param(key)
                 .param(value)

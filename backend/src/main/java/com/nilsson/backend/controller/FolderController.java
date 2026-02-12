@@ -1,5 +1,8 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.slf4j.Logger;
@@ -15,21 +18,6 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for file system navigation, directory traversal, and bookmark management.
- * <p>
- * This controller provides the backend infrastructure for the application's integrated file explorer.
- * It enables the frontend to interact with the host's local file system in a controlled manner,
- * supporting lazy-loading of directory structures and persistent "pinning" of frequently accessed folders.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Root Discovery:</b> Identifies and returns all available system root drives (e.g., C:\, D:\ on Windows, / on Linux/macOS).</li>
- *   <li><b>Lazy Traversal:</b> Provides on-demand listing of subdirectories for a given path, optimized for
- *   rendering in tree-based UI components.</li>
- *   <li><b>Folder Pinning:</b> Manages a persistent list of bookmarked directories, allowing for rapid
- *   navigation to user-defined "hot" locations.</li>
- *   <li><b>Data Normalization:</b> Transforms raw {@link File} objects into {@link FileDTO} records,
- *   ensuring consistent path formatting and UI-ready metadata (icons, labels).</li>
- * </ul>
  */
 @RestController
 @RequestMapping("/api/folders")
@@ -61,16 +49,19 @@ public class FolderController {
 
         File folder = pathService.resolve(path);
 
-        if (!folder.exists() || !folder.isDirectory()) {
-            logger.warn("Path does not exist or is not directory: {}", path);
-            return ResponseEntity.badRequest().build();
+        if (!folder.exists()) {
+            throw new ResourceNotFoundException("Folder", path);
+        }
+        if (!folder.isDirectory()) {
+            throw new ValidationException("Path is not a directory: " + path);
         }
 
         File[] files = folder.listFiles();
 
         if (files == null) {
+            // This usually happens if the OS denies access or IO error occurs
             logger.warn("Access denied or IO error reading: {}", path);
-            return ResponseEntity.ok(List.of());
+            throw new ApplicationException("Cannot access folder (Access Denied): " + path);
         }
 
         List<FileDTO> dtos = Arrays.stream(files)
@@ -98,23 +89,24 @@ public class FolderController {
     @PostMapping("/pin")
     public ResponseEntity<Void> pinFolder(@RequestParam String path) {
         File folder = pathService.resolve(path);
-        if (folder.exists() && folder.isDirectory()) {
-            dataManager.addPinnedFolder(folder);
-            return ResponseEntity.ok().build();
+        if (!folder.exists()) {
+            throw new ResourceNotFoundException("Folder", path);
         }
-        return ResponseEntity.badRequest().build();
+        if (!folder.isDirectory()) {
+            throw new ValidationException("Cannot pin a file, only folders.");
+        }
+        dataManager.addPinnedFolder(folder);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/unpin")
     public ResponseEntity<Void> unpinFolder(@RequestParam String path) {
         File folder = pathService.resolve(path);
+        // We allow unpinning even if the folder no longer exists on disk (cleanup)
         dataManager.removePinnedFolder(folder);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Data Transfer Object representing a file system entry, optimized for tree-view rendering.
-     */
     public record FileDTO(String name, String path, boolean isDirectory, boolean isPinned, String key, String label,
                           String icon, boolean leaf) {
         public FileDTO(String name, String path, boolean isDirectory, boolean isPinned) {

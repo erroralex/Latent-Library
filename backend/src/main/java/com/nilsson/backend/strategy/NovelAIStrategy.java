@@ -2,6 +2,9 @@ package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -24,10 +27,15 @@ import java.util.Map;
 @Service
 public class NovelAIStrategy implements MetadataStrategy {
 
+    private static final Logger log = LoggerFactory.getLogger(NovelAIStrategy.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public Map<String, String> parse(String text) {
+        if (text == null || text.isBlank()) {
+            return new HashMap<>();
+        }
+
         Map<String, String> results = new HashMap<>();
         try {
             JsonNode root = mapper.readTree(text);
@@ -37,36 +45,41 @@ public class NovelAIStrategy implements MetadataStrategy {
                 extract(field.getKey(), field.getValue(), root, results);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to parse NovelAI metadata block", e);
+            throw new ApplicationException("System failed to parse NovelAI generation parameters from JSON block.", e);
         }
         return results;
     }
 
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {
-        if (!value.isTextual() && !value.isNumber()) return;
+        try {
+            if (!value.isTextual() && !value.isNumber()) return;
 
-        String text = value.asText().trim();
-        if (text.isEmpty()) return;
+            String text = value.asText().trim();
+            if (text.isEmpty()) return;
 
-        if (key.equals("prompt")) {
-            if (!results.containsKey("Prompt")) {
-                results.put("Prompt", text);
+            if (key.equals("prompt")) {
+                if (!results.containsKey("Prompt")) {
+                    results.put("Prompt", text);
+                }
+            } else if (key.equals("uc")) {
+                results.put("Negative", text);
+            } else if (key.equals("scale")) {
+                results.put("CFG", text);
+            } else if (key.equals("steps")) {
+                results.put("Steps", text);
+            } else if (key.equals("seed")) {
+                results.put("Seed", text);
+            } else if (key.equals("sampler")) {
+                results.put("Sampler", text);
+            } else if (key.equals("software") && text.equalsIgnoreCase("novelai")) {
+                if (!results.containsKey("Model")) {
+                    results.put("Model", "NovelAI Diffusion");
+                }
             }
-        } else if (key.equals("uc")) {
-            results.put("Negative", text);
-        } else if (key.equals("scale")) {
-            results.put("CFG", text);
-        } else if (key.equals("steps")) {
-            results.put("Steps", text);
-        } else if (key.equals("seed")) {
-            results.put("Seed", text);
-        } else if (key.equals("sampler")) {
-            results.put("Sampler", text);
-        } else if (key.equals("software") && text.equalsIgnoreCase("novelai")) {
-            if (!results.containsKey("Model")) {
-                results.put("Model", "NovelAI Diffusion");
-            }
+        } catch (Exception e) {
+            log.error("Error during NovelAI JSON extraction for key: {}", key, e);
         }
     }
 }

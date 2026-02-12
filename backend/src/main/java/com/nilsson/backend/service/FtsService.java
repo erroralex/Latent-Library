@@ -1,7 +1,11 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.TagRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +39,7 @@ import java.util.stream.Collectors;
 @Service
 public class FtsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(FtsService.class);
     private final JdbcClient jdbcClient;
     private final ImageMetadataRepository metadataRepository;
     private final TagRepository tagRepository;
@@ -49,6 +54,10 @@ public class FtsService {
 
     @Transactional
     public void updateFtsIndex(int imageId) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for FTS indexing.");
+        }
+
         String metadataText = metadataRepository.getMetadata(imageId).entrySet().stream()
                 .map(entry -> {
                     String key = entry.getKey();
@@ -100,9 +109,16 @@ public class FtsService {
 
     @Transactional
     public void rebuildFtsIndex() {
-        List<Integer> imageIds = jdbcClient.sql("SELECT id FROM images").query(Integer.class).list();
-        for (int imageId : imageIds) {
-            updateFtsIndex(imageId);
+        logger.info("Starting full FTS index rebuild...");
+        try {
+            List<Integer> imageIds = jdbcClient.sql("SELECT id FROM images").query(Integer.class).list();
+            for (int imageId : imageIds) {
+                updateFtsIndex(imageId);
+            }
+            logger.info("FTS index rebuild completed successfully.");
+        } catch (Exception e) {
+            logger.error("Failed to rebuild FTS index.", e);
+            throw new ApplicationException("System failed to rebuild the search index.", e);
         }
     }
 

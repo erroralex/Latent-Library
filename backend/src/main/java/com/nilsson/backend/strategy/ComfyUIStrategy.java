@@ -1,6 +1,7 @@
 package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.nilsson.backend.exception.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -107,7 +108,8 @@ public class ComfyUIStrategy implements MetadataStrategy {
                 processInputsBlock(value, parentNode, results, skipCoreParams);
             }
         } catch (Exception e) {
-            log.error("Error extracting ComfyUI metadata for key: {}", key, e);
+            log.error("Internal strategy error during ComfyUI graph navigation for key: {}", key, e);
+            throw new ApplicationException("System failed to navigate ComfyUI generation graph.", e);
         }
     }
 
