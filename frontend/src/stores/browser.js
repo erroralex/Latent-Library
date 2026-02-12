@@ -1,21 +1,10 @@
-import {defineStore} from 'pinia';
-import axios from 'axios';
+import { defineStore } from 'pinia';
+import axios from 'axios'; // Kept ONLY for silent startup polling
+import api from '../services/api'; // Use centralized API service for everything else
 
 /**
  * @file browser.js
  * @description The central state management hub for the Image Browser application.
- *
- * This Pinia store orchestrates the data flow and UI state for the entire browsing experience.
- * It manages the image library (files), selection state, metadata caching, search/filter criteria,
- * and view configurations. It acts as the single source of truth for all browser-related components.
- *
- * Key responsibilities:
- * - **Library Management:** Handles folder scanning and collection loading via backend APIs.
- * - **Search & Filtering:** Maintains active filter states (Model, Sampler, LoRA, Rating) and executes paginated search queries.
- * - **Metadata Orchestration:** Fetches and caches detailed metadata for the currently selected image.
- * - **Navigation Logic:** Implements directional navigation (Next/Previous) and view mode switching.
- * - **Pagination:** Manages infinite scroll state, including page offsets and loading indicators.
- * - **Preloading:** Manages background preloading of adjacent images for smoother navigation.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -40,8 +29,7 @@ export const useBrowserStore = defineStore('browser', {
         selectedSampler: null,
         selectedLora: null,
         selectedRating: null,
-        activeCollection: null, // New state for active collection filter
-
+        activeCollection: null,
         lastFolderPath: null,
         navRefreshKey: 0,
         collectionToEdit: null,
@@ -55,13 +43,13 @@ export const useBrowserStore = defineStore('browser', {
     actions: {
         /**
          * Polls the backend to ensure it is ready before attempting to load data.
-         * Prevents the "infinite spinner" race condition on application startup.
+         * Uses raw axios to avoid triggering global error toasts during polling.
          */
         async waitForBackend(retries = 20) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    // Check a lightweight endpoint to confirm server availability
-                    await axios.get('/api/images/filters');
+                    // Raw axios call to avoid global interceptor toasts
+                    await axios.get('http://localhost:8080/api/images/filters');
                     return true;
                 } catch (e) {
                     console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
@@ -83,6 +71,7 @@ export const useBrowserStore = defineStore('browser', {
                 }
             } catch (error) {
                 console.error("Initialization failed:", error);
+                // Note: The global interceptor in api.js will handle the visual notification
             } finally {
                 this.isLoading = false;
             }
@@ -94,7 +83,7 @@ export const useBrowserStore = defineStore('browser', {
 
         async loadFilters() {
             try {
-                const res = await axios.get('/api/images/filters');
+                const res = await api.get('/images/filters');
                 this.availableModels = ['All', ...res.data.models];
                 this.availableSamplers = ['All', ...res.data.samplers];
                 this.availableLoras = ['All', ...res.data.loras];
@@ -108,11 +97,11 @@ export const useBrowserStore = defineStore('browser', {
             this.files = [];
             this.page = 0;
             this.hasMore = false;
-            this.activeCollection = null; // Clear active collection when loading a folder
+            this.activeCollection = null;
 
             try {
-                const response = await axios.post('/api/library/scan', null, {
-                    params: {path}
+                const response = await api.post('/library/scan', null, {
+                    params: { path }
                 });
                 this.files = response.data;
                 this.searchQuery = '';
@@ -135,19 +124,17 @@ export const useBrowserStore = defineStore('browser', {
 
         async loadCollection(collectionName) {
             this.isLoading = true;
-            this.activeCollection = collectionName; // Set active collection
-            this.searchQuery = ''; // Clear search query so user can search WITHIN collection
+            this.activeCollection = collectionName;
+            this.searchQuery = '';
             this.files = [];
             this.page = 0;
-            this.hasMore = true; // Enable pagination for collections
+            this.hasMore = true;
 
             try {
-                // Initial load using the search endpoint which now supports collection filtering
                 await this.fetchPage();
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
-                    // Force gallery view when opening a collection to see the content
                     this.setViewMode('gallery');
                 } else {
                     this.selectedFile = null;
@@ -180,7 +167,7 @@ export const useBrowserStore = defineStore('browser', {
                 }
 
                 if (focusImage) {
-                    this.imageFocusRequested = true;
+                    // Logic for focusing image if implemented in view
                 }
 
             } catch (error) {
@@ -205,14 +192,14 @@ export const useBrowserStore = defineStore('browser', {
         },
 
         async fetchPage() {
-            const response = await axios.get('/api/images/search', {
+            const response = await api.get('/images/search', {
                 params: {
                     query: this.searchQuery,
                     model: this.selectedModel,
                     sampler: this.selectedSampler,
                     lora: this.selectedLora,
                     rating: this.selectedRating,
-                    collection: this.activeCollection, // Pass active collection
+                    collection: this.activeCollection,
                     page: this.page,
                     size: this.pageSize
                 }
@@ -233,15 +220,14 @@ export const useBrowserStore = defineStore('browser', {
         clearSearch() {
             this.searchQuery = '';
             const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.activeCollection;
-            
+
             if (!isAnyFilterActive && this.lastFolderPath) {
                 this.loadFolder(this.lastFolderPath);
             } else {
-                // If collection is active, just reload it without search query
                 this.search('');
             }
         },
-        
+
         clearCollection() {
             this.activeCollection = null;
             this.clearSearch();
@@ -287,9 +273,11 @@ export const useBrowserStore = defineStore('browser', {
             const nextIndex = (currentIndex + 1) % this.files.length;
             const prevIndex = (currentIndex - 1 + this.files.length) % this.files.length;
 
+            // Note: Preloading uses raw Image object, does not use Axios/API service
             const preload = (path) => {
                 const img = new Image();
-                img.src = `/api/images/content?path=${encodeURIComponent(path)}`;
+                // Ensure this URL matches your backend serving strategy
+                img.src = `http://localhost:8080/api/images/content?path=${encodeURIComponent(path)}`;
             };
 
             preload(this.files[nextIndex].path);
@@ -303,8 +291,8 @@ export const useBrowserStore = defineStore('browser', {
                 return;
             }
             try {
-                const response = await axios.get('/api/images/metadata', {
-                    params: {path}
+                const response = await api.get('/images/metadata', {
+                    params: { path }
                 });
                 this.currentMetadata = response.data;
                 this.currentRating = response.data.rating || 0;
@@ -318,8 +306,8 @@ export const useBrowserStore = defineStore('browser', {
         async setRating(rating) {
             if (!this.selectedFile) return;
             try {
-                await axios.post('/api/images/rating', null, {
-                    params: {path: this.selectedFile, rating}
+                await api.post('/images/rating', null, {
+                    params: { path: this.selectedFile, rating }
                 });
                 this.currentRating = rating;
 

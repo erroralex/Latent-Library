@@ -2,6 +2,8 @@ package com.nilsson.backend.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,27 +15,49 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+
  * Repository for managing image collections and their relational associations.
+
  * <p>
+
  * This class handles the persistence of both "Static Collections" (manual associations) and
+
  * "Smart Collections" (dynamic, filter-based groupings). It manages the {@code collections}
+
  * table, which stores collection definitions and serialized JSON filters, and the
+
  * {@code collection_images} join table, which maintains the many-to-many relationship
+
  * between images and collections.
+
  * <p>
+
  * Key Responsibilities:
+
  * <ul>
- *   <li><b>Collection CRUD:</b> Implements full lifecycle management for collection entities,
- *   including creation, updates, and deletion.</li>
- *   <li><b>Smart Filter Persistence:</b> Serializes and deserializes complex search criteria
- *   using Jackson to store dynamic collection rules in the database.</li>
- *   <li><b>Membership Management:</b> Handles adding images to collections, distinguishing
- *   between manual additions and smart population, and managing blacklisted exclusions.</li>
- *   <li><b>Path Resolution:</b> Retrieves absolute file system paths for all images within
- *   a specific collection, respecting user-defined exclusions.</li>
- *   <li><b>Atomic Operations:</b> Utilizes {@code INSERT OR IGNORE} and transactional updates
- *   to safely manage image associations and collection state.</li>
+
+ * <li><b>Collection CRUD:</b> Implements full lifecycle management for collection entities,
+
+ * including creation, updates, and deletion.</li>
+
+ * <li><b>Smart Filter Persistence:</b> Serializes and deserializes complex search criteria
+
+ * using Jackson to store dynamic collection rules in the database.</li>
+
+ * <li><b>Membership Management:</b> Handles adding images to collections, distinguishing
+
+ * between manual additions and smart population, and managing blacklisted exclusions.</li>
+
+ * <li><b>Path Resolution:</b> Retrieves absolute file system paths for all images within
+
+ * a specific collection, respecting user-defined exclusions.</li>
+
+ * <li><b>Atomic Operations:</b> Utilizes {@code INSERT OR IGNORE} and transactional updates
+
+ * to safely manage image associations and collection state.</li>
+
  * </ul>
+
  */
 @Repository
 public class CollectionRepository {
@@ -54,7 +78,9 @@ public class CollectionRepository {
     }
 
     public Optional<CreateCollectionRequest> get(String name) {
-        if (name == null) return Optional.empty();
+        if (name == null || name.isBlank()) {
+            return Optional.empty();
+        }
         return jdbcClient.sql("SELECT name, is_smart, filters_json FROM collections WHERE name = ?")
                 .param(name.trim())
                 .query((rs, rowNum) -> {
@@ -66,7 +92,9 @@ public class CollectionRepository {
                         try {
                             filters = objectMapper.readValue(filtersJson, CreateCollectionRequest.CollectionFilters.class);
                         } catch (JsonProcessingException e) {
+                            // Technical failure reading from DB
                             logger.error("Failed to parse filters for collection: {}", colName, e);
+                            throw new ApplicationException("Error reading collection filter data from database", e);
                         }
                     }
                     return new CreateCollectionRequest(colName, isSmart, filters);
@@ -75,13 +103,17 @@ public class CollectionRepository {
     }
 
     public void create(String name, boolean isSmart, CreateCollectionRequest.CollectionFilters filters) {
-        if (name == null || name.isBlank()) return;
+        if (name == null || name.isBlank()) {
+            throw new ValidationException("Collection name cannot be empty.");
+        }
+
         String filtersJson = null;
         if (isSmart && filters != null) {
             try {
                 filtersJson = objectMapper.writeValueAsString(filters);
             } catch (JsonProcessingException e) {
                 logger.error("Error serializing collection filters for collection: {}", name, e);
+                throw new ApplicationException("Failed to process collection filter parameters", e);
             }
         }
 
@@ -94,15 +126,20 @@ public class CollectionRepository {
     }
 
     public void update(String oldName, String newName, boolean isSmart, CreateCollectionRequest.CollectionFilters filters) {
-        if (oldName == null || oldName.isBlank()) return;
-        if (newName == null || newName.isBlank()) newName = oldName;
-        
+        if (oldName == null || oldName.isBlank()) {
+            throw new ValidationException("Original collection name is required for update.");
+        }
+        if (newName == null || newName.isBlank()) {
+            newName = oldName;
+        }
+
         String filtersJson = null;
         if (isSmart && filters != null) {
             try {
                 filtersJson = objectMapper.writeValueAsString(filters);
             } catch (JsonProcessingException e) {
                 logger.error("Error serializing collection filters for collection: {}", newName, e);
+                throw new ApplicationException("Failed to process collection filter parameters", e);
             }
         }
 
@@ -115,14 +152,18 @@ public class CollectionRepository {
     }
 
     public void delete(String name) {
-        if (name == null) return;
+        if (name == null || name.isBlank()) {
+            throw new ValidationException("Collection name is required for deletion.");
+        }
         jdbcClient.sql("DELETE FROM collections WHERE name = ?")
                 .param(name.trim())
                 .update();
     }
 
     public void addImage(String collectionName, int imageId) {
-        if (collectionName == null) return;
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required to add an image.");
+        }
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 1 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)
@@ -132,7 +173,9 @@ public class CollectionRepository {
     }
 
     public void removeAllImages(String collectionName) {
-        if (collectionName == null) return;
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required to clear images.");
+        }
         String sql = "DELETE FROM collection_images WHERE collection_id = (SELECT id FROM collections WHERE name = ?) AND is_manual = 0";
         jdbcClient.sql(sql)
                 .param(collectionName.trim())
@@ -140,48 +183,56 @@ public class CollectionRepository {
     }
 
     public List<String> getFilePaths(String collectionName) {
-        if (collectionName == null) return List.of();
+        if (collectionName == null || collectionName.isBlank()) {
+            return List.of();
+        }
         String sql = """
-            SELECT i.file_path 
-            FROM images i 
-            JOIN collection_images ci ON i.id = ci.image_id 
-            JOIN collections c ON ci.collection_id = c.id 
-            WHERE c.name = ? 
-            AND i.id NOT IN (
-                SELECT ce.image_id 
-                FROM collection_exclusions ce 
-                JOIN collections c2 ON ce.collection_id = c2.id 
-                WHERE c2.name = ?
-            )
-            ORDER BY ci.added_at DESC
-        """;
+                    SELECT i.file_path 
+                    FROM images i 
+                    JOIN collection_images ci ON i.id = ci.image_id 
+                    JOIN collections c ON ci.collection_id = c.id 
+                    WHERE c.name = ? 
+                    AND i.id NOT IN (
+                        SELECT ce.image_id 
+                        FROM collection_exclusions ce 
+                        JOIN collections c2 ON ce.collection_id = c2.id 
+                        WHERE c2.name = ?
+                    )
+                    ORDER BY ci.added_at DESC
+                """;
         return jdbcClient.sql(sql)
                 .param(collectionName.trim())
                 .param(collectionName.trim())
                 .query(String.class)
                 .list();
     }
-    
+
     public void addExclusion(String collectionName, int imageId) {
-        if (collectionName == null) return;
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required for exclusion.");
+        }
         String sql = "INSERT OR IGNORE INTO collection_exclusions (collection_id, image_id) SELECT id, ? FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)
                 .param(collectionName.trim())
                 .update();
     }
-    
+
     public void removeExclusion(String collectionName, int imageId) {
-        if (collectionName == null) return;
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required to remove exclusion.");
+        }
         String sql = "DELETE FROM collection_exclusions WHERE collection_id = (SELECT id FROM collections WHERE name = ?) AND image_id = ?";
         jdbcClient.sql(sql)
                 .param(collectionName.trim())
                 .param(imageId)
                 .update();
     }
-    
+
     public void addSmartImage(String collectionName, int imageId) {
-        if (collectionName == null) return;
+        if (collectionName == null || collectionName.isBlank()) {
+            return; // Usually called in background cycles, silent return is safer here
+        }
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 0 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)
                 .param(imageId)

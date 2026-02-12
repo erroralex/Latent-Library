@@ -1,5 +1,8 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.repository.ImageMetadataRepository;
@@ -96,15 +99,18 @@ public class UserDataManager {
     }
 
     public File resolvePath(String dbPath) {
+        if (dbPath == null || dbPath.isBlank()) return null;
         try {
             return pathService.resolve(dbPath);
-        } catch (InvalidPathException e) {
-            logger.warn("Could not resolve path: {}", dbPath, e);
+        } catch (Exception e) {
+            logger.warn("Could not resolve path: {}", dbPath);
             return null;
         }
     }
 
     public List<String> getDistinctMetadataValues(String key) {
+        if (key == null || key.isBlank()) return Collections.emptyList();
+
         List<String> raw = imageMetadataRepository.getDistinctValues(key);
         if ("Loras".equals(key)) {
             return raw.stream()
@@ -148,51 +154,60 @@ public class UserDataManager {
 
     public CompletableFuture<List<ImageDTO>> findFilesWithFilters(String query, Map<String, String> filters, int offset, int limit) {
         return CompletableFuture.supplyAsync(() -> {
-            Map<String, List<String>> listFilters = new java.util.HashMap<>();
-            String collectionName = null;
-            
-            if (filters != null) {
-                for (Map.Entry<String, String> entry : filters.entrySet()) {
-                    if ("Collection".equals(entry.getKey())) {
-                        collectionName = entry.getValue();
-                    } else {
-                        listFilters.put(entry.getKey(), Collections.singletonList(entry.getValue()));
+            try {
+                Map<String, List<String>> listFilters = new java.util.HashMap<>();
+                String collectionName = null;
+
+                if (filters != null) {
+                    for (Map.Entry<String, String> entry : filters.entrySet()) {
+                        if ("Collection".equals(entry.getKey())) {
+                            collectionName = entry.getValue();
+                        } else {
+                            listFilters.put(entry.getKey(), Collections.singletonList(entry.getValue()));
+                        }
                     }
                 }
-            }
-            
-            List<String> collectionPaths = null;
-            if (collectionName != null) {
-                collectionPaths = collectionService.getFilePathsFromCollection(collectionName);
-            }
 
-            List<String> paths = searchRepository.findPaths(query, listFilters, collectionPaths, offset, limit);
-            return paths.stream()
-                    .map(path -> {
-                        File file = pathService.resolve(path);
-                        int rating = getRating(file);
-                        String model = "";
-                        if (hasCachedMetadata(file)) {
-                            Map<String, String> meta = getCachedMetadata(file);
-                            model = meta.getOrDefault("Model", "");
-                        }
-                        return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
-                    })
-                    .collect(Collectors.toList());
+                List<String> collectionPaths = null;
+                if (collectionName != null) {
+                    collectionPaths = collectionService.getFilePathsFromCollection(collectionName);
+                }
+
+                List<String> paths = searchRepository.findPaths(query, listFilters, collectionPaths, offset, limit);
+                return paths.stream()
+                        .map(path -> {
+                            File file = pathService.resolve(path);
+                            int rating = getRating(file);
+                            String model = "";
+                            if (hasCachedMetadata(file)) {
+                                Map<String, String> meta = getCachedMetadata(file);
+                                model = meta.getOrDefault("Model", "");
+                            }
+                            return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
+                        })
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                logger.error("Async search filter operation failed", e);
+                throw new ApplicationException("Failed to execute filtered search query.", e);
+            }
         });
     }
 
     public boolean moveFileToTrash(File file) {
-        if (file == null || !file.exists()) return false;
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("File to delete", file != null ? file.getAbsolutePath() : "null");
+        }
 
         boolean success = false;
         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
             try {
                 success = Desktop.getDesktop().moveToTrash(file);
             } catch (Exception e) {
-                logger.error("System trash failed", e);
-                return false;
+                logger.error("System trash operation failed for: {}", file.getAbsolutePath(), e);
+                throw new ApplicationException("OS failed to move file to trash.", e);
             }
+        } else {
+            throw new ApplicationException("System Trash is not supported on this platform.");
         }
 
         if (success) {
@@ -202,6 +217,9 @@ public class UserDataManager {
     }
 
     private int getOrCreateImageIdInternal(File file) {
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("Image file", "null");
+        }
         try {
             String path = pathService.getNormalizedAbsolutePath(file);
             int id = imageRepo.getIdByPath(path);
@@ -218,8 +236,8 @@ public class UserDataManager {
 
             return imageRepo.getOrCreateId(path, hash);
         } catch (Exception e) {
-            logger.error("Failed to get ID for file: {}", file, e);
-            return -1;
+            logger.error("Failed to reconcile or register file: {}", file.getAbsolutePath(), e);
+            throw new ApplicationException("System failed to register image in database.", e);
         }
     }
 
@@ -236,8 +254,8 @@ public class UserDataManager {
             for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
-            logger.error("Hash calculation failed: {}", file, e);
-            return "hash_error_" + System.currentTimeMillis();
+            logger.error("Hash calculation failed: {}", file.getAbsolutePath(), e);
+            throw new ApplicationException("Failed to calculate unique file hash.", e);
         }
     }
 
@@ -272,6 +290,7 @@ public class UserDataManager {
     }
 
     public int getRating(File file) {
+        if (file == null) return 0;
         return imageRepo.getRating(pathService.getNormalizedAbsolutePath(file));
     }
 
@@ -295,9 +314,13 @@ public class UserDataManager {
     }
 
     public void addPinnedFolder(File folder) {
-        if (folder != null && folder.isDirectory()) {
-            pinnedFolderRepository.addPinnedFolder(pathService.getNormalizedAbsolutePath(folder));
+        if (folder == null) {
+            throw new ValidationException("Folder parameter cannot be null.");
         }
+        if (!folder.isDirectory()) {
+            throw new ValidationException("Only directories can be pinned.");
+        }
+        pinnedFolderRepository.addPinnedFolder(pathService.getNormalizedAbsolutePath(folder));
     }
 
     public void removePinnedFolder(File folder) {
@@ -330,7 +353,7 @@ public class UserDataManager {
         int id = getOrCreateImageIdInternal(file);
         collectionService.addImageToCollection(collectionName, id);
     }
-    
+
     public void blacklistImageFromCollection(String collectionName, File file) {
         int id = getOrCreateImageIdInternal(file);
         collectionService.blacklistImageFromCollection(collectionName, id);
@@ -373,6 +396,7 @@ public class UserDataManager {
     }
 
     public void addExcludedPath(String path) {
+        if (path == null || path.isBlank()) return;
         List<String> current = getExcludedPaths();
         if (!current.contains(path)) {
             current.add(path);
@@ -381,6 +405,7 @@ public class UserDataManager {
     }
 
     public void removeExcludedPath(String path) {
+        if (path == null || path.isBlank()) return;
         List<String> current = getExcludedPaths();
         if (current.remove(path)) {
             settingsRepo.set("excluded_paths", String.join(";", current));

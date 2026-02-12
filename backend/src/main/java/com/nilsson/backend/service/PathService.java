@@ -1,5 +1,6 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,13 +38,13 @@ public class PathService {
 
     public File resolve(String pathString) {
         if (pathString == null || pathString.isBlank()) {
-            throw new InvalidPathException(pathString, "Path cannot be null or empty.");
+            throw new ValidationException("Path cannot be null or empty.");
         }
         try {
             return Path.of(pathString).normalize().toFile();
         } catch (InvalidPathException e) {
             logger.error("Invalid path string provided: {}", pathString, e);
-            throw e;
+            throw new ValidationException("The provided path is malformed or invalid: " + pathString);
         }
     }
 
@@ -51,6 +52,11 @@ public class PathService {
         if (file == null) {
             return null;
         }
-        return file.toPath().normalize().toAbsolutePath().toString().replace("\\", "/");
+        try {
+            return file.toPath().normalize().toAbsolutePath().toString().replace("\\", "/");
+        } catch (Exception e) {
+            logger.error("Failed to normalize file path: {}", file.getName(), e);
+            return file.getAbsolutePath().replace("\\", "/");
+        }
     }
 }

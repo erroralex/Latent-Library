@@ -1,5 +1,9 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ImageProcessingException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -18,24 +22,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * REST Controller for the Metadata Scrubber utility, providing privacy-focused image processing.
- * <p>
- * This controller manages the lifecycle of image metadata removal, allowing users to strip sensitive
- * generation parameters (EXIF, XMP, and custom PNG chunks) from their images before sharing.
- * The scrubbing process is achieved by re-encoding the image using Java's {@code ImageIO} API,
- * which effectively discards all non-pixel data and produces a "clean" version of the file.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Temporary Staging:</b> Manages a secure, transient storage area in {@code data/temp} for
- *   uploaded files and processed results.</li>
- *   <li><b>Secure Uploads:</b> Handles multipart file uploads, assigning unique UUID-based identifiers
- *   to prevent filename collisions and unauthorized access.</li>
- *   <li><b>Metadata Stripping:</b> Performs the core scrubbing operation by reading the image into
- *   memory and writing it back to disk in a standard format (PNG or JPG).</li>
- *   <li><b>Resource Delivery:</b> Serves the cleaned images as downloadable attachments with
- *   appropriate HTTP headers.</li>
- * </ul>
+ * REST Controller for the Metadata Scrubber utility.
  */
 @RestController
 @RequestMapping("/api/scrub")
@@ -47,7 +34,7 @@ public class ScrubController {
         try {
             Files.createDirectories(tempDir);
         } catch (IOException e) {
-            throw new RuntimeException("Could not initialize temp storage", e);
+            throw new ApplicationException("Could not initialize temp storage: " + e.getMessage());
         }
     }
 
@@ -59,7 +46,7 @@ public class ScrubController {
             Files.copy(file.getInputStream(), targetPath);
             return ResponseEntity.ok(filename);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Failed to upload file: " + e.getMessage());
+            throw new ApplicationException("Failed to upload file: " + e.getMessage());
         }
     }
 
@@ -74,22 +61,25 @@ public class ScrubController {
                         .contentType(MediaType.IMAGE_JPEG)
                         .body(resource);
             } else {
-                return ResponseEntity.notFound().build();
+                throw new ResourceNotFoundException("Preview image", filename);
             }
         } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().build();
+            throw new ValidationException("Invalid filename format: " + filename);
         }
     }
 
     @PostMapping("/process")
     public ResponseEntity<Resource> processImage(@RequestParam("filename") String filename) {
-        try {
-            Path sourcePath = tempDir.resolve(filename);
-            if (!Files.exists(sourcePath)) {
-                return ResponseEntity.notFound().build();
-            }
+        Path sourcePath = tempDir.resolve(filename);
+        if (!Files.exists(sourcePath)) {
+            throw new ResourceNotFoundException("Source image", filename);
+        }
 
+        try {
             BufferedImage image = ImageIO.read(sourcePath.toFile());
+            if (image == null) {
+                throw new ImageProcessingException("Failed to decode image. File may be corrupted.");
+            }
 
             String cleanFilename = "clean_" + filename;
             Path targetPath = tempDir.resolve(cleanFilename);
@@ -108,7 +98,7 @@ public class ScrubController {
                     .body(resource);
 
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
+            throw new ImageProcessingException("Error scrubbing metadata from image: " + e.getMessage(), e);
         }
     }
 }

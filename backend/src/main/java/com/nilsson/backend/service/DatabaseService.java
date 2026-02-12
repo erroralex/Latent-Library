@@ -1,5 +1,6 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
@@ -92,7 +93,7 @@ public class DatabaseService implements DisposableBean {
 
         } catch (IOException e) {
             logger.error("Failed to initialize data directory.", e);
-            throw new RuntimeException("Fatal Error: Could not create data directory.", e);
+            throw new ApplicationException("Fatal Error: Could not create data directory.", e);
         }
     }
 
@@ -114,14 +115,18 @@ public class DatabaseService implements DisposableBean {
 
     private void performMigrations() {
         logger.info("Starting Flyway migration...");
-        Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .locations("classpath:db/migration")
-                .baselineOnMigrate(true)
-                .load();
+        try {
+            Flyway flyway = Flyway.configure()
+                    .dataSource(dataSource)
+                    .locations("classpath:db/migration")
+                    .baselineOnMigrate(true)
+                    .load();
 
-        flyway.migrate();
-        logger.info("Flyway migration completed successfully.");
+            flyway.migrate();
+            logger.info("Flyway migration completed successfully.");
+        } catch (Exception e) {
+            throw new ApplicationException("Database migration failed. Please check technical logs.", e);
+        }
     }
 
     public void clearAllData() {
@@ -141,7 +146,7 @@ public class DatabaseService implements DisposableBean {
             logger.info("Database cleared and vacuumed.");
         } catch (SQLException e) {
             logger.error("Failed to clear database", e);
-            throw new RuntimeException(e);
+            throw new ApplicationException("System failed to clear application data.", e);
         }
     }
 }

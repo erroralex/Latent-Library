@@ -7,6 +7,9 @@ import com.drew.metadata.Tag;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.strategy.ComfyUIStrategy;
 import com.nilsson.backend.strategy.MetadataStrategy;
 import org.slf4j.Logger;
@@ -63,6 +66,10 @@ public class MetadataService {
     }
 
     public Map<String, String> getExtractedData(File file) {
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("Image file", file != null ? file.getAbsolutePath() : "null");
+        }
+
         Map<String, String> results = new HashMap<>();
 
         extractPhysicalDimensions(file, results);
@@ -162,6 +169,10 @@ public class MetadataService {
     }
 
     private String findBestMetadataChunk(File file) {
+        if (file == null) {
+            throw new ValidationException("File parameter cannot be null.");
+        }
+
         List<String> candidates = new ArrayList<>();
 
         try {
@@ -186,8 +197,8 @@ public class MetadataService {
                 }
             }
         } catch (Exception e) {
-            logger.debug("Failed to extract metadata chunks for {}: {}", file.getName(), e.getMessage());
-            return null;
+            logger.error("Failed to extract metadata chunks for {}: {}", file.getName(), e.getMessage());
+            throw new ApplicationException("System error extracting raw metadata chunks.", e);
         }
 
         String bestChunk = null;
@@ -267,7 +278,7 @@ public class MetadataService {
                 results.put("Prompt", findLongestText(root));
             }
         } catch (Exception e) {
-            logger.debug("JSON parsing error: {}", e.getMessage());
+            logger.warn("JSON parsing error for provided metadata: {}", e.getMessage());
             results.put("Prompt", "Error parsing JSON: " + e.getMessage());
         }
     }
@@ -292,7 +303,7 @@ public class MetadataService {
 
                 findKeysRecursively(entry.getValue(), results, software);
             }
-        } else if (node.isArray()) {
+        } else if (node.isObject() == false && node.isArray()) { // Explicitly keeping the original logic flow
             for (JsonNode child : node) {
                 findKeysRecursively(child, results, software);
             }

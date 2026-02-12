@@ -1,5 +1,7 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.service.FtsService;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
@@ -21,23 +23,6 @@ import java.util.stream.Stream;
 
 /**
  * REST Controller for system-level operations, application lifecycle management, and OS integration.
- * <p>
- * This controller serves as a bridge between the web-based frontend and the host operating system.
- * It provides critical endpoints for managing the application's lifecycle (shutdown), interacting
- * with native file managers (Explorer/Finder), and performing maintenance tasks such as
- * database cleanup and search index rebuilding.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Lifecycle Management:</b> Facilitates graceful application shutdown by closing the
- *   Spring Boot context in a separate thread.</li>
- *   <li><b>Native OS Integration:</b> Utilizes Java's {@code Desktop} API and {@code ProcessBuilder}
- *   to open folders or highlight specific files within the host's native file explorer.</li>
- *   <li><b>Maintenance & Cleanup:</b> Provides administrative endpoints to clear the SQLite database,
- *   purge generated thumbnails, and trigger background FTS5 index rebuilds.</li>
- *   <li><b>Path Exclusion:</b> Manages a persistent list of directory paths that should be ignored
- *   during library indexing operations.</li>
- * </ul>
  */
 @RestController
 @RequestMapping("/api/system")
@@ -79,26 +64,22 @@ public class SystemController {
         File folder = new File(path).getAbsoluteFile();
 
         if (!folder.exists() || !folder.isDirectory()) {
-            logger.warn("Folder not found: {}", folder.getAbsolutePath());
-            return ResponseEntity.badRequest().body("Folder does not exist: " + folder.getAbsolutePath());
+            throw new ResourceNotFoundException("Folder", folder.getAbsolutePath());
         }
 
         try {
             String os = System.getProperty("os.name").toLowerCase();
             if (os.contains("win")) {
-                // Windows: Use explorer.exe
                 new ProcessBuilder("explorer.exe", folder.getAbsolutePath()).start();
             } else if (os.contains("mac")) {
-                // macOS: Use open command
                 new ProcessBuilder("open", folder.getAbsolutePath()).start();
             } else {
-                // Linux: Try xdg-open
                 new ProcessBuilder("xdg-open", folder.getAbsolutePath()).start();
             }
             return ResponseEntity.ok("Opened");
         } catch (IOException e) {
             logger.error("Failed to open folder: {}", path, e);
-            return ResponseEntity.internalServerError().body("Failed to open folder: " + e.getMessage());
+            throw new ApplicationException("Failed to open folder in OS explorer: " + e.getMessage());
         }
     }
 
@@ -106,7 +87,7 @@ public class SystemController {
     public ResponseEntity<String> showInExplorer(@RequestParam("path") String path) {
         File file = pathService.resolve(path);
         if (!file.exists()) {
-            return ResponseEntity.badRequest().body("File does not exist");
+            throw new ResourceNotFoundException("File", path);
         }
 
         try {
@@ -120,7 +101,7 @@ public class SystemController {
             }
             return ResponseEntity.ok("Command sent");
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Failed to show file: " + e.getMessage());
+            throw new ApplicationException("Failed to reveal file in explorer: " + e.getMessage());
         }
     }
 
@@ -156,7 +137,7 @@ public class SystemController {
                         .map(Path::toFile)
                         .forEach(File::delete);
             } catch (IOException e) {
-                return ResponseEntity.internalServerError().body("Failed to clear thumbnails: " + e.getMessage());
+                throw new ApplicationException("Failed to clear thumbnails: " + e.getMessage());
             }
         }
         return ResponseEntity.ok("Thumbnails cleared.");

@@ -1,5 +1,7 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.repository.ImageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,8 +122,13 @@ public class IndexingService {
     }
 
     public void indexFolder(File folder) {
-        if (folder == null || !folder.isDirectory()) return;
-        
+        if (folder == null) {
+            throw new ValidationException("Folder parameter cannot be null.");
+        }
+        if (!folder.isDirectory()) {
+            throw new ValidationException("Provided path is not a directory: " + folder.getAbsolutePath());
+        }
+
         String folderPath = pathService.getNormalizedAbsolutePath(folder);
         List<String> excludedPaths = dataManager.getExcludedPaths();
         for (String excluded : excludedPaths) {
@@ -136,21 +143,22 @@ public class IndexingService {
 
         try (Stream<Path> stream = Files.list(folder.toPath())) {
             List<File> batch = new ArrayList<>(BATCH_SIZE);
-            
+
             stream.filter(path -> isImageFile(path.toFile()))
-                  .forEach(path -> {
-                      batch.add(path.toFile());
-                      if (batch.size() >= BATCH_SIZE) {
-                          processAndClearBatch(new ArrayList<>(batch));
-                          batch.clear();
-                      }
-                  });
+                    .forEach(path -> {
+                        batch.add(path.toFile());
+                        if (batch.size() >= BATCH_SIZE) {
+                            processAndClearBatch(new ArrayList<>(batch));
+                            batch.clear();
+                        }
+                    });
 
             if (!batch.isEmpty()) {
                 processAndClearBatch(batch);
             }
         } catch (IOException e) {
             logger.error("Failed to stream files from folder: {}", folder.getAbsolutePath(), e);
+            throw new ApplicationException("I/O error during folder indexing.", e);
         }
     }
 
@@ -187,7 +195,7 @@ public class IndexingService {
         stopWatching();
 
         if (directory == null || !directory.exists() || !directory.isDirectory()) return;
-        
+
         String folderPath = pathService.getNormalizedAbsolutePath(directory);
         List<String> excludedPaths = dataManager.getExcludedPaths();
         for (String excluded : excludedPaths) {
@@ -212,6 +220,7 @@ public class IndexingService {
 
         } catch (IOException e) {
             logger.error("Failed to start WatchService for {}", directory, e);
+            throw new ApplicationException("System failed to initialize folder monitor.", e);
         }
     }
 
@@ -299,14 +308,14 @@ public class IndexingService {
     private void handleFileCreation(File file) {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
-            
+
             dbLock.lock();
             try {
                 dataManager.cacheMetadata(file, meta);
             } finally {
                 dbLock.unlock();
             }
-            
+
             thumbnailService.getThumbnail(file);
             logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
@@ -317,14 +326,14 @@ public class IndexingService {
     private void handleFileDeletion(File file) {
         try {
             String path = pathService.getNormalizedAbsolutePath(file);
-            
+
             dbLock.lock();
             try {
                 imageRepo.deleteByPath(path);
             } finally {
                 dbLock.unlock();
             }
-            
+
             logger.debug("Deleted file from disk and DB: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing deleted file: {}", file.getName(), e);
@@ -343,7 +352,7 @@ public class IndexingService {
         for (File file : batch) {
             try {
                 Map<String, String> meta = metaService.getExtractedData(file);
-                
+
                 dbLock.lock();
                 try {
                     dataManager.cacheMetadata(file, meta);

@@ -1,5 +1,6 @@
 package com.nilsson.backend.repository;
 
+import com.nilsson.backend.exception.ValidationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -35,6 +36,13 @@ public class TagRepository {
     }
 
     public void addTag(int imageId, String tag) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for adding a tag.");
+        }
+        if (tag == null || tag.isBlank()) {
+            throw new ValidationException("Tag content cannot be empty.");
+        }
+
         jdbcClient.sql("INSERT OR IGNORE INTO image_tags(image_id, tag) VALUES(?, ?)")
                 .param(imageId)
                 .param(tag)
@@ -42,6 +50,13 @@ public class TagRepository {
     }
 
     public void removeTag(int imageId, String tag) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for removing a tag.");
+        }
+        if (tag == null || tag.isBlank()) {
+            throw new ValidationException("Tag content cannot be empty for removal.");
+        }
+
         jdbcClient.sql("DELETE FROM image_tags WHERE image_id = ? AND tag = ?")
                 .param(imageId)
                 .param(tag)
@@ -49,6 +64,10 @@ public class TagRepository {
     }
 
     public Set<String> getTags(int imageId) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for tag retrieval.");
+        }
+
         return new HashSet<>(jdbcClient.sql("SELECT tag FROM image_tags WHERE image_id = ?")
                 .param(imageId)
                 .query(String.class)

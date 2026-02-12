@@ -2,7 +2,10 @@ package com.nilsson.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.strategy.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -32,6 +35,7 @@ import java.util.Map;
 @Service
 public class TextParamsParser {
 
+    private static final Logger logger = LoggerFactory.getLogger(TextParamsParser.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static Map<String, String> parse(String text) {
@@ -39,9 +43,12 @@ public class TextParamsParser {
             return new HashMap<>();
         }
 
-        if (text.trim().startsWith("{")) {
+        String trimmedText = text.trim();
+
+        // 1. JSON-based Parsing (ComfyUI / Workflow formats)
+        if (trimmedText.startsWith("{")) {
             try {
-                JsonNode root = mapper.readTree(text);
+                JsonNode root = mapper.readTree(trimmedText);
                 Map<String, String> results = new HashMap<>();
                 ComfyUIStrategy strategy = new ComfyUIStrategy();
 
@@ -76,10 +83,14 @@ public class TextParamsParser {
 
                 if (!results.isEmpty()) return results;
 
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                logger.warn("JSON block detected but parsing failed: {}", e.getMessage());
+                // Wrap in ApplicationException to ensure the failure is reported to the UI
+                throw new ApplicationException("Failed to parse image generation metadata from JSON structure.", e);
             }
         }
 
+        // 2. Text-based Strategy Routing (A1111, InvokeAI, NovelAI, SwarmUI)
         if (text.contains("Steps: ") && text.contains("Sampler: ")) {
             return new CommonStrategy().parse(text);
         }

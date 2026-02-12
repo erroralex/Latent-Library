@@ -1,5 +1,7 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.repository.CollectionRepository;
 import com.nilsson.backend.repository.ImageRepository;
@@ -51,17 +53,35 @@ public class CollectionService {
     }
 
     public Optional<CreateCollectionRequest> getCollectionDetails(String name) {
+        if (name == null || name.isBlank()) {
+            throw new ValidationException("Collection name cannot be empty.");
+        }
         return collectionRepository.get(name);
     }
 
     @Transactional
     public void createCollection(CreateCollectionRequest request) {
+        if (request == null || request.name() == null || request.name().isBlank()) {
+            throw new ValidationException("Invalid collection creation request.");
+        }
         collectionRepository.create(request.name(), request.isSmart(), request.filters());
         populateSmartCollection(request);
     }
 
     @Transactional
     public void updateCollection(String oldName, CreateCollectionRequest request) {
+        if (oldName == null || oldName.isBlank()) {
+            throw new ValidationException("Original collection name is required for update.");
+        }
+        if (request == null || request.name() == null || request.name().isBlank()) {
+            throw new ValidationException("Updated collection request is invalid.");
+        }
+
+        // Check existence before update
+        if (collectionRepository.get(oldName).isEmpty()) {
+            throw new ResourceNotFoundException("Collection", oldName);
+        }
+
         collectionRepository.update(oldName, request.name(), request.isSmart(), request.filters());
         if (request.isSmart()) {
             collectionRepository.removeAllImages(request.name());
@@ -104,26 +124,50 @@ public class CollectionService {
     }
 
     public void deleteCollection(String name) {
+        if (name == null || name.isBlank()) {
+            throw new ValidationException("Collection name is required for deletion.");
+        }
+        if (collectionRepository.get(name).isEmpty()) {
+            throw new ResourceNotFoundException("Collection", name);
+        }
         collectionRepository.delete(name);
     }
 
     public void addImageToCollection(String collectionName, int imageId) {
-        if (collectionName != null && imageId > 0) {
-            collectionRepository.addImage(collectionName, imageId);
-            collectionRepository.removeExclusion(collectionName, imageId);
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
         }
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID.");
+        }
+
+        collectionRepository.addImage(collectionName, imageId);
+        collectionRepository.removeExclusion(collectionName, imageId);
     }
-    
+
     public void blacklistImageFromCollection(String collectionName, int imageId) {
-        if (collectionName != null && imageId > 0) {
-            collectionRepository.addExclusion(collectionName, imageId);
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
         }
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID.");
+        }
+
+        collectionRepository.addExclusion(collectionName, imageId);
     }
 
     @Transactional
     public List<String> getFilePathsFromCollection(String collectionName) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
+        }
+
         Optional<CreateCollectionRequest> details = collectionRepository.get(collectionName);
-        if (details.isPresent() && details.get().isSmart()) {
+        if (details.isEmpty()) {
+            throw new ResourceNotFoundException("Collection", collectionName);
+        }
+
+        if (details.get().isSmart()) {
             collectionRepository.removeAllImages(collectionName);
             populateSmartCollection(details.get());
         }

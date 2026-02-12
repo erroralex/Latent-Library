@@ -1,5 +1,7 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.ValidationException;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +65,7 @@ public class ThumbnailService {
                 Files.createDirectories(thumbnailCacheDir);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to initialize thumbnail cache directory", e);
+            throw new ApplicationException("Failed to initialize thumbnail cache directory", e);
         }
 
         this.locks = IntStream.range(0, STRIPE_COUNT)
@@ -113,7 +115,10 @@ public class ThumbnailService {
     }
 
     public void preloadCache(List<File> files) {
-        if (files == null || files.isEmpty()) return;
+        if (files == null) {
+            throw new ValidationException("File list for preloading cannot be null.");
+        }
+        if (files.isEmpty()) return;
 
         logger.info("Starting background preload for {} files using Virtual Threads...", files.size());
 
@@ -145,7 +150,7 @@ public class ThumbnailService {
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not found", e);
+            throw new ApplicationException("Critical Failure: SHA-256 algorithm not found", e);
         }
     }
 }

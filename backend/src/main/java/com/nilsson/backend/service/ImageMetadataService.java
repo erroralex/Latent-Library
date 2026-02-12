@@ -1,5 +1,7 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ResourceNotFoundException;
+import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,13 @@ public class ImageMetadataService {
     }
 
     public Map<String, String> getCachedMetadata(File file, String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path cannot be empty for metadata retrieval.");
+        }
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("Image file", path);
+        }
+
         int imageId = imageRepository.getIdByPath(path);
         if (imageId != -1 && imageMetadataRepository.hasMetadata(imageId)) {
             return imageMetadataRepository.getMetadata(imageId);
@@ -58,11 +67,20 @@ public class ImageMetadataService {
     }
 
     public boolean hasCachedMetadata(String path) {
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path cannot be empty for metadata check.");
+        }
         int imageId = imageRepository.getIdByPath(path);
         return imageId != -1 && imageMetadataRepository.hasMetadata(imageId);
     }
 
     public void cacheMetadata(int imageId, Map<String, String> meta) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID for caching metadata.");
+        }
+        if (meta == null || meta.isEmpty()) {
+            throw new ValidationException("Metadata map cannot be null or empty.");
+        }
         saveMetadataAndIndex(imageId, meta);
     }
 
