@@ -10,9 +10,12 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for MetadataService.
- * Focuses on the extraction and parsing of AI generation metadata from raw string formats.
- * Verifies correct identification of software, prompts, and technical parameters.
+ * MetadataServiceTest provides unit tests for the MetadataService, focusing on the
+ * extraction and parsing of AI generation metadata from various raw string formats.
+ * It verifies the service's ability to correctly identify the generation software
+ * (e.g., ComfyUI), extract complex prompt structures, and parse technical parameters
+ * like seeds, steps, and samplers. The tests ensure that the metadata extraction
+ * pipeline is robust and handles both valid and empty metadata scenarios gracefully.
  */
 class MetadataServiceTest {
 

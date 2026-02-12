@@ -15,29 +15,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Repository for executing complex, high-performance image searches using relational and full-text indexing.
- * <p>
- * This class is the primary engine for the application's search functionality. It orchestrates
- * queries against both the standard relational {@code images} table and the specialized
- * {@code metadata_fts} virtual table (SQLite FTS5). It dynamically constructs SQL queries
- * that combine full-text search clauses with relational filters like star ratings and
- * collection memberships.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>FTS5 Integration:</b> Implements advanced full-text search with prefix matching and
- *   custom tokenization to allow for natural language and field-specific queries.</li>
- *   <li><b>Dynamic Query Building:</b> Constructs complex {@code JOIN} and {@code WHERE} clauses
- *   on-the-fly based on the active set of user-defined filters.</li>
- *   <li><b>Multi-Filter Support:</b> Handles concurrent filtering by Model, Sampler, LoRA,
- *   Rating, and Collection, ensuring precise result sets.</li>
- *   <li><b>Token Sanitization:</b> Ensures search terms are correctly formatted to match the
- *   FTS5 index tokens, preventing SQL injection and improving match accuracy.</li>
- *   <li><b>Pagination:</b> Implements efficient {@code LIMIT} and {@code OFFSET} logic to
- *   support high-performance scrolling in the frontend.</li>
- * </ul>
- */
 @Repository
 public class SearchRepository {
 
@@ -55,13 +32,8 @@ public class SearchRepository {
     }
 
     public List<String> findPaths(String query, Map<String, List<String>> filters, List<String> collectionPaths, int offset, int limit) {
-        // Validation for pagination parameters
-        if (offset < 0) {
-            throw new ValidationException("Offset cannot be negative.");
-        }
-        if (limit <= 0) {
-            throw new ValidationException("Limit must be greater than zero.");
-        }
+        if (offset < 0) throw new ValidationException("Offset cannot be negative.");
+        if (limit <= 0) throw new ValidationException("Limit must be greater than zero.");
 
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
@@ -78,36 +50,25 @@ public class SearchRepository {
             for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
                 String key = entry.getKey();
                 List<String> values = entry.getValue();
-
                 if (values == null || values.isEmpty()) continue;
 
                 List<String> validValues = values.stream()
                         .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
                         .toList();
-
                 if (validValues.isEmpty()) continue;
+                if ("Rating".equals(key)) continue;
 
-                if ("Rating".equals(key)) {
-                    continue;
-                }
-
-                String fieldQuery;
-                if ("Loras".equals(key)) {
-                    fieldQuery = validValues.stream()
-                            .map(v -> FtsService.formatFtsToken(key, v))
-                            .collect(Collectors.joining(" OR "));
-                } else {
-                    fieldQuery = validValues.stream()
-                            .map(v -> FtsService.formatFtsToken(key, v))
-                            .collect(Collectors.joining(" OR "));
-                }
-
+                String fieldQuery = validValues.stream()
+                        .map(v -> FtsService.formatFtsToken(key, v))
+                        .collect(Collectors.joining(" OR "));
                 ftsClauses.add("(" + fieldQuery + ")");
             }
         }
 
         if (!ftsClauses.isEmpty()) {
-            sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.metadata_fts MATCH ? ");
+            // FIX: Explicitly target the 'global_text' column via the alias 'fts'
+            // This prevents "no such column: fts" errors in some SQLite versions
+            sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.global_text MATCH ? ");
             params.add(String.join(" AND ", ftsClauses));
         } else {
             sql.append("WHERE 1=1 ");
@@ -123,10 +84,7 @@ public class SearchRepository {
         }
 
         if (collectionPaths != null) {
-            if (collectionPaths.isEmpty()) {
-                return new ArrayList<>();
-            }
-
+            if (collectionPaths.isEmpty()) return new ArrayList<>();
             sql.append(" AND i.file_path IN (");
             for (int i = 0; i < collectionPaths.size(); i++) {
                 sql.append("?");
@@ -135,7 +93,6 @@ public class SearchRepository {
             }
             sql.append(") ");
         }
-
 
         sql.append(" LIMIT ? OFFSET ?");
         params.add(limit);

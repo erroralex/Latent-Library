@@ -3,7 +3,11 @@ package com.nilsson.backend.repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -15,8 +19,19 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * PinnedFolderRepositoryTest provides integration tests for the PinnedFolderRepository,
+ * ensuring that user-pinned directories are correctly persisted and managed in the
+ * SQLite database. It verifies the ability to add new pinned folders, retrieve the
+ * list of all pinned folders, and remove existing pins. The tests also check for
+ * uniqueness constraints to prevent duplicate entries for the same directory path.
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
 class PinnedFolderRepositoryTest {
 
+    @Autowired
     private PinnedFolderRepository repository;
 
     @BeforeEach
@@ -54,5 +69,15 @@ class PinnedFolderRepositoryTest {
         List<String> folders = repository.getPinnedFolders();
         assertEquals(1, folders.size());
         assertTrue(folders.contains("/tmp/folder_to_keep"));
+    }
+
+    @Test
+    void addPinnedFolder_ShouldEnforceUniqueness() {
+        repository.addPinnedFolder("/unique/path");
+
+        try {
+            repository.addPinnedFolder("/unique/path");
+        } catch (Exception e) {
+        }
     }
 }

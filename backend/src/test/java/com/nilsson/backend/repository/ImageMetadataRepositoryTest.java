@@ -14,6 +14,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * ImageMetadataRepositoryTest provides integration tests for the ImageMetadataRepository,
+ * verifying the storage and retrieval of key-value metadata associated with images.
+ * It ensures that metadata can be saved and retrieved accurately, and that the
+ * repository can correctly identify distinct values for specific metadata keys,
+ * which is essential for generating search filters and organizing the image library.
+ */
 class ImageMetadataRepositoryTest {
 
     private ImageRepository imageRepository;

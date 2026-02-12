@@ -54,7 +54,7 @@ public class InvokeAIStrategy implements MetadataStrategy {
     @Override
     public void extract(String key, JsonNode value, JsonNode parentNode, Map<String, String> results) {
         try {
-            if (!value.isTextual()) return;
+            if (!value.isTextual() && !value.isNumber()) return;
             String text = value.asText();
 
             if (key.equals("model_name") || key.equals("model_weights")) {
@@ -72,7 +72,6 @@ public class InvokeAIStrategy implements MetadataStrategy {
             }
         } catch (Exception e) {
             log.error("Error during InvokeAI JSON extraction for key: {}", key, e);
-            // Non-throwing catch to allow processing other keys if one value is malformed
         }
     }
 }
