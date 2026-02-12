@@ -5264,3 +5264,117 @@ java.lang.RuntimeException: Unexpected failure
 2026-02-12 21:28:03.405 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
 2026-02-12 21:28:03.411 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
 2026-02-12 21:28:03.420 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-12 21:36:08.781 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 9108 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-12 21:36:08.781 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-12 21:36:08.782 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-12 21:36:09.739 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-12 21:36:09.748 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-12 21:36:09.748 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-12 21:36:09.767 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-12 21:36:09.767 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 941 ms
+2026-02-12 21:36:09.804 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-12 21:36:09.813 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-12 21:36:09.929 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@1a565afb
+2026-02-12 21:36:09.931 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-12 21:36:09.931 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-12 21:36:10.002 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:36:10.023 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.010s)
+2026-02-12 21:36:10.027 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:36:10.028 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:36:10.030 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-12 21:36:10.116 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-12 21:36:10.191 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-12 21:36:10.448 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:36:10.450 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-12 21:36:10.450 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:36:10.450 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:36:10.622 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 54234 (http) with context path '/'
+2026-02-12 21:36:10.640 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.261 seconds (process running for 2.638)
+2026-02-12 21:36:10.834 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-12 21:36:10.836 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-12 21:36:10.836 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-12 21:36:11.068 [tomcat-handler-12] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-12 21:36:11.070 [virtual-75] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-12 21:36:11.071 [virtual-81] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-12 21:36:11.081 [virtual-75] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:36:11.081 [virtual-81] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:36:28.477 [tomcat-handler-51] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-12 21:36:28.984 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-12 21:36:28.990 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-12 21:36:29.003 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-12 21:38:53.856 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 11880 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-12 21:38:53.857 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-12 21:38:53.858 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-12 21:38:54.801 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-12 21:38:54.807 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-12 21:38:54.807 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-12 21:38:54.824 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-12 21:38:54.824 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 822 ms
+2026-02-12 21:38:54.865 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-12 21:38:54.874 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-12 21:38:54.987 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@36920bd6
+2026-02-12 21:38:54.988 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-12 21:38:54.988 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-12 21:38:55.058 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:38:55.078 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.009s)
+2026-02-12 21:38:55.081 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:38:55.082 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:38:55.085 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-12 21:38:55.171 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-12 21:38:55.254 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-12 21:38:55.492 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:38:55.493 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-12 21:38:55.494 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:38:55.494 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:38:55.650 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 54473 (http) with context path '/'
+2026-02-12 21:38:55.668 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.178 seconds (process running for 2.561)
+2026-02-12 21:38:55.864 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-12 21:38:55.864 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-12 21:38:55.865 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-12 21:38:55.992 [tomcat-handler-12] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-12 21:38:55.992 [virtual-74] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-12 21:38:55.994 [virtual-107] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-12 21:38:55.999 [virtual-107] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:38:55.999 [virtual-74] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:39:09.602 [tomcat-handler-55] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-12 21:39:10.113 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-12 21:39:10.119 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-12 21:39:10.124 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-12 21:40:30.904 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 10608 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-12 21:40:30.905 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-12 21:40:30.906 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-12 21:40:31.778 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-12 21:40:31.788 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-12 21:40:31.788 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-12 21:40:31.809 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-12 21:40:31.809 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 799 ms
+2026-02-12 21:40:31.858 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-12 21:40:31.867 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-12 21:40:31.985 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@3a90c13c
+2026-02-12 21:40:31.986 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-12 21:40:31.986 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-12 21:40:32.060 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:40:32.079 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.010s)
+2026-02-12 21:40:32.083 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:40:32.084 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:40:32.086 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-12 21:40:32.166 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-12 21:40:32.234 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-12 21:40:32.440 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-12 21:40:32.442 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-12 21:40:32.442 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-12 21:40:32.443 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-12 21:40:32.577 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 54541 (http) with context path '/'
+2026-02-12 21:40:32.593 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.064 seconds (process running for 2.441)
+2026-02-12 21:40:32.799 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-12 21:40:32.799 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-12 21:40:32.800 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-12 21:40:33.046 [tomcat-handler-11] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-12 21:40:33.049 [virtual-74] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-12 21:40:33.053 [virtual-109] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-12 21:40:33.063 [virtual-74] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:40:33.063 [virtual-109] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-12 21:40:50.187 [tomcat-handler-55] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-12 21:40:50.694 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-12 21:40:50.700 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-12 21:40:50.708 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
