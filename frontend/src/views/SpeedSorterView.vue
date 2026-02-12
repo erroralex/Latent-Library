@@ -15,7 +15,7 @@
  * - Electron Integration: Leverages native folder selection dialogs when running in an Electron environment.
  */
 import {ref, onMounted, onUnmounted, computed} from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
@@ -34,7 +34,7 @@ const progress = computed(() => `${currentIndex.value + 1} / ${files.value.lengt
 
 const loadConfig = async () => {
   try {
-    const res = await axios.get('/api/speedsorter/config');
+    const res = await api.get('/speedsorter/config');
     inputDir.value = res.data.inputDir;
     targets.value = res.data.targets;
     if (inputDir.value) loadFiles();
@@ -45,7 +45,7 @@ const loadConfig = async () => {
 
 const loadFiles = async () => {
   try {
-    const res = await axios.get('/api/speedsorter/files');
+    const res = await api.get('/speedsorter/files');
     files.value = res.data;
     currentIndex.value = 0;
   } catch (e) {
@@ -57,13 +57,13 @@ const selectInput = async () => {
   if (window.electronAPI) {
     const path = await window.electronAPI.selectFolder();
     if (path) {
-      await axios.post('/api/speedsorter/config/input', null, {params: {path}});
+      await api.post('/speedsorter/config/input', null, {params: {path}});
       await loadConfig();
     }
   } else {
     const path = prompt("Enter absolute path to Input Folder:", inputDir.value || "");
     if (path) {
-      await axios.post('/api/speedsorter/config/input', null, {params: {path}});
+      await api.post('/speedsorter/config/input', null, {params: {path}});
       await loadConfig();
     }
   }
@@ -73,14 +73,14 @@ const selectTarget = async (index) => {
   if (window.electronAPI) {
     const path = await window.electronAPI.selectFolder();
     if (path) {
-      await axios.post('/api/speedsorter/config/target', null, {params: {index, path}});
+      await api.post('/speedsorter/config/target', null, {params: {index, path}});
       await loadConfig();
     }
   } else {
     const current = targets.value.find(t => t.index == index)?.path || "";
     const path = prompt(`Enter absolute path for Target ${index + 1}:`, current);
     if (path) {
-      await axios.post('/api/speedsorter/config/target', null, {params: {index, path}});
+      await api.post('/speedsorter/config/target', null, {params: {index, path}});
       await loadConfig();
     }
   }
@@ -102,7 +102,7 @@ const moveFile = async (targetIndex) => {
 
   const fileToMove = currentFile.value;
   try {
-    const res = await axios.post('/api/speedsorter/move', null, {
+    const res = await api.post('/speedsorter/move', null, {
       params: {source: fileToMove, targetIndex}
     });
 
@@ -117,7 +117,7 @@ const moveFile = async (targetIndex) => {
       life: 1000
     });
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Move failed', life: 2000});
+    // Error handled by api interceptor
   }
 };
 
@@ -126,14 +126,14 @@ const deleteFile = async () => {
   const fileToDelete = currentFile.value;
 
   try {
-    await axios.post('/api/speedsorter/delete', null, {params: {path: fileToDelete}});
+    await api.post('/speedsorter/delete', null, {params: {path: fileToDelete}});
 
     history.value.push({source: fileToDelete, dest: null, isDelete: true});
     files.value.splice(currentIndex.value, 1);
 
     toast.add({severity: 'error', summary: 'Deleted', detail: 'Moved to Recycle Bin', life: 1000});
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Delete failed', life: 2000});
+    // Error handled by api interceptor
   }
 };
 
@@ -147,14 +147,14 @@ const undo = async () => {
   }
 
   try {
-    await axios.post('/api/speedsorter/undo', null, {
+    await api.post('/speedsorter/undo', null, {
       params: {source: lastAction.dest, original: lastAction.source}
     });
 
     files.value.splice(currentIndex.value, 0, lastAction.source);
     toast.add({severity: 'info', summary: 'Undone', detail: 'File restored', life: 1000});
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Undo failed', life: 2000});
+    // Error handled by api interceptor
   }
 };
 
@@ -217,7 +217,7 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-column h-full overflow-hidden p-3">
-    <Toast position="bottom-center"/>
+    <!-- Removed local Toast -->
 
     <div class="flex align-items-center justify-content-between mb-3 glass-panel p-3 border-round">
       <div class="flex align-items-center gap-3">

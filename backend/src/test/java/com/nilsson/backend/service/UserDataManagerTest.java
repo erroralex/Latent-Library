@@ -1,5 +1,6 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.repository.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,7 +31,7 @@ class UserDataManagerTest {
     @Mock
     private DatabaseService db;
     @Mock
-    private SettingsRepository settingsRepo;
+    private JsonSettingsService settingsService;
     @Mock
     private ImageRepository imageRepo;
     @Mock
@@ -67,9 +67,11 @@ class UserDataManagerTest {
     }
 
     @Test
-    @DisplayName("getExcludedPaths should parse semicolon-separated settings")
+    @DisplayName("getExcludedPaths should return list from settings service")
     void testGetExcludedPaths() {
-        when(settingsRepo.get("excluded_paths", "")).thenReturn("/path1;/path2");
+        AppSettings settings = new AppSettings();
+        settings.setExcludedPaths(List.of("/path1", "/path2"));
+        when(settingsService.get()).thenReturn(settings);
 
         List<String> results = userDataManager.getExcludedPaths();
 
@@ -79,13 +81,10 @@ class UserDataManagerTest {
     }
 
     @Test
-    @DisplayName("addExcludedPath should append new path to settings")
+    @DisplayName("addExcludedPath should update settings service")
     void testAddExcludedPath() {
-        when(settingsRepo.get("excluded_paths", "")).thenReturn("/path1");
-
         userDataManager.addExcludedPath("/path2");
-
-        verify(settingsRepo).set("excluded_paths", "/path1;/path2");
+        verify(settingsService).update(any());
     }
 
     @Test

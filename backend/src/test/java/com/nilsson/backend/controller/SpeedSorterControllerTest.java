@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.service.UserDataManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,13 +36,17 @@ class SpeedSorterControllerTest {
     @Test
     @DisplayName("GET /api/speedsorter/config should return current settings")
     void getConfig_ShouldReturnSettings() throws Exception {
-        when(dataManager.getSetting("speed_input_dir", null)).thenReturn("/input");
-        when(dataManager.getSetting(contains("speed_target_"), isNull())).thenReturn("/target");
+        AppSettings settings = new AppSettings();
+        settings.getSpeedSorter().setInputDir("/input");
+        settings.getSpeedSorter().setTargets(List.of("/target1", "/target2"));
+        
+        when(dataManager.getSettings()).thenReturn(settings);
 
         mockMvc.perform(get("/api/speedsorter/config"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.inputDir").value("/input"))
-                .andExpect(jsonPath("$.targets").isArray());
+                .andExpect(jsonPath("$.targets").isArray())
+                .andExpect(jsonPath("$.targets[0].path").value("/target1"));
     }
 
     @Test
@@ -52,7 +58,7 @@ class SpeedSorterControllerTest {
         mockMvc.perform(post("/api/speedsorter/config/input").param("path", path))
                 .andExpect(status().isOk());
 
-        verify(dataManager).setSetting("speed_input_dir", path);
+        verify(dataManager).updateSettings(any());
     }
 
     @Test

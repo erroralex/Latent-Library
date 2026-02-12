@@ -3,13 +3,13 @@ package com.nilsson.backend.service;
 import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
+import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.PinnedFolderRepository;
 import com.nilsson.backend.repository.SearchRepository;
-import com.nilsson.backend.repository.SettingsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,8 +17,13 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.security.MessageDigest;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,7 +64,7 @@ public class UserDataManager {
     private static final Logger logger = LoggerFactory.getLogger(UserDataManager.class);
 
     private final DatabaseService db;
-    private final SettingsRepository settingsRepo;
+    private final JsonSettingsService settingsService;
     private final ImageRepository imageRepo;
     private final ImageMetadataRepository imageMetadataRepository;
     private final PinnedFolderRepository pinnedFolderRepository;
@@ -71,7 +76,7 @@ public class UserDataManager {
     private final FtsService ftsService;
 
     public UserDataManager(DatabaseService db,
-                           SettingsRepository settingsRepo,
+                           JsonSettingsService settingsService,
                            ImageRepository imageRepo,
                            ImageMetadataRepository imageMetadataRepository, PinnedFolderRepository pinnedFolderRepository,
                            CollectionService collectionService,
@@ -81,7 +86,7 @@ public class UserDataManager {
                            SearchRepository searchRepository,
                            FtsService ftsService) {
         this.db = db;
-        this.settingsRepo = settingsRepo;
+        this.settingsService = settingsService;
         this.imageRepo = imageRepo;
         this.imageMetadataRepository = imageMetadataRepository;
         this.pinnedFolderRepository = pinnedFolderRepository;
@@ -203,17 +208,66 @@ public class UserDataManager {
             try {
                 success = Desktop.getDesktop().moveToTrash(file);
             } catch (Exception e) {
-                logger.error("System trash operation failed for: {}", file.getAbsolutePath(), e);
-                throw new ApplicationException("OS failed to move file to trash.", e);
+                logger.warn("System trash operation failed for: {}. Attempting fallback.", file.getAbsolutePath());
             }
-        } else {
-            throw new ApplicationException("System Trash is not supported on this platform.");
+        }
+
+        if (!success) {
+            success = moveFileToAppTrash(file);
         }
 
         if (success) {
             imageRepo.deleteByPath(pathService.getNormalizedAbsolutePath(file));
+        } else {
+            throw new ApplicationException("Failed to delete file. System trash unavailable and fallback failed.");
         }
         return success;
+    }
+
+    private boolean moveFileToAppTrash(File file) {
+        try {
+            Path trashDir = Paths.get("data", "trash").toAbsolutePath().normalize();
+            if (!Files.exists(trashDir)) {
+                Files.createDirectories(trashDir);
+            }
+            
+            String uniqueName = System.currentTimeMillis() + "_" + file.getName();
+            Path target = trashDir.resolve(uniqueName);
+            
+            Files.move(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Moved file to application trash: {}", target);
+            return true;
+        } catch (IOException e) {
+            logger.error("Fallback trash operation failed", e);
+            return false;
+        }
+    }
+
+    public void renameFile(File file, String newName) {
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("File to rename", file != null ? file.getAbsolutePath() : "null");
+        }
+        if (newName == null || newName.isBlank()) {
+            throw new ValidationException("New filename cannot be empty.");
+        }
+
+        File parent = file.getParentFile();
+        File newFile = new File(parent, newName);
+
+        if (newFile.exists()) {
+            throw new ValidationException("A file with that name already exists in the destination folder.");
+        }
+
+        boolean success = file.renameTo(newFile);
+        if (!success) {
+            throw new ApplicationException("Failed to rename file on disk.");
+        }
+
+        String oldPath = pathService.getNormalizedAbsolutePath(file);
+        String newPath = pathService.getNormalizedAbsolutePath(newFile);
+
+        // Update database path to preserve metadata
+        imageRepo.updatePath(oldPath, newPath);
     }
 
     private int getOrCreateImageIdInternal(File file) {
@@ -366,22 +420,23 @@ public class UserDataManager {
                 .collect(Collectors.toList());
     }
 
-    public String getSetting(String key, String defaultValue) {
-        return settingsRepo.get(key, defaultValue);
+    public AppSettings getSettings() {
+        return settingsService.get();
     }
 
-    public void setSetting(String key, String value) {
-        settingsRepo.set(key, value);
+    public void updateSettings(java.util.function.Consumer<AppSettings> updater) {
+        settingsService.update(updater);
     }
 
     public File getLastFolder() {
-        String path = settingsRepo.get("last_folder", null);
+        String path = settingsService.get().getLastFolder();
         return path != null ? pathService.resolve(path) : null;
     }
 
     public void setLastFolder(File folder) {
         if (folder != null) {
-            settingsRepo.set("last_folder", pathService.getNormalizedAbsolutePath(folder));
+            String path = pathService.getNormalizedAbsolutePath(folder);
+            settingsService.update(s -> s.setLastFolder(path));
         }
     }
 
@@ -390,25 +445,27 @@ public class UserDataManager {
     }
 
     public List<String> getExcludedPaths() {
-        String raw = settingsRepo.get("excluded_paths", "");
-        if (raw == null || raw.isBlank()) return new ArrayList<>();
-        return new ArrayList<>(Arrays.asList(raw.split(";")));
+        return settingsService.get().getExcludedPaths();
     }
 
     public void addExcludedPath(String path) {
         if (path == null || path.isBlank()) return;
-        List<String> current = getExcludedPaths();
-        if (!current.contains(path)) {
-            current.add(path);
-            settingsRepo.set("excluded_paths", String.join(";", current));
-        }
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getExcludedPaths());
+            if (!current.contains(path)) {
+                current.add(path);
+                s.setExcludedPaths(current);
+            }
+        });
     }
 
     public void removeExcludedPath(String path) {
         if (path == null || path.isBlank()) return;
-        List<String> current = getExcludedPaths();
-        if (current.remove(path)) {
-            settingsRepo.set("excluded_paths", String.join(";", current));
-        }
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getExcludedPaths());
+            if (current.remove(path)) {
+                s.setExcludedPaths(current);
+            }
+        });
     }
 }

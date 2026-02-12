@@ -17,13 +17,16 @@
 import {onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
 import {useRoute, useRouter} from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
 import VirtualGallery from '@/components/VirtualGallery.vue';
 import SingleImageViewer from '@/components/SingleImageViewer.vue';
 import CustomContextMenu from '@/components/CustomContextMenu.vue';
 import {useToast} from 'primevue/usetoast';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 
 const store = useBrowserStore();
 const route = useRoute();
@@ -34,6 +37,10 @@ const virtualGalleryRef = ref(null);
 const cm = ref();
 const menuModel = ref([]);
 const contextMenuSelection = ref(null);
+
+const showRenameDialog = ref(false);
+const newFileName = ref('');
+const fileToRename = ref(null);
 
 const handleKeydown = (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -85,6 +92,12 @@ const handleKeydown = (e) => {
         store.setSidebarOpen(true);
       }
       break;
+
+    case 'F2':
+      if (store.selectedFile) {
+        openRenameDialog(store.selectedFile);
+      }
+      break;
   }
 };
 
@@ -95,23 +108,27 @@ const onContextMenu = async (payload) => {
   // Fetch collections for the submenu
   let collections = [];
   try {
-    const res = await axios.get('/api/collections');
+    const res = await api.get('/collections');
     collections = res.data;
   } catch (e) {
     console.error("Failed to fetch collections for context menu", e);
   }
 
+  const selectedCount = store.selectedFiles.size;
+  const isBatch = selectedCount > 1;
+  const batchLabel = isBatch ? ` (${selectedCount} items)` : '';
+
   const addToCollectionItems = collections.map(colName => ({
     label: colName,
     icon: 'pi pi-folder',
-    command: () => addToCollection(colName, file.path)
+    command: () => addToCollection(colName, isBatch ? Array.from(store.selectedFiles) : [file.path])
   }));
 
   // Add "Create New Collection" option
   addToCollectionItems.unshift({
     label: 'Create New Collection...',
     icon: 'pi pi-plus',
-    command: () => createNewCollection(file.path)
+    command: () => createNewCollection()
   });
 
   if (addToCollectionItems.length > 1) {
@@ -122,7 +139,7 @@ const onContextMenu = async (payload) => {
 
   // "Add to Collection" is always available
   items.push({
-    label: 'Add to Collection',
+    label: `Add to Collection${batchLabel}`,
     icon: 'pi pi-plus',
     items: addToCollectionItems
   });
@@ -130,24 +147,32 @@ const onContextMenu = async (payload) => {
   // "Blacklist" only if inside a collection
   if (store.activeCollection) {
     items.push({
-      label: 'Blacklist (Remove)',
+      label: `Blacklist (Remove)${batchLabel}`,
       icon: 'pi pi-ban',
-      command: () => blacklistImage(store.activeCollection, file.path)
+      command: () => blacklistImage(store.activeCollection, isBatch ? Array.from(store.selectedFiles) : [file.path])
     });
   }
 
   items.push({ separator: true });
 
-  items.push({
-    label: 'Open in Explorer',
-    icon: 'pi pi-external-link',
-    command: () => openInExplorer(file.path)
-  });
+  if (!isBatch) {
+    items.push({
+      label: 'Rename',
+      icon: 'pi pi-pencil',
+      command: () => openRenameDialog(file.path)
+    });
+
+    items.push({
+      label: 'Open in Explorer',
+      icon: 'pi pi-external-link',
+      command: () => openInExplorer(file.path)
+    });
+  }
 
   items.push({
-    label: 'Delete (Trash)',
+    label: `Delete (Trash)${batchLabel}`,
     icon: 'pi pi-trash',
-    command: () => deleteImage(file.path)
+    command: () => deleteImage(isBatch ? Array.from(store.selectedFiles) : [file.path])
   });
 
   menuModel.value = items;
@@ -157,65 +182,109 @@ const onContextMenu = async (payload) => {
   }
 };
 
-const addToCollection = async (collectionName, path) => {
+const addToCollection = async (collectionName, paths) => {
   try {
-    await axios.post(`/api/collections/${collectionName}/images`, null, { params: { path } });
-    toast.add({ severity: 'success', summary: 'Added', detail: `Added to ${collectionName}`, life: 2000 });
+    for (const path of paths) {
+        await api.post(`/collections/${collectionName}/images`, null, { params: { path } });
+    }
+    toast.add({ severity: 'success', summary: 'Added', detail: `Added ${paths.length} items to ${collectionName}`, life: 2000 });
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add to collection', life: 3000 });
+    // Error handled by api interceptor
   }
 };
 
-const createNewCollection = (path) => {
+const createNewCollection = () => {
     store.collectionToEdit = null; // Ensure we are creating new
     router.push('/collections');
-    // Ideally we would pass the image path to pre-select it, but for now just navigating is fine.
-    // Or we could use a query param to trigger the dialog immediately.
 };
 
-const blacklistImage = async (collectionName, path) => {
+const blacklistImage = async (collectionName, paths) => {
   try {
-    await axios.post(`/api/collections/${collectionName}/blacklist`, null, { params: { path } });
-    toast.add({ severity: 'success', summary: 'Removed', detail: `Removed from ${collectionName}`, life: 2000 });
+    for (const path of paths) {
+        await api.post(`/collections/${collectionName}/blacklist`, null, { params: { path } });
+    }
+    toast.add({ severity: 'success', summary: 'Removed', detail: `Removed ${paths.length} items from ${collectionName}`, life: 2000 });
     // Refresh the current view to hide the removed image
     store.loadCollection(collectionName);
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to blacklist image', life: 3000 });
+    // Error handled by api interceptor
   }
 };
 
 const openInExplorer = async (path) => {
   try {
-    await axios.post('/api/system/show-in-explorer', null, { params: { path } });
+    await api.post('/system/show-in-explorer', null, { params: { path } });
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to open explorer', life: 3000 });
+    // Error handled by api interceptor
   }
 };
 
-const deleteImage = async (path) => {
-  if (!confirm("Are you sure you want to move this file to the trash?")) return;
+const deleteImage = async (paths) => {
+  if (!confirm(`Are you sure you want to move ${paths.length} file(s) to the trash?`)) return;
 
   try {
-    await axios.post('/api/speedsorter/delete', null, { params: { path } });
-    toast.add({ severity: 'success', summary: 'Deleted', detail: 'Moved to trash', life: 2000 });
+    let deletedCount = 0;
+    for (const path of paths) {
+        await api.post('/speedsorter/delete', null, { params: { path } });
 
-    // Remove from local store to update UI immediately
-    const index = store.files.findIndex(f => f.path === path);
-    if (index !== -1) {
-      store.files.splice(index, 1);
-      // If the deleted file was selected, select the next one
-      if (store.selectedFile === path) {
-        if (store.files.length > 0) {
-          const nextIndex = Math.min(index, store.files.length - 1);
-          store.selectFile(store.files[nextIndex]);
-        } else {
-          store.selectedFile = null;
+        // Remove from local store to update UI immediately
+        const index = store.files.findIndex(f => f.path === path);
+        if (index !== -1) {
+          store.files.splice(index, 1);
         }
-      }
+        deletedCount++;
     }
+
+    // Fix selection if current file was deleted
+    if (store.selectedFile && paths.includes(store.selectedFile)) {
+        if (store.files.length > 0) {
+            store.selectFile(store.files[0]);
+        } else {
+            store.selectedFile = null;
+        }
+    }
+    store.selectedFiles.clear();
+
+    toast.add({ severity: 'success', summary: 'Deleted', detail: `Moved ${deletedCount} files to trash`, life: 2000 });
+
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete file', life: 3000 });
+    // Error handled by api interceptor
   }
+};
+
+const openRenameDialog = (path) => {
+    fileToRename.value = path;
+    // Extract filename from path
+    const parts = path.split(/[\\/]/);
+    newFileName.value = parts.pop();
+    showRenameDialog.value = true;
+};
+
+const performRename = async () => {
+    if (!fileToRename.value || !newFileName.value) return;
+
+    try {
+        await api.post('/images/rename', null, {
+            params: {
+                path: fileToRename.value,
+                newName: newFileName.value
+            }
+        });
+
+        toast.add({ severity: 'success', summary: 'Success', detail: 'File renamed successfully', life: 2000 });
+        showRenameDialog.value = false;
+
+        // Refresh the current view to reflect the name change
+        // If we are in a folder, reload the folder. If in a collection, reload the collection.
+        if (store.activeCollection) {
+            store.loadCollection(store.activeCollection);
+        } else if (store.lastFolderPath) {
+            store.loadFolder(store.lastFolderPath);
+        }
+
+    } catch (e) {
+        // Error handled by api interceptor
+    }
 };
 
 onMounted(async () => {
@@ -291,6 +360,17 @@ watch(() => store.imageFocusRequested, (requested) => {
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel"/>
+
+    <Dialog v-model:visible="showRenameDialog" header="Rename File" :modal="true" class="glass-dialog">
+        <div class="flex flex-column gap-3">
+            <span class="p-text-secondary block mb-2">Enter new filename:</span>
+            <InputText v-model="newFileName" class="w-full glass-input" autofocus @keyup.enter="performRename" />
+        </div>
+        <template #footer>
+            <Button label="Cancel" icon="pi pi-times" @click="showRenameDialog = false" class="p-button-text" />
+            <Button label="Rename" icon="pi pi-check" @click="performRename" autofocus />
+        </template>
+    </Dialog>
   </div>
 </template>
 
@@ -303,5 +383,19 @@ watch(() => store.imageFocusRequested, (requested) => {
 .sidebar-slide-enter-from,
 .sidebar-slide-leave-to {
   transform: translateX(100%);
+}
+
+.glass-dialog .p-dialog-header,
+.glass-dialog .p-dialog-content,
+.glass-dialog .p-dialog-footer {
+  background: rgba(10, 10, 10, 0.95) !important;
+  color: white;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
 }
 </style>

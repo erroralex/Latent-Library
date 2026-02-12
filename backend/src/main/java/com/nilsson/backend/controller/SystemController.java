@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -134,6 +135,7 @@ public class SystemController {
         if (Files.exists(thumbDir)) {
             try (Stream<Path> walk = Files.walk(thumbDir)) {
                 walk.sorted(Comparator.reverseOrder())
+                        .filter(p -> !p.equals(thumbDir)) // Don't delete the root dir
                         .map(Path::toFile)
                         .forEach(File::delete);
             } catch (IOException e) {
@@ -158,5 +160,14 @@ public class SystemController {
     public ResponseEntity<Void> removeExcludedPath(@RequestParam String path) {
         userDataManager.removeExcludedPath(path);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/last-folder")
+    public ResponseEntity<Map<String, String>> getLastFolder() {
+        File folder = userDataManager.getLastFolder();
+        if (folder != null) {
+            return ResponseEntity.ok(Map.of("path", pathService.getNormalizedAbsolutePath(folder)));
+        }
+        return ResponseEntity.ok(Map.of());
     }
 }

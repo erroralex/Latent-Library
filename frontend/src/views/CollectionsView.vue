@@ -14,7 +14,7 @@
  * - Navigation Integration: Seamlessly transitions to the Image Browser with pre-applied collection filters.
  */
 import {ref, onMounted, computed, watch} from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import {useBrowserStore} from '@/stores/browser';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -116,7 +116,7 @@ const openCreateDialog = () => {
 
 const editCollection = async (name) => {
   try {
-    const response = await axios.get(`/api/collections/${name}`);
+    const response = await api.get(`/collections/${name}`);
     const data = response.data;
 
     newCollectionName.value = data.name;
@@ -145,7 +145,7 @@ const editCollection = async (name) => {
     displayCreateDialog.value = true;
   } catch (error) {
     console.error('Error fetching collection details:', error);
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load collection details', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -170,10 +170,10 @@ const saveCollection = async () => {
   try {
     if (isEditing.value) {
       // Use originalCollectionName in the URL to identify the resource to update
-      await axios.put(`/api/collections/${originalCollectionName.value}`, collectionData);
+      await api.put(`/collections/${originalCollectionName.value}`, collectionData);
       toast.add({severity: 'success', summary: 'Success', detail: 'Collection updated!', life: 3000});
     } else {
-      await axios.post('/api/collections', collectionData);
+      await api.post('/collections', collectionData);
       toast.add({severity: 'success', summary: 'Success', detail: 'Collection created!', life: 3000});
     }
 
@@ -182,18 +182,13 @@ const saveCollection = async () => {
     displayCreateDialog.value = false;
   } catch (error) {
     console.error('Error saving collection:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to save collection. See console for details.',
-      life: 3000
-    });
+    // Error handled by api interceptor
   }
 };
 
 const fetchCollections = async () => {
   try {
-    const response = await axios.get('/api/collections');
+    const response = await api.get('/collections');
     collections.value = response.data;
   } catch (error) {
     console.error('Error fetching collections:', error);
@@ -225,11 +220,11 @@ const onCardContextMenu = (event, collectionName) => {
 
 const removeCollection = async (name) => {
   try {
-    await axios.delete(`/api/collections/${name}`);
+    await api.delete(`/collections/${name}`);
     toast.add({severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000});
     store.refreshNav();
   } catch (e) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to remove collection', life: 2000});
+    // Error handled by api interceptor
   }
 };
 
@@ -249,7 +244,7 @@ onMounted(() => {
 <template>
   <div class="flex h-full overflow-hidden">
     <div class="flex-grow-1 flex flex-column overflow-y-auto collections-view p-4">
-      <Toast/>
+      <!-- Removed local Toast -->
       <div class="flex flex-column align-items-center mb-4">
         <h1 class="text-4xl font-bold text-gradient">Collections</h1>
         <Button label="Create New Collection" icon="pi pi-plus" @click="openCreateDialog"

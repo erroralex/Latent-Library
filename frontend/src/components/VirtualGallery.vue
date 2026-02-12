@@ -12,6 +12,7 @@
  * - Dynamic Grid: Automatically adjusts the number of columns when the window is resized or the card size changes.
  * - Smart Scrolling: Monitors selection changes to ensure the active image is always scrolled into view.
  * - Infinite Loading: Triggers pagination/lazy-loading when the user nears the bottom of the list.
+ * - Multi-Selection: Supports Shift+Click and Ctrl+Click for batch operations.
  */
 import {ref, computed, onMounted, onUnmounted, watch, nextTick} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
@@ -106,6 +107,12 @@ const onScrollIndexChange = (event) => {
   }
 };
 
+const handleGalleryItemClick = (file, event) => {
+  const multiSelect = event.ctrlKey || event.metaKey;
+  const rangeSelect = event.shiftKey;
+  store.selectFile(file, multiSelect, rangeSelect);
+};
+
 const handleGalleryItemDoubleClick = (file) => {
   store.selectFile(file);
   store.setViewMode('browser');
@@ -115,6 +122,10 @@ const handleGalleryItemDoubleClick = (file) => {
 const emit = defineEmits(['contextmenu']);
 
 const onImageContextMenu = (payload) => {
+  // If the right-clicked item isn't in the selection, select it exclusively
+  if (!store.selectedFiles.has(payload.file.path)) {
+    store.selectFile(payload.file);
+  }
   emit('contextmenu', payload);
 };
 
@@ -131,8 +142,8 @@ defineExpose({gridCols});
           <div v-for="file in item" :key="file.path"
                :style="{ width: store.cardSize + 'px', height: store.cardSize + 'px' }"
                class="border-round transition-all transition-duration-100"
-               :class="{ 'outline-active': store.selectedFile === file.path }"
-               @click="store.selectFile(file)"
+               :class="{ 'outline-active': store.selectedFiles.has(file.path) }"
+               @click="handleGalleryItemClick(file, $event)"
                @dblclick="handleGalleryItemDoubleClick(file)">
             <ImageCard :file="file" @contextmenu="onImageContextMenu"/>
           </div>

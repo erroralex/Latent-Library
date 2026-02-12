@@ -3,7 +3,7 @@ import { toast } from 'vue3-toastify';
 
 // Create instance
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api', // Or dynamic port if you implemented that
+    baseURL: '/api', // Relative path for dynamic port support
     timeout: 10000,
 });
 

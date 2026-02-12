@@ -46,6 +46,7 @@ public class IndexingService {
     private static final Logger logger = LoggerFactory.getLogger(IndexingService.class);
     private static final int BATCH_SIZE = 20;
     private static final long DEBOUNCE_DELAY_MS = 500;
+    private static final long WATCH_RETRY_DELAY_MS = 5000;
 
     private final ImageRepository imageRepo;
     private final MetadataService metaService;
@@ -106,6 +107,15 @@ public class IndexingService {
                 if (file != null && !file.exists()) {
                     logger.info("[Reconcile] File missing: {}. Deleting record from DB.", path);
                     imageRepo.deleteByPath(path);
+                    
+                    // Cleanup orphaned thumbnail
+                    File thumbnail = thumbnailService.getThumbnail(file);
+                    if (thumbnail != null && thumbnail.exists()) {
+                        if (thumbnail.delete()) {
+                            logger.debug("[Reconcile] Deleted orphaned thumbnail for: {}", path);
+                        }
+                    }
+                    
                     removedCount.incrementAndGet();
                 }
             });
@@ -206,22 +216,12 @@ public class IndexingService {
             }
         }
 
-        try {
-            this.watchService = FileSystems.getDefault().newWatchService();
-            Path path = directory.toPath();
-            path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+        watchThread = new Thread(() -> watchLoop(directory, listener));
+        watchThread.setDaemon(true);
+        watchThread.setName("Folder-Watcher-" + directory.getName());
+        watchThread.start();
 
-            watchThread = new Thread(() -> watchLoop(path, listener));
-            watchThread.setDaemon(true);
-            watchThread.setName("Folder-Watcher-" + directory.getName());
-            watchThread.start();
-
-            logger.info("Started watching directory: {}", directory);
-
-        } catch (IOException e) {
-            logger.error("Failed to start WatchService for {}", directory, e);
-            throw new ApplicationException("System failed to initialize folder monitor.", e);
-        }
+        logger.info("Started watching directory: {}", directory);
     }
 
     public void stopWatching() {
@@ -229,6 +229,11 @@ public class IndexingService {
             watchThread.interrupt();
             watchThread = null;
         }
+        closeWatchService();
+        pendingEvents.clear();
+    }
+
+    private void closeWatchService() {
         if (watchService != null) {
             try {
                 watchService.close();
@@ -236,16 +241,25 @@ public class IndexingService {
             }
             watchService = null;
         }
-        pendingEvents.clear();
     }
 
-    private void watchLoop(Path monitoredPath, Consumer<FileChangeEvent> listener) {
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
+    private void watchLoop(File directory, Consumer<FileChangeEvent> listener) {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                if (watchService == null) {
+                    this.watchService = FileSystems.getDefault().newWatchService();
+                    Path path = directory.toPath();
+                    path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+                }
+
                 WatchKey key;
                 try {
                     key = watchService.take();
                 } catch (InterruptedException x) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (ClosedWatchServiceException e) {
+                    // Service closed explicitly, exit loop
                     break;
                 }
 
@@ -257,7 +271,7 @@ public class IndexingService {
                     if (kind == StandardWatchEventKinds.OVERFLOW) continue;
 
                     Path fileName = (Path) event.context();
-                    File file = monitoredPath.resolve(fileName).toFile();
+                    File file = directory.toPath().resolve(fileName).toFile();
 
                     if (!isImageFile(file)) continue;
 
@@ -286,11 +300,24 @@ public class IndexingService {
                 }
 
                 boolean valid = key.reset();
-                if (!valid) break;
+                if (!valid) {
+                    logger.warn("WatchKey invalid. Directory may have been deleted or inaccessible: {}", directory);
+                    break;
+                }
+
+            } catch (Exception e) {
+                logger.error("WatchService error for {}: {}. Retrying in {}ms...", directory, e.getMessage(), WATCH_RETRY_DELAY_MS);
+                closeWatchService();
+                try {
+                    Thread.sleep(WATCH_RETRY_DELAY_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
-        } catch (Exception e) {
-            logger.debug("WatchService loop ended: {}", e.getMessage());
         }
+        closeWatchService();
+        logger.info("Watch loop terminated for {}", directory);
     }
 
     private void processFileSystemEvent(WatchEvent.Kind<?> kind, File file, Consumer<FileChangeEvent> listener) {
@@ -332,6 +359,14 @@ public class IndexingService {
                 imageRepo.deleteByPath(path);
             } finally {
                 dbLock.unlock();
+            }
+            
+            // Cleanup orphaned thumbnail
+            File thumbnail = thumbnailService.getThumbnail(file);
+            if (thumbnail != null && thumbnail.exists()) {
+                if (thumbnail.delete()) {
+                    logger.debug("Deleted orphaned thumbnail for: {}", file.getName());
+                }
             }
 
             logger.debug("Deleted file from disk and DB: {}", file.getName());

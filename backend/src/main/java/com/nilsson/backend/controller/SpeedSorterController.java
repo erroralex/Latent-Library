@@ -3,6 +3,7 @@ package com.nilsson.backend.controller;
 import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
+import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.service.UserDataManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +30,16 @@ public class SpeedSorterController {
 
     @GetMapping("/config")
     public ResponseEntity<Map<String, Object>> getConfig() {
+        AppSettings.SpeedSorterSettings settings = dataManager.getSettings().getSpeedSorter();
+        
         Map<String, Object> config = new HashMap<>();
-        String inputDir = dataManager.getSetting("speed_input_dir", null);
-        config.put("inputDir", inputDir);
+        config.put("inputDir", settings.getInputDir());
 
         List<Map<String, String>> targets = new ArrayList<>();
+        List<String> paths = settings.getTargets();
+        
         for (int i = 0; i < 5; i++) {
-            String path = dataManager.getSetting("speed_target_" + i, null);
+            String path = (i < paths.size()) ? paths.get(i) : null;
             Map<String, String> target = new HashMap<>();
             target.put("index", String.valueOf(i));
             target.put("path", path);
@@ -50,7 +54,7 @@ public class SpeedSorterController {
     public ResponseEntity<Void> setInputFolder(@RequestParam("path") String path) {
         File folder = new File(path);
         if (folder.exists() && folder.isDirectory()) {
-            dataManager.setSetting("speed_input_dir", folder.getAbsolutePath());
+            dataManager.updateSettings(s -> s.getSpeedSorter().setInputDir(folder.getAbsolutePath()));
             return ResponseEntity.ok().build();
         }
         throw new ValidationException("Input path must be a valid directory.");
@@ -60,7 +64,14 @@ public class SpeedSorterController {
     public ResponseEntity<Void> setTargetFolder(@RequestParam("index") int index, @RequestParam("path") String path) {
         File folder = new File(path);
         if (index >= 0 && index < 5 && folder.exists() && folder.isDirectory()) {
-            dataManager.setSetting("speed_target_" + index, folder.getAbsolutePath());
+            dataManager.updateSettings(s -> {
+                List<String> targets = s.getSpeedSorter().getTargets();
+                // Ensure list is big enough
+                while (targets.size() <= index) {
+                    targets.add(null);
+                }
+                targets.set(index, folder.getAbsolutePath());
+            });
             return ResponseEntity.ok().build();
         }
         throw new ValidationException("Invalid target index or directory path.");
@@ -68,7 +79,7 @@ public class SpeedSorterController {
 
     @GetMapping("/files")
     public ResponseEntity<List<String>> getFiles() {
-        String inputPath = dataManager.getSetting("speed_input_dir", null);
+        String inputPath = dataManager.getSettings().getSpeedSorter().getInputDir();
         if (inputPath == null) return ResponseEntity.ok(Collections.emptyList());
 
         File dir = new File(inputPath);
@@ -91,11 +102,13 @@ public class SpeedSorterController {
 
     @PostMapping("/move")
     public ResponseEntity<String> moveFile(@RequestParam("source") String sourcePath, @RequestParam("targetIndex") int targetIndex) {
-        String targetPathStr = dataManager.getSetting("speed_target_" + targetIndex, null);
-        if (targetPathStr == null) {
+        List<String> targets = dataManager.getSettings().getSpeedSorter().getTargets();
+        
+        if (targetIndex < 0 || targetIndex >= targets.size() || targets.get(targetIndex) == null) {
             throw new ValidationException("Target slot " + targetIndex + " is not configured.");
         }
-
+        
+        String targetPathStr = targets.get(targetIndex);
         File source = new File(sourcePath);
         File targetDir = new File(targetPathStr);
 
