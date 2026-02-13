@@ -7,15 +7,15 @@
  *
  * Key architectural features:
  * - Multi-Root Navigation: Organizes navigation into logical sections: Collections, Pinned Folders, and Local Drives (This PC).
- * - Lazy Loading: Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
+ * - Lazy Loading: Implements on-demand directory traversal. Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
  * - Reactive State Integration: Synchronizes with the global Pinia store to trigger library scans and update the browser view when a folder or collection is selected.
- * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations.
+ * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
  * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
 import {ref, onMounted, watch, computed} from 'vue';
 import api from '@/services/api';
 import {useBrowserStore} from '@/stores/browser';
-import {useRouter} from 'vue-router';
+import {useRouter, useRoute} from 'vue-router';
 import Tree from 'primevue/tree';
 import CustomContextMenu from './CustomContextMenu.vue';
 import {useToast} from 'primevue/usetoast';
@@ -26,12 +26,14 @@ import {useConfirm} from 'primevue/useconfirm';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 
+// Import logos
 import logoNeon from '@/assets/alx_logo_neon.png';
 import logoGold from '@/assets/alx_logo_gold.png';
 import logoLight from '@/assets/alx_logo_light.png';
 
 const store = useBrowserStore();
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 const confirm = useConfirm();
 
@@ -130,24 +132,78 @@ const loadTree = async () => {
   nodes.value = rootNodes;
   expandedKeys.value = {'collections': true, 'pinned': true, 'drives': true};
 
-  if (store.lastFolderPath) {
-    setTimeout(() => {
-      selectNodeByPath(store.lastFolderPath);
-    }, 500);
+  // Restore selection
+  syncSelection();
+};
+
+const normalizePath = (p) => {
+  if (!p) return '';
+  return p.replace(/\\/g, '/').toLowerCase().replace(/\/$/, '');
+};
+
+const findNodeByPath = (nodesList, path) => {
+  if (!nodesList || !path) return null;
+  const searchPath = normalizePath(path);
+  for (const node of nodesList) {
+    if (node.data?.path && normalizePath(node.data.path) === searchPath) return node;
+    if (node.children && node.children.length > 0) {
+      const found = findNodeByPath(node.children, path);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const syncSelection = () => {
+  let newSelection = {};
+  if (store.activeCollection) {
+    const root = nodes.value.find(n => n.key === 'collections');
+    const node = root?.children?.find(c => c.data === store.activeCollection);
+    if (node) newSelection[node.key] = true;
+  } else if (store.lastFolderPath) {
+    const node = findNodeByPath(nodes.value, store.lastFolderPath);
+    if (node) newSelection[node.key] = true;
+  }
+
+  // Only update if changed to avoid unnecessary re-renders
+  if (JSON.stringify(newSelection) !== JSON.stringify(selectedKey.value)) {
+    selectedKey.value = newSelection;
   }
 };
 
-const selectNodeByPath = (path) => {
-  const pinnedNode = nodes.value.find(n => n.key === 'pinned')?.children?.find(c => c.data.path === path);
-  if (pinnedNode) {
-    selectedKey.value = {[pinnedNode.key]: true};
-    return;
-  }
+// Watch for changes in the store to update selection
+watch(() => [store.lastFolderPath, store.activeCollection], syncSelection);
+watch(nodes, syncSelection);
 
-  const driveNode = nodes.value.find(n => n.key === 'drives')?.children?.find(c => c.data.path === path);
-  if (driveNode) {
-    selectedKey.value = {[driveNode.key]: true};
+const navigateToNode = (node) => {
+  if (!node || node.type === 'separator' || node.type === 'root') return;
+
+  if (node.type === 'collection') {
+    const collectionName = node.data;
+    // If we're already on the browser view with this collection, router.push won't trigger anything
+    // So we manually trigger the load to ensure reliability.
+    if (router.currentRoute.value.path === '/' && route.query.collection === collectionName) {
+      store.loadCollection(collectionName);
+    } else {
+      router.push({ path: '/', query: { collection: collectionName } });
+    }
+  } else if (node.data?.path) {
+    const path = node.data.path;
+    // For folders, we load and then ensure we are on the browser view
+    store.loadFolder(path);
+    if (router.currentRoute.value.path !== '/') {
+      router.push('/');
+    }
   }
+};
+
+const onNodeSelect = (event) => {
+  navigateToNode(event.node || event);
+};
+
+const onNodeClick = (event) => {
+  // node-click is essential for re-triggering navigation on already-selected nodes
+  navigateToNode(event.node);
 };
 
 const onNodeExpand = async (node) => {
@@ -166,26 +222,11 @@ const onNodeExpand = async (node) => {
       children: []
     }));
     actualNode._loaded = true;
+    syncSelection();
   } catch (e) {
     // Error handled by api interceptor
   } finally {
     actualNode.loading = false;
-  }
-};
-
-const onNodeSelect = async (node) => {
-  const actualNode = node.node || node;
-  if (actualNode.type === 'collection') {
-    router.push({path: '/', query: {collection: actualNode.data}});
-  } else if (actualNode.data?.path) {
-    try {
-      await store.loadFolder(actualNode.data.path);
-      if (router.currentRoute.value.path !== '/') {
-        router.push('/');
-      }
-    } catch (e) {
-      // Error handled by api interceptor
-    }
   }
 };
 
@@ -241,11 +282,11 @@ const onCustomContextMenu = (event, node) => {
 
 const pinFolder = async (path) => {
   await api.post('/folders/pin', null, {params: {path}});
-  loadTree();
+  await loadTree();
 };
 const unpinFolder = async (path) => {
   await api.post('/folders/unpin', null, {params: {path}});
-  loadTree();
+  await loadTree();
 };
 const removeCollection = async (name) => {
   try {
@@ -270,7 +311,7 @@ const openInExplorer = async (path) => {
 
 const openSettings = async () => {
   showSettings.value = true;
-  currentTheme.value = store.currentTheme;
+  currentTheme.value = store.currentTheme; // Sync with store
   try {
     const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
@@ -301,7 +342,7 @@ const clearDatabase = () => {
       try {
         await api.post('/system/clear-database');
         toast.add({severity: 'success', summary: 'Success', detail: 'Database cleared', life: 3000});
-        store.initialize();
+        store.initialize(); // Reload
       } catch (e) {
         // Error handled by api interceptor
       }
@@ -344,6 +385,7 @@ const selectExcludedFolder = async () => {
       newExcludedPath.value = path;
     }
   } else {
+    // Fallback for browser dev mode
     const path = prompt("Enter absolute path to exclude:");
     if (path) {
       newExcludedPath.value = path;
@@ -385,6 +427,7 @@ onMounted(loadTree);
           :lazy="true"
           @node-expand="onNodeExpand"
           @node-select="onNodeSelect"
+          @node-click="onNodeClick"
       >
         <template #default="slotProps">
           <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
@@ -602,7 +645,7 @@ onMounted(loadTree);
   background: transparent !important;
 }
 
-:deep(.p-tree .p-treenode-icon) {
+:deep(.p-treenode-icon) {
   color: inherit !important;
   transition: color 0.2s;
 }

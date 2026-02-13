@@ -7,6 +7,7 @@ import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,12 +35,18 @@ public class SystemController {
     private final FtsService ftsService;
     private final PathService pathService;
     private final UserDataManager userDataManager;
+    private final String appDataDir;
 
-    public SystemController(ConfigurableApplicationContext context, FtsService ftsService, PathService pathService, UserDataManager userDataManager) {
+    public SystemController(ConfigurableApplicationContext context, 
+                            FtsService ftsService, 
+                            PathService pathService, 
+                            UserDataManager userDataManager,
+                            @Value("${app.data.dir:.}") String appDataDir) {
         this.context = context;
         this.ftsService = ftsService;
         this.pathService = pathService;
         this.userDataManager = userDataManager;
+        this.appDataDir = appDataDir;
     }
 
     @PostMapping("/shutdown")
@@ -62,7 +69,7 @@ public class SystemController {
 
     @PostMapping("/open-folder")
     public ResponseEntity<String> openFolder(@RequestParam("path") String path) {
-        File folder = new File(path).getAbsoluteFile();
+        File folder = pathService.resolve(path);
 
         if (!folder.exists() || !folder.isDirectory()) {
             throw new ResourceNotFoundException("Folder", folder.getAbsolutePath());
@@ -114,7 +121,7 @@ public class SystemController {
 
     @PostMapping("/open-data-folder")
     public ResponseEntity<String> openDataFolder() {
-        File dataDir = Paths.get(".").resolve("data").toAbsolutePath().normalize().toFile();
+        File dataDir = Paths.get(appDataDir).resolve("data").toAbsolutePath().normalize().toFile();
         logger.info("Attempting to open data folder at: {}", dataDir.getAbsolutePath());
 
         if (!dataDir.exists()) {
@@ -131,7 +138,7 @@ public class SystemController {
 
     @PostMapping("/clear-thumbnails")
     public ResponseEntity<String> clearThumbnails() {
-        Path thumbDir = Paths.get("data", "thumbnails");
+        Path thumbDir = Paths.get(appDataDir).resolve("data/thumbnails").toAbsolutePath().normalize();
         if (Files.exists(thumbDir)) {
             try (Stream<Path> walk = Files.walk(thumbDir)) {
                 walk.sorted(Comparator.reverseOrder())

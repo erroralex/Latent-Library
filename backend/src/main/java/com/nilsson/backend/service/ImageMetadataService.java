@@ -46,6 +46,7 @@ public class ImageMetadataService {
         this.ftsService = ftsService;
     }
 
+    @Transactional
     public Map<String, String> getCachedMetadata(File file, String path) {
         if (path == null || path.isBlank()) {
             throw new ValidationException("Path cannot be empty for metadata retrieval.");
@@ -74,6 +75,7 @@ public class ImageMetadataService {
         return imageId != -1 && imageMetadataRepository.hasMetadata(imageId);
     }
 
+    @Transactional
     public void cacheMetadata(int imageId, Map<String, String> meta) {
         if (imageId <= 0) {
             throw new ValidationException("Invalid image ID for caching metadata.");
@@ -84,8 +86,7 @@ public class ImageMetadataService {
         saveMetadataAndIndex(imageId, meta);
     }
 
-    @Transactional
-    protected void saveMetadataAndIndex(int imageId, Map<String, String> meta) {
+    private void saveMetadataAndIndex(int imageId, Map<String, String> meta) {
         if (imageId > 0 && meta != null && !meta.isEmpty()) {
             imageMetadataRepository.saveMetadata(imageId, meta);
             ftsService.updateFtsIndex(imageId);

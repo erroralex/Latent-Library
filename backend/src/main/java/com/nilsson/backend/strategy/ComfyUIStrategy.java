@@ -415,7 +415,7 @@ public class ComfyUIStrategy implements MetadataStrategy {
                     }
                 }
             }
-            if (bestText != null) return bestText;
+            return bestText;
         }
         return null;
     }
@@ -450,12 +450,12 @@ public class ComfyUIStrategy implements MetadataStrategy {
                 }
 
                 if (resolvedPart != null && !resolvedPart.isEmpty()) {
-                    if (sb.length() > 0) sb.append(", ");
+                    if (!sb.isEmpty()) sb.append(", ");
                     sb.append(resolvedPart);
                 }
             }
 
-            if (sb.length() == 0 && node.has("widgets_values")) {
+            if (sb.isEmpty() && node.has("widgets_values")) {
                 for (JsonNode w : node.get("widgets_values")) {
                     if (w.isTextual() && isValidPrompt(w.asText())) sb.append(w.asText()).append(" ");
                 }

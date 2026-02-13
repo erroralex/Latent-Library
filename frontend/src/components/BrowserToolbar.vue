@@ -202,8 +202,8 @@ const refreshFilters = () => {
   background: var(--bg-toolbar);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: 12px;
-  border: 1px solid var(--border-light);
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-light);
   box-shadow: var(--shadow-panel);
   position: relative;
   z-index: 10;

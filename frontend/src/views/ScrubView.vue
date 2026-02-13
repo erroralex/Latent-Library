@@ -82,7 +82,7 @@ const clear = () => {
 </script>
 
 <template>
-  <div class="flex flex-column align-items-center justify-content-center h-full p-4">
+  <div class="flex flex-column align-items-center justify-content-center h-full p-4 scrub-view-bg">
     <div class="text-center mb-5">
       <h1 class="text-4xl font-bold text-gradient mb-2">Metadata Scrubber</h1>
       <p class="text-gray-400">Remove hidden metadata (EXIF, Prompts, Workflow) for privacy.</p>
@@ -116,6 +116,10 @@ const clear = () => {
 </template>
 
 <style scoped>
+.scrub-view-bg {
+  background: transparent;
+}
+
 .text-gradient {
   background: var(--grad-text);
   -webkit-background-clip: text;

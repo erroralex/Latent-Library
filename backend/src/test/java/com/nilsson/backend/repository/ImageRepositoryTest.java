@@ -34,8 +34,7 @@ class ImageRepositoryTest {
     void setUp() throws Exception {
         File dbFile = tempDir.resolve("test-library.db").toFile();
         String connectionString = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-        DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource(connectionString);
-        this.dataSource = driverManagerDataSource;
+        this.dataSource = new DriverManagerDataSource(connectionString);
 
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT UNIQUE, file_hash TEXT, is_starred BOOLEAN DEFAULT 0, rating INTEGER DEFAULT 0, last_scanned INTEGER, is_missing BOOLEAN DEFAULT 0)");

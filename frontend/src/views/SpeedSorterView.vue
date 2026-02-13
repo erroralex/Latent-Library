@@ -215,7 +215,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-column h-full overflow-hidden p-3">
+  <div class="flex flex-column h-full overflow-hidden p-3 speed-sorter-bg">
     <div class="flex align-items-center justify-content-between mb-3 glass-panel p-3 border-round">
       <div class="flex align-items-center gap-3">
         <span class="text-xl font-bold text-gradient">Speed Sorter</span>
@@ -258,6 +258,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.speed-sorter-bg {
+  background: transparent;
+}
+
 .text-gradient {
   background: var(--grad-text);
   -webkit-background-clip: text;

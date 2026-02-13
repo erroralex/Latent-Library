@@ -44,6 +44,8 @@ class LibraryControllerTest {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
         String path = tempDir.getAbsolutePath();
 
+        // Mock PathService to return a valid file object
+        when(pathService.resolve(path)).thenReturn(tempDir);
         when(userDataManager.getExcludedPaths()).thenReturn(List.of());
         when(pathService.getNormalizedAbsolutePath(any(File.class))).thenReturn(path);
 

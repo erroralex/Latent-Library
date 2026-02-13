@@ -6,6 +6,8 @@
 :root, .theme-neon {
     /* --- Main Backgrounds --- */
     --bg-app: #000000;
+    --bg-app-image: radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 75%, rgba(216, 112, 255, 0.08) 0%, transparent 40%);
 
     /* --- Component Backgrounds --- */
     --bg-header: rgba(0, 0, 0, 0.80);

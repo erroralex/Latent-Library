@@ -80,7 +80,7 @@ const closeWindow = () => {
 <template>
   <div class="layout-wrapper h-screen flex flex-column overflow-hidden">
     <Toast position="bottom-right" />
-    <header class="menubar-glass flex align-items-center px-5 py-3 gap-5 draggable-header">
+    <header class="menubar-glass flex align-items-center pl-5 pr-1 py-2 gap-5 draggable-header">
       <div class="flex align-items-center gap-3 mr-5 no-drag">
         <img src="@/assets/icon.png" alt="Logo" style="height: 42px;" />
         <span class="text-2xl font-bold text-gradient">AI Toolbox</span>
@@ -95,7 +95,7 @@ const closeWindow = () => {
                 @click="navigate(item.path)" />
       </div>
 
-      <div class="flex gap-2 no-drag">
+      <div class="flex gap-1 no-drag">
         <Button icon="pi pi-minus" class="p-button-text text-gray-400 hover:text-white hover:bg-white-alpha-10 w-3rem h-3rem" @click="minimizeWindow" />
         <Button icon="pi pi-window-maximize" class="p-button-text text-gray-400 hover:text-white hover:bg-white-alpha-10 w-3rem h-3rem" @click="maximizeWindow" />
         <Button icon="pi pi-times" class="window-close-btn p-button-text text-gray-400 w-3rem h-3rem" @click="closeWindow" />

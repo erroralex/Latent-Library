@@ -203,7 +203,7 @@ public class CollectionRepository {
             return List.of();
         }
         String sql = """
-                    SELECT i.file_path 
+                    SELECT i.file_path
                     FROM images i 
                     JOIN collection_images ci ON i.id = ci.image_id 
                     JOIN collections c ON ci.collection_id = c.id 

@@ -173,7 +173,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative h-full w-full image-viewer-glass" @contextmenu.prevent="onRightClick">
+  <div class="relative h-full w-full image-viewer-bg" @contextmenu.prevent="onRightClick">
     <div
         class="absolute top-0 left-0 right-0 overflow-hidden flex align-items-center justify-content-center"
         style="bottom: 10rem"
@@ -225,8 +225,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.image-viewer-glass {
-  background: var(--bg-overlay);
+.image-viewer-bg {
+  background: transparent;
 }
 
 .text-red-400 {
