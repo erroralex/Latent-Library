@@ -52,7 +52,7 @@ class EdgeCaseTest {
     @Test
     @DisplayName("ThumbnailService should handle non-existent or corrupted files gracefully")
     void testCorruptFile(@TempDir Path tempDir) throws IOException {
-        ThumbnailService thumbnailService = new ThumbnailService();
+        ThumbnailService thumbnailService = new ThumbnailService(tempDir.toString());
         File corruptFile = tempDir.resolve("corrupt.jpg").toFile();
         Files.writeString(corruptFile.toPath(), "not an image");
 

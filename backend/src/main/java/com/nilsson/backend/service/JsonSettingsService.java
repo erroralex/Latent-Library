@@ -6,6 +6,7 @@ import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.model.AppSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -34,9 +35,9 @@ public class JsonSettingsService {
     
     private AppSettings currentSettings;
 
-    public JsonSettingsService() {
+    public JsonSettingsService(@Value("${app.data.dir:.}") String appDataDir) {
         this.mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        this.settingsPath = Paths.get(".").resolve(SETTINGS_FILE).toAbsolutePath().normalize();
+        this.settingsPath = Paths.get(appDataDir).resolve(SETTINGS_FILE).toAbsolutePath().normalize();
         initialize();
     }
 

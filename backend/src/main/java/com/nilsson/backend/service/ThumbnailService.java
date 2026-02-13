@@ -5,6 +5,7 @@ import com.nilsson.backend.exception.ValidationException;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -58,8 +59,8 @@ public class ThumbnailService {
     private final Semaphore cpuPermits;
     private final Path thumbnailCacheDir;
 
-    public ThumbnailService() {
-        this.thumbnailCacheDir = Paths.get(".").resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
+    public ThumbnailService(@Value("${app.data.dir:.}") String appDataDir) {
+        this.thumbnailCacheDir = Paths.get(appDataDir).resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
         try {
             if (!Files.exists(thumbnailCacheDir)) {
                 Files.createDirectories(thumbnailCacheDir);
@@ -132,7 +133,9 @@ public class ThumbnailService {
     }
 
     private ReentrantLock getLock(String key) {
-        int index = Math.abs(key.hashCode() % STRIPE_COUNT);
+        // Use bitwise masking to ensure a positive index, preventing ArrayIndexOutOfBoundsException
+        // if hashCode() returns Integer.MIN_VALUE.
+        int index = (key.hashCode() & 0x7FFFFFFF) % STRIPE_COUNT;
         return locks[index];
     }
 

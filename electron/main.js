@@ -24,7 +24,33 @@ let backendProcess;
 let backendPort = null; // Dynamic port
 
 const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
-const PORT_FILE = path.join(__dirname, '../backend/data/port.txt');
+
+function getBackendPaths() {
+    let jarPath, workingDir, portFile, appDataDir;
+
+    if (app.isPackaged) {
+        // Production: JAR is inside resources/backend
+        jarPath = path.join(process.resourcesPath, 'backend', JAR_NAME);
+        workingDir = path.join(process.resourcesPath, 'backend');
+        // In production, anchor data to the executable's directory for true portability
+        appDataDir = path.dirname(app.getPath('exe'));
+    } else {
+        // Development: JAR is in backend/target
+        jarPath = path.join(__dirname, '../backend/target', JAR_NAME);
+        workingDir = path.join(__dirname, '../backend');
+        // In dev, anchor data to the backend project root
+        appDataDir = workingDir;
+    }
+    
+    // Ensure data directory exists
+    const dataDir = path.join(appDataDir, 'data');
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    portFile = path.join(dataDir, 'port.txt');
+    return { jarPath, workingDir, portFile, appDataDir };
+}
 
 function createWindow() {
     if (!backendPort) return;
@@ -55,19 +81,26 @@ function createWindow() {
 }
 
 function startBackend() {
-    const devJarPath = path.join(__dirname, '../backend/target', JAR_NAME);
-    const projectRoot = path.join(__dirname, '../backend');
+    const { jarPath, workingDir, portFile, appDataDir } = getBackendPaths();
 
-    console.log('Starting backend JAR:', devJarPath);
-    console.log('Backend Working Directory:', projectRoot);
+    console.log('Starting backend JAR:', jarPath);
+    console.log('Backend Working Directory:', workingDir);
+    console.log('App Data Directory:', appDataDir);
 
     // Remove old port file if it exists
-    if (fs.existsSync(PORT_FILE)) {
-        fs.unlinkSync(PORT_FILE);
+    if (fs.existsSync(portFile)) {
+        try {
+            fs.unlinkSync(portFile);
+        } catch (e) {
+            console.warn("Could not delete old port file:", e.message);
+        }
     }
 
-    backendProcess = spawn('java', ['-jar', devJarPath], {
-        cwd: projectRoot
+    backendProcess = spawn('java', [
+        '-jar', jarPath,
+        `--app.data.dir=${appDataDir}`
+    ], {
+        cwd: workingDir
     });
 
     backendProcess.stdout.on('data', (data) => {
@@ -84,9 +117,9 @@ function startBackend() {
 
     // Poll for the port file
     const pollInterval = setInterval(() => {
-        if (fs.existsSync(PORT_FILE)) {
+        if (fs.existsSync(portFile)) {
             try {
-                const portStr = fs.readFileSync(PORT_FILE, 'utf8').trim();
+                const portStr = fs.readFileSync(portFile, 'utf8').trim();
                 backendPort = parseInt(portStr);
                 console.log(`Backend detected on port: ${backendPort} (via port.txt)`);
                 clearInterval(pollInterval);

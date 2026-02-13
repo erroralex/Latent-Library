@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,10 +42,12 @@ import java.util.stream.Collectors;
  *   collections, tags, and application settings.</li>
  *   <li><b>Advanced Search Orchestration:</b> Combines SQLite FTS5 search with relational filtering
  *   and DTO mapping to deliver responsive search results.</li>
- *   <li><b>File Integrity & Tracking:</b> Implements SHA-256 hashing to detect when files have been
+ *   <li><b>File Integrity & Tracking:</b> Implements a fast fingerprinting mechanism to detect when files have been
  *   moved or renamed, maintaining database consistency without re-indexing.</li>
  *   <li><b>Metadata Normalization:</b> Cleans and formats raw metadata values (e.g., LoRAs, Samplers)
  *   to ensure a consistent and user-friendly experience in the frontend.</li>
+ *   <li><b>System Integration:</b> Manages OS-level operations such as moving files to the system trash
+ *   and resolving platform-specific file paths.</li>
  *   <li><b>Application State:</b> Persists and retrieves user preferences, such as the last visited
  *   folder and excluded directory paths.</li>
  * </ul>
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 public class UserDataManager {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDataManager.class);
+    private static final int HASH_CHUNK_SIZE = 64 * 1024; // 64KB
 
     private final DatabaseService db;
     private final JsonSettingsService settingsService;
@@ -192,6 +196,19 @@ public class UserDataManager {
         });
     }
 
+    public boolean moveFileToTrash(File file) {
+        if (file == null || !file.exists()) {
+            throw new ResourceNotFoundException("File to delete", file != null ? file.getAbsolutePath() : "null");
+        }
+
+        boolean success = fileSystemService.moveFileToTrash(file);
+
+        if (success) {
+            imageRepo.deleteByPath(pathService.getNormalizedAbsolutePath(file));
+        }
+        return success;
+    }
+
     public void batchDeleteFiles(List<String> paths) {
         if (paths == null || paths.isEmpty()) return;
 
@@ -252,21 +269,44 @@ public class UserDataManager {
         }
     }
 
+    /**
+     * Calculates a fast fingerprint for the file to detect moves/renames.
+     * Instead of hashing the entire file, it hashes the size, and the first/last 64KB.
+     */
     private String calculateHash(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
+        try {
+            long length = file.length();
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] buffer = new byte[8192];
-            int n;
-            while ((n = fis.read(buffer)) != -1) {
-                digest.update(buffer, 0, n);
+            
+            // Include file length in the hash
+            digest.update(String.valueOf(length).getBytes());
+
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+                byte[] buffer = new byte[HASH_CHUNK_SIZE];
+                
+                // Read first chunk
+                int bytesRead = raf.read(buffer);
+                if (bytesRead > 0) {
+                    digest.update(buffer, 0, bytesRead);
+                }
+
+                // Read last chunk if file is large enough
+                if (length > HASH_CHUNK_SIZE) {
+                    raf.seek(length - HASH_CHUNK_SIZE);
+                    bytesRead = raf.read(buffer);
+                    if (bytesRead > 0) {
+                        digest.update(buffer, 0, bytesRead);
+                    }
+                }
             }
+
             byte[] bytes = digest.digest();
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
-            logger.error("Hash calculation failed: {}", file.getAbsolutePath(), e);
-            throw new ApplicationException("Failed to calculate unique file hash.", e);
+            logger.error("Fingerprint calculation failed: {}", file.getAbsolutePath(), e);
+            throw new ApplicationException("Failed to calculate unique file fingerprint.", e);
         }
     }
 
