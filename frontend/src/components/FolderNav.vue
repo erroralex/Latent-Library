@@ -12,7 +12,7 @@
  * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
  * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
-import {ref, onMounted, watch} from 'vue';
+import {ref, onMounted, watch, computed} from 'vue';
 import api from '@/services/api';
 import {useBrowserStore} from '@/stores/browser';
 import {useRouter} from 'vue-router';
@@ -24,6 +24,12 @@ import Dialog from 'primevue/dialog';
 import ConfirmDialog from 'primevue/confirmdialog';
 import {useConfirm} from 'primevue/useconfirm';
 import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+
+// Import logos
+import logoNeon from '@/assets/alx_logo_neon.png';
+import logoGold from '@/assets/alx_logo_gold.png';
+import logoLight from '@/assets/alx_logo_light.png';
 
 const store = useBrowserStore();
 const router = useRouter();
@@ -41,6 +47,24 @@ const menuModel = ref([]);
 const showSettings = ref(false);
 const excludedPaths = ref([]);
 const newExcludedPath = ref('');
+
+const currentTheme = ref('neon');
+const themeOptions = ref([
+    {label: 'Deep Neon', value: 'neon'},
+    {label: 'Clean Light', value: 'light'},
+    {label: 'Dark Premium', value: 'gold'}
+]);
+
+const currentLogo = computed(() => {
+  switch (store.currentTheme) {
+    case 'gold':
+      return logoGold;
+    case 'light':
+      return logoLight;
+    default:
+      return logoNeon;
+  }
+});
 
 watch(() => store.navRefreshKey, () => {
   loadTree();
@@ -247,12 +271,17 @@ const openInExplorer = async (path) => {
 
 const openSettings = async () => {
   showSettings.value = true;
+  currentTheme.value = store.currentTheme; // Sync with store
   try {
     const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
   } catch (e) {
     console.error("Failed to load excluded paths", e);
   }
+};
+
+const changeTheme = () => {
+    store.setTheme(currentTheme.value);
 };
 
 const openDataFolder = async () => {
@@ -370,13 +399,22 @@ onMounted(loadTree);
     </div>
 
     <div class="p-2 mt-auto border-top-1 border-white-alpha-10 flex justify-content-center">
-      <img src="@/assets/alx_logo.png" alt="ALX Logo" style="height: 60px; opacity: 0.9;">
+      <img :src="currentLogo" alt="ALX Logo" style="height: 60px; width: auto; object-fit: contain; opacity: 0.9;">
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel"/>
 
     <Dialog v-model:visible="showSettings" modal header="Settings" :style="{ width: '50vw' }" class="glass-dialog">
       <div class="flex flex-column gap-4">
+        <div>
+          <h3 class="text-lg font-semibold mb-2 text-white">Appearance</h3>
+          <div class="flex align-items-center gap-3">
+            <label class="text-white">Theme</label>
+            <Dropdown v-model="currentTheme" :options="themeOptions" optionLabel="label" optionValue="value"
+                      class="w-full md:w-14rem glass-input" @change="changeTheme" />
+          </div>
+        </div>
+
         <div>
           <h3 class="text-lg font-semibold mb-2 text-white">Data Management</h3>
           <div class="flex gap-2">
@@ -413,22 +451,23 @@ onMounted(loadTree);
 
 <style scoped>
 .folder-nav-glass {
-  background: var(--app-bg-panel, rgba(0, 0, 0, 0.7));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-sidebar-left);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--border-light);
   box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  background: var(--grad-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .separator-line {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-light);
   margin: 0.5rem 0;
   width: 100%;
 }
@@ -436,33 +475,33 @@ onMounted(loadTree);
 .glass-dialog .p-dialog-header,
 .glass-dialog .p-dialog-content,
 .glass-dialog .p-dialog-footer {
-  background: rgba(10, 10, 10, 0.95) !important;
-  color: white;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-panel-opaque) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-input) !important;
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
+  color: var(--text-primary) !important;
 }
 
 .glass-box {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
 }
 
 :deep(.p-tree) {
   background: transparent !important;
   border: none !important;
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem; /* Increased left padding to 1.5rem */
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
   padding: 0.5rem 0.75rem;
-  margin: 4px 0;
+  margin: 4px 4px; /* Add horizontal margin to prevent shadow clipping */
   border-radius: 6px;
-  color: #9ca3af;
+  color: var(--text-secondary);
   transition: all 0.2s ease;
   border: none;
   font-weight: 600;
@@ -470,6 +509,17 @@ onMounted(loadTree);
   z-index: 1;
   background: transparent !important;
   overflow: visible !important;
+  width: fit-content; /* Fix: Button only as wide as text */
+  min-width: 100%; /* Ensure it still spans if needed for hover effect, wait... user said "less wide" */
+}
+
+/* Reverting min-width: 100% to allow fit-content behavior as requested */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
+  min-width: auto;
+}
+
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content .p-treenode-label) {
+  font-size: 0.9rem; /* Smaller font size */
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus),
@@ -484,11 +534,12 @@ onMounted(loadTree);
   border: none !important;
 }
 
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::before) {
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::before),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::before) {
   content: '';
   position: absolute;
   inset: -1px;
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   border-radius: 6px;
   z-index: -2;
   opacity: 0;
@@ -496,18 +547,19 @@ onMounted(loadTree);
   transition: opacity 0.3s ease;
 }
 
-:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content::after) {
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::after),
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::after) {
   content: '';
   position: absolute;
   inset: 0;
-  background: transparent;
+  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
   border-radius: 6px;
   z-index: -1;
   transition: background 0.3s ease;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover) {
-  color: white !important;
+  color: var(--text-primary) !important;
   transform: translateY(-1px);
 }
 
@@ -516,14 +568,14 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::after) {
-  background: #000000;
+  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-label),
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-icon) {
   background: none !important;
-  -webkit-text-fill-color: white !important;
-  color: white !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  color: var(--text-primary) !important;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight) {
@@ -532,7 +584,7 @@ onMounted(loadTree);
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-label),
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-icon) {
-  background-image: var(--app-grad-hover);
+  background-image: var(--grad-text);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -547,7 +599,7 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::after) {
-  background: #000000;
+  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight:hover) {
@@ -560,12 +612,12 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-toggler) {
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-right: 0.25rem;
 }
 
 :deep(.p-tree .p-tree-toggler:hover) {
-  color: white;
+  color: var(--text-primary);
   background: transparent;
 }
 </style>

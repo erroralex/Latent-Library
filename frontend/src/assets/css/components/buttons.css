@@ -1,0 +1,120 @@
+/* Button Styles */
+
+.nav-btn {
+    color: var(--text-secondary) !important;
+    border-radius: 8px;
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    border: 1px solid transparent; /* Placeholder for layout */
+}
+
+/* The Gradient Glow/Border Effect */
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: var(--grad-hover);
+    border-radius: 9px;
+    z-index: -2;
+    opacity: 0;
+    filter: blur(4px);
+    transition: opacity 0.3s ease;
+}
+
+/* The Background Mask (to make it look like a border) */
+.nav-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border-radius: 8px;
+    z-index: -1;
+    transition: background 0.3s ease;
+}
+
+.nav-btn:hover {
+    color: var(--text-primary) !important;
+    transform: translateY(-1px);
+}
+
+.nav-btn:hover::before {
+    opacity: 0.8;
+}
+
+.nav-btn:hover::after {
+    background: var(--bg-btn-inner); /* Use theme variable */
+}
+
+/* Active State - Increased Specificity */
+.nav-btn.active-nav-btn {
+    color: transparent !important; /* Text is gradient */
+}
+
+.nav-btn.active-nav-btn::before {
+    opacity: 0.8; /* Ensure glow is visible */
+}
+
+.nav-btn.active-nav-btn::after {
+    background: var(--bg-btn-inner); /* Ensure text is readable against theme bg */
+}
+
+.nav-btn.active-nav-btn .p-button-label,
+.nav-btn.active-nav-btn .p-button-icon {
+    background: var(--grad-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent !important;
+    font-weight: 700;
+}
+
+/* Window Control Buttons */
+.window-close-btn {
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+    overflow: visible !important;
+}
+
+.window-close-btn::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: var(--status-danger);
+    border-radius: 9px;
+    z-index: -2;
+    opacity: 0;
+    filter: blur(4px);
+    transition: opacity 0.3s ease;
+}
+
+.window-close-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border-radius: 8px;
+    z-index: -1;
+    transition: background 0.3s ease;
+}
+
+.window-close-btn:hover {
+    color: var(--text-primary) !important;
+    transform: translateY(-1px);
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.window-close-btn:hover::before {
+    opacity: 0.8;
+}
+
+.window-close-btn:hover::after {
+    background: var(--bg-btn-inner);
+}
+
+.window-close-btn:hover .p-button-icon {
+    color: var(--text-primary) !important;
+}

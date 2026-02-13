@@ -346,46 +346,49 @@ onMounted(() => {
 }
 
 .text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  background: var(--grad-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .collection-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .collection-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--bg-input);
+  border-color: var(--border-input);
 }
 
 .glass-dialog .p-dialog-header,
 .glass-dialog .p-dialog-content,
 .glass-dialog .p-dialog-footer {
-  background: rgba(10, 10, 10, 0.75) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-panel-opaque) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-input) !important;
 }
 
 .glass-dialog .p-dialog-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-input);
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
+  color: var(--text-primary) !important;
 }
 
 .selected-chips-container {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+}
+
+.text-white {
+  color: var(--text-primary) !important;
 }
 </style>

@@ -1,0 +1,60 @@
+/*
+   Theme: Deep Neon Cinematic (Restored & Enhanced)
+*/
+:root, .theme-neon {
+    /* Main Backgrounds - Restored from original variables.css */
+    --bg-app: #000000; /* Was --app-bg-deepest */
+
+    /* Component Backgrounds */
+    --bg-header: rgba(0, 0, 0, 0.80); /* Was --app-bg-header */
+    --bg-sidebar-left: rgba(0, 0, 0, 0.75); /* Matching --app-bg-panel */
+    --bg-sidebar-right: rgba(0, 0, 0, 0.75); /* Matching --app-bg-panel */
+    --bg-toolbar: rgba(0, 0, 0, 0.80); /* Matching --app-bg-header */
+    --bg-filmstrip: rgba(0, 0, 0, 0.75); /* Updated to match sidebars */
+
+    /* Generic Panels */
+    --bg-panel: rgba(0, 0, 0, 0.75); /* Was --app-bg-panel */
+    --bg-panel-opaque: rgba(10, 10, 10, 0.95);
+    --bg-input: rgba(0, 0, 0, 0.85); /* Was --app-bg-input */
+    --bg-overlay: rgba(0, 0, 0, 0.75);
+    --bg-menu: rgba(10, 10, 10, 0.95); /* For dropdowns/menus */
+
+    /* Button Internals */
+    --bg-btn-inner: #000000;
+
+    /* Borders */
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-input: rgba(255, 255, 255, 0.1);
+
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0; /* Was --text-secondary */
+    --text-muted: #666666; /* Was --text-muted */
+
+    /* Accents & Gradients */
+    --accent-primary: #66fcf1; /* Was --app-cyan */
+    --accent-secondary: #d870ff; /* Was --app-purple */
+
+    /* Gradients - Restored Angles */
+    --grad-text: linear-gradient(90deg, #66fcf1, #d870ff);
+    --grad-hover: linear-gradient(135deg, #66fcf1 0%, #d870ff 100%); /* Restored 135deg */
+    --grad-border: linear-gradient(135deg, rgba(102, 252, 241, 0.8) 0%, rgba(216, 112, 255, 0.8) 100%); /* Restored --app-grad-primary */
+
+    /* Status Colors */
+    --status-danger: #ff4d4d; /* Was --app-red-warning */
+    --status-warning: #eab308;
+    --status-success: #22c55e;
+
+    /* Effects */
+    --glass-blur: blur(20px);
+    --shadow-panel: 0 10px 40px -10px rgba(0, 0, 0, 1.0), inset 0 0 0 1px rgba(255, 255, 255, 0.06); /* Restored --shadow-glass */
+
+    /* Neon Glow Effects */
+    --shadow-glow-primary: 0 0 10px rgba(102, 252, 241, 0.1); /* Restored --glow-soft */
+    --shadow-glow-secondary: 0 0 20px rgba(216, 112, 255, 0.25); /* Restored --glow-strong */
+
+    /* Scrollbars */
+    --scrollbar-track: rgba(255, 255, 255, 0.02);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+}

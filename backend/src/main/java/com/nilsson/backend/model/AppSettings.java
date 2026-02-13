@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class AppSettings {
     private String lastFolder;
+    private String theme = "neon"; // Default theme
     private List<String> excludedPaths = new ArrayList<>();
     private SpeedSorterSettings speedSorter = new SpeedSorterSettings();
 
@@ -18,6 +19,14 @@ public class AppSettings {
 
     public void setLastFolder(String lastFolder) {
         this.lastFolder = lastFolder;
+    }
+
+    public String getTheme() {
+        return theme;
+    }
+
+    public void setTheme(String theme) {
+        this.theme = theme;
     }
 
     public List<String> getExcludedPaths() {

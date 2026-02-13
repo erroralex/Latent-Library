@@ -149,16 +149,17 @@ const reset = () => {
 
 <style scoped>
 .text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  background: var(--grad-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .drop-zone {
   width: 300px;
   height: 300px;
-  background: rgba(20, 20, 20, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 1;
@@ -168,7 +169,7 @@ const reset = () => {
   content: '';
   position: absolute;
   inset: -2px;
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   border-radius: inherit;
   z-index: -2;
   opacity: 0;
@@ -202,7 +203,7 @@ const reset = () => {
 
 .slider-handle {
   background: linear-gradient(#000, #000) padding-box,
-  var(--app-grad-hover) border-box;
+  var(--grad-hover) border-box;
   border: 2px solid transparent;
 }
 </style>

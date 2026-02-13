@@ -22,6 +22,9 @@ export const useBrowserStore = defineStore('browser', {
         currentTags: [],
         cardSize: 160,
         isSidebarOpen: false,
+        
+        // Theme State
+        currentTheme: 'neon',
 
         availableModels: [],
         availableSamplers: [],
@@ -66,6 +69,7 @@ export const useBrowserStore = defineStore('browser', {
                 await this.waitForBackend();
 
                 await this.loadFilters();
+                await this.loadTheme(); // Load theme on startup
                 
                 // Fetch last folder from backend settings instead of localStorage
                 try {
@@ -83,6 +87,33 @@ export const useBrowserStore = defineStore('browser', {
                 // Note: The global interceptor in api.js will handle the visual notification
             } finally {
                 this.isLoading = false;
+            }
+        },
+        
+        async loadTheme() {
+            try {
+                const res = await api.get('/system/theme');
+                if (res.data && res.data.theme) {
+                    this.setTheme(res.data.theme, false); // Don't save again, just apply
+                }
+            } catch (e) {
+                console.warn("Failed to load theme setting", e);
+            }
+        },
+        
+        async setTheme(themeName, save = true) {
+            this.currentTheme = themeName;
+            
+            // Apply theme class to body
+            document.body.className = ''; // Clear existing
+            document.body.classList.add(`theme-${themeName}`);
+            
+            if (save) {
+                try {
+                    await api.post('/system/theme', null, { params: { theme: themeName } });
+                } catch (e) {
+                    console.error("Failed to save theme setting", e);
+                }
             }
         },
 

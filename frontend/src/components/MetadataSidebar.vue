@@ -120,7 +120,7 @@ const setRating = (rating, event) => {
           <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
                   v-tooltip.left="'Copy Prompt'" @click="copyToClipboard(meta.Prompt)"/>
         </div>
-        <div class="glass-box p-2 border-round text-sm line-height-3 select-text text-gray-200"
+        <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
              style="max-height: 150px; overflow-y: auto;">
           {{ meta.Prompt || 'No prompt found' }}
         </div>
@@ -132,7 +132,7 @@ const setRating = (rating, event) => {
           <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
                   v-tooltip.left="'Copy Negative Prompt'" @click="copyToClipboard(meta.Negative)"/>
         </div>
-        <div class="glass-box p-2 border-round text-sm line-height-3 select-text text-gray-400"
+        <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
              style="max-height: 100px; overflow-y: auto;">
           {{ meta.Negative || 'No negative prompt' }}
         </div>
@@ -201,21 +201,21 @@ const setRating = (rating, event) => {
 
 <style scoped>
 .metadata-sidebar-glass {
-  background: var(--app-bg-panel, rgba(0, 0, 0, 0.75));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-sidebar-right);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-left: 1px solid var(--border-light);
   box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .glass-box {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
   color: var(--text-primary);
 }
 
@@ -223,30 +223,30 @@ const setRating = (rating, event) => {
   box-shadow: none !important;
   outline: none !important;
   border-color: transparent !important;
-  border-image: var(--app-grad-hover) 1 !important;
+  border-image: var(--grad-hover) 1 !important;
 }
 
 .text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  background: var(--grad-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .raw-meta-pre {
-  background-color: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   padding: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
   max-height: 60vh;
   overflow-y: auto;
-  color: #e0e0e0;
+  color: var(--text-secondary);
 }
 
 .lora-chip {
   background: transparent !important;
-  color: white !important;
+  color: var(--text-primary) !important;
   border: none !important;
   position: relative;
   z-index: 1;
@@ -257,7 +257,7 @@ const setRating = (rating, event) => {
   content: '';
   position: absolute;
   inset: -1px;
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   border-radius: 16px;
   z-index: -2;
 }
@@ -266,49 +266,65 @@ const setRating = (rating, event) => {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000;
+  background: var(--bg-btn-inner); /* Use theme variable */
   border-radius: 16px;
   z-index: -1;
 }
 
 :deep(.glass-dialog) {
-  background: rgba(15, 15, 15, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-panel-opaque) !important;
+  border: 1px solid var(--border-input) !important;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: blur(20px) !important;
-  color: white !important;
+  backdrop-filter: var(--glass-blur) !important;
+  color: var(--text-primary) !important;
 }
 
 :deep(.glass-dialog .p-dialog-header) {
   background: transparent !important;
-  color: white !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-input) !important;
   padding: 1.5rem !important;
 }
 
 :deep(.glass-dialog .p-dialog-content) {
   background: transparent !important;
-  color: white !important;
+  color: var(--text-primary) !important;
   padding: 1.5rem !important;
 }
 
 :deep(.glass-dialog .p-dialog-footer) {
   background: transparent !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top: 1px solid var(--border-input) !important;
   padding: 1.5rem !important;
 }
 
 :deep(.glass-dialog .p-dialog-header-icon) {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.glass-dialog .p-dialog-header-icon:hover) {
   background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  color: var(--text-primary) !important;
 }
 
 .text-yellow-500 {
-  color: #eab308 !important;
+  color: var(--status-warning) !important;
+}
+
+.text-red-400 {
+  color: var(--status-danger) !important;
+}
+
+.text-500 {
+  color: var(--text-secondary) !important;
+}
+
+.text-white {
+  color: var(--text-primary) !important;
+}
+
+.border-white-alpha-10 {
+  border-color: var(--border-light) !important;
 }
 
 /* Explicitly remove focus outline for star buttons */

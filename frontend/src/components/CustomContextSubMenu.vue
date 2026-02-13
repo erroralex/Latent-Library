@@ -73,7 +73,7 @@ const execute = (item) => {
 }
 
 .menu-item:hover {
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   color: #000000;
 }
 
@@ -92,7 +92,7 @@ const execute = (item) => {
 .menu-icon {
   margin-right: 12px;
   font-size: 14px;
-  color: #66fcf1;
+  color: var(--accent-primary);
   width: 16px;
   text-align: center;
   transition: color 0.1s;
@@ -114,7 +114,7 @@ const execute = (item) => {
 
 .menu-separator {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-input);
   margin: 4px 0;
 }
 

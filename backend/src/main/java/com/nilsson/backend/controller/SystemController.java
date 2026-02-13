@@ -170,4 +170,15 @@ public class SystemController {
         }
         return ResponseEntity.ok(Map.of());
     }
+
+    @GetMapping("/theme")
+    public ResponseEntity<Map<String, String>> getTheme() {
+        return ResponseEntity.ok(Map.of("theme", userDataManager.getSettings().getTheme()));
+    }
+
+    @PostMapping("/theme")
+    public ResponseEntity<Void> setTheme(@RequestParam String theme) {
+        userDataManager.updateSettings(s -> s.setTheme(theme));
+        return ResponseEntity.ok().build();
+    }
 }
