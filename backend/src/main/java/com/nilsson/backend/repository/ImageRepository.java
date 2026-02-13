@@ -71,7 +71,7 @@ public class ImageRepository {
         if (oldPath == null || oldPath.isBlank() || newPath == null || newPath.isBlank()) {
             throw new ValidationException("Both old and new paths are required for update.");
         }
-        jdbcClient.sql("UPDATE images SET file_path = ? WHERE file_path = ?")
+        jdbcClient.sql("UPDATE images SET file_path = ?, is_missing = 0 WHERE file_path = ?")
                 .param(newPath)
                 .param(oldPath)
                 .update();
@@ -83,7 +83,7 @@ public class ImageRepository {
             throw new ValidationException("Path and hash are required for registration.");
         }
 
-        jdbcClient.sql("INSERT OR IGNORE INTO images(file_path, file_hash, last_scanned) VALUES(?, ?, ?)")
+        jdbcClient.sql("INSERT OR IGNORE INTO images(file_path, file_hash, last_scanned, is_missing) VALUES(?, ?, ?, 0)")
                 .param(path)
                 .param(hash)
                 .param(System.currentTimeMillis())
@@ -159,5 +159,20 @@ public class ImageRepository {
         return jdbcClient.sql("SELECT file_path FROM images WHERE is_starred = 1")
                 .query(String.class)
                 .list();
+    }
+
+    public void setMissing(String path, boolean missing) {
+        jdbcClient.sql("UPDATE images SET is_missing = ? WHERE file_path = ?")
+                .param(missing)
+                .param(path)
+                .update();
+    }
+
+    public boolean isMissing(String path) {
+        return jdbcClient.sql("SELECT is_missing FROM images WHERE file_path = ?")
+                .param(path)
+                .query(Boolean.class)
+                .optional()
+                .orElse(false);
     }
 }

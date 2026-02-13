@@ -50,6 +50,8 @@ class UserDataManagerTest {
     private SearchRepository searchRepository;
     @Mock
     private FtsService ftsService;
+    @Mock
+    private FileSystemService fileSystemService;
 
     @InjectMocks
     private UserDataManager userDataManager;
@@ -110,8 +112,14 @@ class UserDataManagerTest {
 
         when(pathService.resolve(path1)).thenReturn(file1);
         when(pathService.resolve(path2)).thenReturn(file2);
-        when(file1.exists()).thenReturn(false); // Simulate missing file to test DB cleanup fallback
-        when(file2.exists()).thenReturn(false);
+        when(file1.exists()).thenReturn(true);
+        when(file2.exists()).thenReturn(true);
+        
+        // Mock normalization to return the paths
+        when(pathService.getNormalizedAbsolutePath(file1)).thenReturn(path1);
+        when(pathService.getNormalizedAbsolutePath(file2)).thenReturn(path2);
+
+        when(fileSystemService.moveFileToTrash(any())).thenReturn(true);
 
         userDataManager.batchDeleteFiles(List.of(path1, path2));
 
