@@ -10,9 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -76,8 +74,11 @@ class IndexingServiceTest {
     }
 
     @Test
-    void reconcileLibrary_ShouldRemoveGhostRecords() {
-        String ghostPath = "/ghost/path/img.png";
+    void reconcileLibrary_ShouldRemoveGhostRecords(@TempDir Path tempDir) {
+        // Create a real directory but a non-existent file inside it
+        File existingDir = tempDir.toFile();
+        String ghostPath = new File(existingDir, "ghost.png").getAbsolutePath().replace("\\", "/");
+        
         when(dataManager.getLastFolder()).thenReturn(null);
 
         doAnswer(invocation -> {
@@ -91,10 +92,35 @@ class IndexingServiceTest {
         indexingService.reconcileLibrary();
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(200); // Wait for virtual thread
         } catch (InterruptedException e) {
         }
 
         verify(imageRepo).deleteByPath(ghostPath);
+    }
+
+    @Test
+    void reconcileLibrary_ShouldMarkAsMissingIfFolderIsGone() {
+        String missingFolderPath = "/missing/drive/img.png";
+        when(dataManager.getLastFolder()).thenReturn(null);
+
+        doAnswer(invocation -> {
+            java.util.function.Consumer<String> consumer = invocation.getArgument(0);
+            consumer.accept(missingFolderPath);
+            return null;
+        }).when(imageRepo).forEachFilePath(any());
+
+        when(pathService.resolve(missingFolderPath)).thenReturn(new File(missingFolderPath));
+
+        indexingService.reconcileLibrary();
+
+        try {
+            Thread.sleep(200); // Wait for virtual thread
+        } catch (InterruptedException e) {
+        }
+
+        // Should mark as missing, NOT delete
+        verify(imageRepo).setMissing(missingFolderPath, true);
+        verify(imageRepo, never()).deleteByPath(anyString());
     }
 }

@@ -81,6 +81,11 @@ public class IndexingService {
         stopWatching();
     }
 
+    /**
+     * Performs a lazy reconciliation of the library.
+     * Instead of checking every file on startup, it marks records as potentially missing
+     * and validates them in a low-priority background thread.
+     */
     public void reconcileLibrary() {
         File lastFolder = dataManager.getLastFolder();
         if (lastFolder != null && lastFolder.exists() && lastFolder.isDirectory()) {
@@ -88,47 +93,66 @@ public class IndexingService {
             indexFolder(lastFolder);
         }
 
-        Runnable ghostCleanupTask = () -> {
-            logger.info("[Reconcile] Starting background ghost record cleanup...");
+        Runnable lazyReconcileTask = () -> {
+            logger.info("[Reconcile] Starting background library reconciliation...");
             long start = System.currentTimeMillis();
             AtomicInteger removedCount = new AtomicInteger(0);
+            AtomicInteger markedMissingCount = new AtomicInteger(0);
+
+            // Set of parent directories we've already checked for existence
+            Set<String> checkedDirs = new HashSet<>();
 
             imageRepo.forEachFilePath(path -> {
-                File file = null;
                 try {
-                    file = pathService.resolve(path);
-                } catch (InvalidPathException e) {
-                    logger.warn("[Reconcile] Invalid path found in DB: {}. Deleting record.", path);
-                    imageRepo.deleteByPath(path);
-                    removedCount.incrementAndGet();
-                    return;
-                }
+                    File file = pathService.resolve(path);
+                    File parentDir = file.getParentFile();
 
-                if (file != null && !file.exists()) {
-                    logger.info("[Reconcile] File missing: {}. Deleting record from DB.", path);
-                    imageRepo.deleteByPath(path);
-                    
-                    // Cleanup orphaned thumbnail
-                    File thumbnail = thumbnailService.getThumbnail(file);
-                    if (thumbnail != null && thumbnail.exists()) {
-                        if (thumbnail.delete()) {
-                            logger.debug("[Reconcile] Deleted orphaned thumbnail for: {}", path);
+                    // Optimization: Check if parent directory exists first
+                    if (parentDir != null) {
+                        String parentPath = parentDir.getAbsolutePath();
+                        if (!checkedDirs.contains(parentPath)) {
+                            if (!parentDir.exists()) {
+                                // Entire folder is missing (e.g. USB unplugged)
+                                // Mark as missing but DO NOT delete metadata
+                                logger.debug("[Reconcile] Parent directory missing, marking as missing: {}", parentPath);
+                                imageRepo.setMissing(path, true);
+                                markedMissingCount.incrementAndGet();
+                                checkedDirs.add(parentPath);
+                                return;
+                            }
+                            checkedDirs.add(parentPath);
                         }
                     }
-                    
-                    removedCount.incrementAndGet();
+
+                    if (!file.exists()) {
+                        // File is specifically missing from an existing directory
+                        // This usually means it was deleted, so we remove the record
+                        logger.info("[Reconcile] File missing from disk: {}. Deleting record.", path);
+                        imageRepo.deleteByPath(path);
+                        
+                        // Cleanup orphaned thumbnail
+                        File thumbnail = thumbnailService.getThumbnail(file);
+                        if (thumbnail != null && thumbnail.exists()) {
+                            thumbnail.delete();
+                        }
+                        
+                        removedCount.incrementAndGet();
+                    } else {
+                        // File exists, ensure it's not marked as missing
+                        if (imageRepo.isMissing(path)) {
+                            imageRepo.setMissing(path, false);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("[Reconcile] Error checking path: {}. Skipping.", path);
                 }
             });
 
-            if (removedCount.get() > 0) {
-                logger.info("[Reconcile] Background cleanup finished. Removed {} ghost records in {}ms",
-                        removedCount.get(), (System.currentTimeMillis() - start));
-            } else {
-                logger.debug("[Reconcile] Background cleanup finished. Library is consistent.");
-            }
+            logger.info("[Reconcile] Background reconciliation finished. Removed: {}, Marked Missing: {} in {}ms",
+                    removedCount.get(), markedMissingCount.get(), (System.currentTimeMillis() - start));
         };
 
-        executor.submit(ghostCleanupTask);
+        executor.submit(lazyReconcileTask);
     }
 
     public void indexFolder(File folder) {

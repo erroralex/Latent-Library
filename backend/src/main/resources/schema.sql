@@ -22,7 +22,11 @@ CREATE TABLE IF NOT EXISTS images
         DEFAULT
             0,
     last_scanned
-        INTEGER
+        INTEGER,
+    is_missing
+        BOOLEAN
+        DEFAULT
+            0
 );
 
 -- Table for parsed metadata (Key-Value pairs per image)
@@ -125,3 +129,4 @@ CREATE TABLE IF NOT EXISTS collection_exclusions (
 CREATE INDEX IF NOT EXISTS idx_file_path ON images (file_path);
 CREATE INDEX IF NOT EXISTS idx_file_hash ON images (file_hash);
 CREATE INDEX IF NOT EXISTS idx_tags_text ON image_tags (tag);
+CREATE INDEX IF NOT EXISTS idx_images_is_missing ON images (is_missing);

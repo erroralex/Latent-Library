@@ -14,18 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +45,6 @@ import java.util.stream.Collectors;
  *   moved or renamed, maintaining database consistency without re-indexing.</li>
  *   <li><b>Metadata Normalization:</b> Cleans and formats raw metadata values (e.g., LoRAs, Samplers)
  *   to ensure a consistent and user-friendly experience in the frontend.</li>
- *   <li><b>System Integration:</b> Manages OS-level operations such as moving files to the system trash
- *   and resolving platform-specific file paths.</li>
  *   <li><b>Application State:</b> Persists and retrieves user preferences, such as the last visited
  *   folder and excluded directory paths.</li>
  * </ul>
@@ -74,6 +65,7 @@ public class UserDataManager {
     private final PathService pathService;
     private final SearchRepository searchRepository;
     private final FtsService ftsService;
+    private final FileSystemService fileSystemService;
 
     public UserDataManager(DatabaseService db,
                            JsonSettingsService settingsService,
@@ -84,7 +76,8 @@ public class UserDataManager {
                            TagService tagService,
                            PathService pathService,
                            SearchRepository searchRepository,
-                           FtsService ftsService) {
+                           FtsService ftsService,
+                           FileSystemService fileSystemService) {
         this.db = db;
         this.settingsService = settingsService;
         this.imageRepo = imageRepo;
@@ -96,6 +89,7 @@ public class UserDataManager {
         this.pathService = pathService;
         this.searchRepository = searchRepository;
         this.ftsService = ftsService;
+        this.fileSystemService = fileSystemService;
     }
 
     public void shutdown() {
@@ -198,32 +192,6 @@ public class UserDataManager {
         });
     }
 
-    public boolean moveFileToTrash(File file) {
-        if (file == null || !file.exists()) {
-            throw new ResourceNotFoundException("File to delete", file != null ? file.getAbsolutePath() : "null");
-        }
-
-        boolean success = false;
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
-            try {
-                success = Desktop.getDesktop().moveToTrash(file);
-            } catch (Exception e) {
-                logger.warn("System trash operation failed for: {}. Attempting fallback.", file.getAbsolutePath());
-            }
-        }
-
-        if (!success) {
-            success = moveFileToAppTrash(file);
-        }
-
-        if (success) {
-            imageRepo.deleteByPath(pathService.getNormalizedAbsolutePath(file));
-        } else {
-            throw new ApplicationException("Failed to delete file. System trash unavailable and fallback failed.");
-        }
-        return success;
-    }
-
     public void batchDeleteFiles(List<String> paths) {
         if (paths == null || paths.isEmpty()) return;
 
@@ -232,20 +200,7 @@ public class UserDataManager {
             try {
                 File file = pathService.resolve(path);
                 if (file.exists()) {
-                    boolean success = false;
-                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
-                        try {
-                            success = Desktop.getDesktop().moveToTrash(file);
-                        } catch (Exception e) {
-                            logger.warn("System trash operation failed for: {}. Attempting fallback.", file.getAbsolutePath());
-                        }
-                    }
-
-                    if (!success) {
-                        success = moveFileToAppTrash(file);
-                    }
-
-                    if (success) {
+                    if (fileSystemService.moveFileToTrash(file)) {
                         deletedPaths.add(pathService.getNormalizedAbsolutePath(file));
                     }
                 } else {
@@ -262,46 +217,10 @@ public class UserDataManager {
         }
     }
 
-    private boolean moveFileToAppTrash(File file) {
-        try {
-            Path trashDir = Paths.get("data", "trash").toAbsolutePath().normalize();
-            if (!Files.exists(trashDir)) {
-                Files.createDirectories(trashDir);
-            }
-            
-            String uniqueName = System.currentTimeMillis() + "_" + file.getName();
-            Path target = trashDir.resolve(uniqueName);
-            
-            Files.move(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
-            logger.info("Moved file to application trash: {}", target);
-            return true;
-        } catch (IOException e) {
-            logger.error("Fallback trash operation failed", e);
-            return false;
-        }
-    }
-
     public void renameFile(File file, String newName) {
-        if (file == null || !file.exists()) {
-            throw new ResourceNotFoundException("File to rename", file != null ? file.getAbsolutePath() : "null");
-        }
-        if (newName == null || newName.isBlank()) {
-            throw new ValidationException("New filename cannot be empty.");
-        }
-
-        File parent = file.getParentFile();
-        File newFile = new File(parent, newName);
-
-        if (newFile.exists()) {
-            throw new ValidationException("A file with that name already exists in the destination folder.");
-        }
-
-        boolean success = file.renameTo(newFile);
-        if (!success) {
-            throw new ApplicationException("Failed to rename file on disk.");
-        }
-
         String oldPath = pathService.getNormalizedAbsolutePath(file);
+        
+        File newFile = fileSystemService.renameFile(file, newName);
         String newPath = pathService.getNormalizedAbsolutePath(newFile);
 
         // Update database path to preserve metadata
@@ -439,11 +358,6 @@ public class UserDataManager {
 
     public void deleteCollection(String name) {
         collectionService.deleteCollection(name);
-    }
-
-    public void addImageToCollection(String collectionName, File file) {
-        int id = getOrCreateImageIdInternal(file);
-        collectionService.addImageToCollection(collectionName, id);
     }
 
     public void addImagesToCollection(String collectionName, List<String> paths) {
