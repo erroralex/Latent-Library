@@ -12,3 +12,8 @@ out/
 target/
 electron/dist/
 electron/node_modules/
+
+# Application Data
+data/
+backend/data/
+frontend/data/
