@@ -148,6 +148,10 @@ const reset = () => {
 </template>
 
 <style scoped>
+.comparator-view {
+  background: transparent;
+}
+
 .text-gradient {
   background: var(--grad-text);
   -webkit-background-clip: text;
@@ -181,7 +185,7 @@ const reset = () => {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000000;
+  background: transparent;
   border-radius: inherit;
   z-index: -1;
   opacity: 0;

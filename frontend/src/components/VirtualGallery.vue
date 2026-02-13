@@ -128,7 +128,7 @@ defineExpose({gridCols});
 </script>
 
 <template>
-  <div class="h-full p-3 overflow-hidden" ref="galleryContainer">
+  <div class="h-full p-3 overflow-hidden gallery-bg" ref="galleryContainer">
     <VirtualScroller ref="scrollerRef" :items="chunkedFiles" :itemSize="store.cardSize + 16" class="h-full"
                      @scroll-index-change="onScrollIndexChange">
       <template v-slot:item="{ item, options }">
@@ -152,6 +152,10 @@ defineExpose({gridCols});
 </template>
 
 <style scoped>
+.gallery-bg {
+  background: transparent;
+}
+
 .outline-active {
   position: relative;
   z-index: 1;

@@ -39,7 +39,7 @@ public class LibraryController {
 
     @PostMapping("/scan")
     public ResponseEntity<List<ImageDTO>> scanFolder(@RequestParam String path) {
-        File folder = new File(path);
+        File folder = pathService.resolve(path);
         if (!folder.exists() || !folder.isDirectory()) {
             throw new ResourceNotFoundException("Folder", path);
         }

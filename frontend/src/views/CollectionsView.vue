@@ -238,7 +238,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full overflow-hidden">
+  <div class="flex h-full overflow-hidden collections-view-bg">
     <div class="flex-grow-1 flex flex-column overflow-y-auto collections-view p-4">
       <div class="flex flex-column align-items-center mb-4">
         <h1 class="text-4xl font-bold text-gradient">Collections</h1>
@@ -336,6 +336,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.collections-view-bg {
+  background: transparent;
+}
+
 .collections-view {
   min-height: 100vh;
 }

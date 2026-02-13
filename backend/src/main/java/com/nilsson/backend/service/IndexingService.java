@@ -11,9 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -54,6 +52,7 @@ public class IndexingService {
     private final PathService pathService;
     private final ThumbnailService thumbnailService;
     private final ExecutorService executor;
+    private final ScheduledExecutorService scheduler;
     private final FtsService ftsService;
 
     private WatchService watchService;
@@ -75,10 +74,12 @@ public class IndexingService {
         this.thumbnailService = thumbnailService;
         this.ftsService = ftsService;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
+        this.scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     public void cancel() {
         stopWatching();
+        scheduler.shutdownNow();
     }
 
     /**
@@ -310,17 +311,13 @@ public class IndexingService {
 
                     pendingEvents.put(eventKey, now);
 
-                    executor.submit(() -> {
-                        try {
-                            Thread.sleep(DEBOUNCE_DELAY_MS);
-                            if (pendingEvents.getOrDefault(eventKey, 0L) == now) {
-                                pendingEvents.remove(eventKey);
-                                processFileSystemEvent(kind, file, listener);
-                            }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
+                    // Use ScheduledExecutorService instead of Thread.sleep() to avoid blocking the thread
+                    scheduler.schedule(() -> {
+                        if (pendingEvents.getOrDefault(eventKey, 0L) == now) {
+                            pendingEvents.remove(eventKey);
+                            processFileSystemEvent(kind, file, listener);
                         }
-                    });
+                    }, DEBOUNCE_DELAY_MS, TimeUnit.MILLISECONDS);
                 }
 
                 boolean valid = key.reset();

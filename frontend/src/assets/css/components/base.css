@@ -7,9 +7,7 @@ body {
     margin: 0;
     font-family: var(--font-family, 'Inter', sans-serif);
     background-color: var(--bg-app);
-    background-image:
-            radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
-            radial-gradient(circle at 85% 75%, rgba(216, 112, 255, 0.08) 0%, transparent 40%);
+    background-image: var(--bg-app-image);
     background-attachment: fixed;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;

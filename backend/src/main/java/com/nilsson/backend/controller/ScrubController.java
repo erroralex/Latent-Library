@@ -4,6 +4,8 @@ import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ImageProcessingException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
+import com.nilsson.backend.service.PathService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -28,9 +30,12 @@ import java.util.UUID;
 @RequestMapping("/api/scrub")
 public class ScrubController {
 
-    private final Path tempDir = Paths.get("data", "temp");
+    private final Path tempDir;
+    private final PathService pathService;
 
-    public ScrubController() {
+    public ScrubController(@Value("${app.data.dir:.}") String appDataDir, PathService pathService) {
+        this.pathService = pathService;
+        this.tempDir = Paths.get(appDataDir).resolve("data/temp").toAbsolutePath().normalize();
         try {
             Files.createDirectories(tempDir);
         } catch (IOException e) {
@@ -53,7 +58,16 @@ public class ScrubController {
     @GetMapping("/preview/{filename}")
     public ResponseEntity<Resource> getPreview(@PathVariable String filename) {
         try {
-            Path file = tempDir.resolve(filename);
+            // Validate filename to prevent traversal
+            if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                throw new ValidationException("Invalid filename");
+            }
+            
+            Path file = tempDir.resolve(filename).normalize();
+            if (!file.startsWith(tempDir)) {
+                 throw new ValidationException("Access denied");
+            }
+
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {
@@ -70,7 +84,16 @@ public class ScrubController {
 
     @PostMapping("/process")
     public ResponseEntity<Resource> processImage(@RequestParam("filename") String filename) {
-        Path sourcePath = tempDir.resolve(filename);
+        // Validate filename
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            throw new ValidationException("Invalid filename");
+        }
+
+        Path sourcePath = tempDir.resolve(filename).normalize();
+        if (!sourcePath.startsWith(tempDir)) {
+             throw new ValidationException("Access denied");
+        }
+
         if (!Files.exists(sourcePath)) {
             throw new ResourceNotFoundException("Source image", filename);
         }

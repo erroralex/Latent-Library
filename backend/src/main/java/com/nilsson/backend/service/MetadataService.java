@@ -303,7 +303,7 @@ public class MetadataService {
 
                 findKeysRecursively(entry.getValue(), results, software);
             }
-        } else if (node.isObject() == false && node.isArray()) { // Explicitly keeping the original logic flow
+        } else if (!node.isObject() && node.isArray()) {
             for (JsonNode child : node) {
                 findKeysRecursively(child, results, software);
             }

@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
  * constructs SQL queries that combine standard relational filtering (e.g., ratings, collection membership)
  * with high-performance full-text search (FTS) using SQLite's FTS5 extension.
  * <p>
+ * <b>Security Note:</b> This class implements strict input sanitization to prevent SQL injection and
+ * FTS query syntax manipulation. All user-provided text is stripped of non-alphanumeric characters
+ * before being passed as a bind parameter to the {@code MATCH} operator.
+ * <p>
  * Key Responsibilities:
  * <ul>
  *   <li><b>Dynamic Query Construction:</b> Builds complex SQL statements on-the-fly based on a combination
@@ -40,6 +44,7 @@ public class SearchRepository {
     private static final Logger logger = LoggerFactory.getLogger(SearchRepository.class);
     private final JdbcClient jdbcClient;
 
+    // Strict whitelist: Only allow letters and numbers. All other chars (including SQL control chars) are removed.
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]+");
 
     public SearchRepository(DataSource dataSource) {
@@ -58,13 +63,16 @@ public class SearchRepository {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
         List<String> ftsClauses = new ArrayList<>();
 
+        // 1. Handle Free Text Search
         if (query != null && !query.isBlank()) {
+            // Sanitize: "DROP TABLE" -> "DROP TABLE" (safe text), ";--" -> " "
             String generalQuery = Arrays.stream(query.trim().split("\\s+"))
                     .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll(" ") + "*")
                     .collect(Collectors.joining(" AND "));
             ftsClauses.add("(" + generalQuery + ")");
         }
 
+        // 2. Handle Metadata Filters (Model, Sampler, etc.)
         if (filters != null) {
             for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
                 String key = entry.getKey();
@@ -75,8 +83,9 @@ public class SearchRepository {
                         .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
                         .toList();
                 if (validValues.isEmpty()) continue;
-                if ("Rating".equals(key)) continue;
+                if ("Rating".equals(key)) continue; // Handled separately
 
+                // FtsService.formatFtsToken also applies strict sanitization
                 String fieldQuery = validValues.stream()
                         .map(v -> FtsService.formatFtsToken(key, v))
                         .collect(Collectors.joining(" OR "));
@@ -84,13 +93,18 @@ public class SearchRepository {
             }
         }
 
+        // 3. Construct FTS Clause
         if (!ftsClauses.isEmpty()) {
+            // We use a parameterized query for the MATCH expression.
+            // The 'ftsClauses' string is passed as a single bind parameter.
+            // Because we sanitized the inputs above, this string is safe FTS syntax.
             sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.global_text MATCH ? ");
             params.add(String.join(" AND ", ftsClauses));
         } else {
             sql.append("WHERE 1=1 ");
         }
 
+        // 4. Handle Rating Filter (Relational)
         if (filters != null && filters.containsKey("Rating")) {
             List<String> ratingValues = filters.get("Rating").stream()
                     .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
@@ -100,6 +114,7 @@ public class SearchRepository {
             }
         }
 
+        // 5. Handle Collection Constraints (Relational)
         if (collectionPaths != null) {
             if (collectionPaths.isEmpty()) return new ArrayList<>();
             sql.append(" AND i.file_path IN (");
@@ -111,6 +126,7 @@ public class SearchRepository {
             sql.append(") ");
         }
 
+        // 6. Pagination
         sql.append(" LIMIT ? OFFSET ?");
         params.add(limit);
         params.add(offset);

@@ -172,7 +172,7 @@ public class CommonStrategy implements MetadataStrategy {
             String name = m.group(1);
             String strength = m.group(2);
 
-            if (loraBuilder.length() > 0) loraBuilder.append(", ");
+            if (!loraBuilder.isEmpty()) loraBuilder.append(", ");
             loraBuilder.append("<lora:").append(name);
 
             if (strength != null) {
@@ -181,7 +181,7 @@ public class CommonStrategy implements MetadataStrategy {
             loraBuilder.append(">");
         }
 
-        if (loraBuilder.length() > 0) {
+        if (!loraBuilder.isEmpty()) {
             results.put("Loras", loraBuilder.toString());
         }
     }

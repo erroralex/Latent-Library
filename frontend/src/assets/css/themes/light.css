@@ -6,6 +6,7 @@
 .theme-light {
     /* --- Main Backgrounds --- */
     --bg-app: #f0f4f8;
+    --bg-app-image: none;
 
     /* --- Component Backgrounds --- */
     --bg-header: #e6eef5;

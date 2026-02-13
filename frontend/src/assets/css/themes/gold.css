@@ -5,28 +5,29 @@
 
 .theme-gold {
     /* --- Main Backgrounds --- */
-    --bg-app: #212121;
+    --bg-app: #121212;
+    --bg-app-image: none;
 
     /* --- Component Backgrounds --- */
-    --bg-header: rgba(33, 33, 33, 0.95);
-    --bg-sidebar-left: rgba(38, 38, 38, 0.95);
-    --bg-sidebar-right: rgba(38, 38, 38, 0.95);
-    --bg-toolbar: rgba(45, 45, 45, 0.9);
-    --bg-filmstrip: rgba(30, 30, 30, 0.9);
+    --bg-header: rgba(18, 18, 18, 0.98);
+    --bg-sidebar-left: rgba(20, 20, 20, 0.98);
+    --bg-sidebar-right: rgba(20, 20, 20, 0.98);
+    --bg-toolbar: rgba(25, 25, 25, 0.95);
+    --bg-filmstrip: rgba(15, 15, 15, 0.95);
 
     /* --- Generic Panels --- */
-    --bg-panel: rgba(45, 45, 45, 0.8);
-    --bg-panel-opaque: #2d2d2d;
-    --bg-input: #1a1a1a;
-    --bg-overlay: rgba(0, 0, 0, 0.6);
-    --bg-menu: #2d2d2d;
+    --bg-panel: rgba(30, 30, 30, 0.8);
+    --bg-panel-opaque: #1e1e1e;
+    --bg-input: #0a0a0a;
+    --bg-overlay: rgba(0, 0, 0, 0.7);
+    --bg-menu: #1e1e1e;
 
     /* --- Button Internals --- */
-    --bg-btn-inner: #2d2d2d;
+    --bg-btn-inner: #1e1e1e;
 
     /* --- Borders --- */
-    --border-light: rgba(255, 255, 255, 0.1);
-    --border-input: rgba(255, 255, 255, 0.15);
+    --border-light: rgba(255, 255, 255, 0.05);
+    --border-input: rgba(255, 255, 255, 0.08);
 
     /* --- Text --- */
     --text-primary: #f0f0f0;
@@ -47,12 +48,12 @@
 
     /* --- Effects --- */
     --glass-blur: blur(12px);
-    --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --shadow-glow-primary: 0 0 10px rgba(230, 157, 103, 0.3);
-    --shadow-glow-secondary: 0 0 15px rgba(212, 175, 55, 0.3);
+    --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow-primary: 0 0 10px rgba(230, 157, 103, 0.2);
+    --shadow-glow-secondary: 0 0 15px rgba(212, 175, 55, 0.2);
 
     /* --- Scrollbars --- */
-    --scrollbar-track: rgba(255, 255, 255, 0.05);
-    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
-    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+    --scrollbar-track: rgba(255, 255, 255, 0.02);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
 }
