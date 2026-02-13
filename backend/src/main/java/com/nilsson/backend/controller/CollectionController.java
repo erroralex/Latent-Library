@@ -71,16 +71,21 @@ public class CollectionController {
 
     @PostMapping("/{name}/images")
     public ResponseEntity<Void> addImageToCollection(@PathVariable String name, @RequestParam String path) {
-        try {
-            File file = pathService.resolve(path);
-            if (!file.exists()) {
-                throw new ResourceNotFoundException("Image", path);
-            }
-            dataManager.addImageToCollection(name, file);
-            return ResponseEntity.ok().build();
-        } catch (InvalidPathException e) {
-            throw new ValidationException("Invalid path format: " + path);
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path cannot be empty.");
         }
+        // Delegate to batch logic for consistency
+        dataManager.addImagesToCollection(name, List.of(path));
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{name}/batch/add")
+    public ResponseEntity<Void> batchAddImagesToCollection(@PathVariable String name, @RequestBody List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            throw new ValidationException("Path list cannot be empty.");
+        }
+        dataManager.addImagesToCollection(name, paths);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{name}/blacklist")

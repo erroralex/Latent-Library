@@ -17,12 +17,14 @@ const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
 const {spawn} = require('child_process');
 const http = require('http');
+const fs = require('fs');
 
 let mainWindow;
 let backendProcess;
 let backendPort = null; // Dynamic port
 
 const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
+const PORT_FILE = path.join(__dirname, '../backend/data/port.txt');
 
 function createWindow() {
     if (!backendPort) return;
@@ -59,33 +61,49 @@ function startBackend() {
     console.log('Starting backend JAR:', devJarPath);
     console.log('Backend Working Directory:', projectRoot);
 
+    // Remove old port file if it exists
+    if (fs.existsSync(PORT_FILE)) {
+        fs.unlinkSync(PORT_FILE);
+    }
+
     backendProcess = spawn('java', ['-jar', devJarPath], {
         cwd: projectRoot
     });
 
     backendProcess.stdout.on('data', (data) => {
-        const output = data.toString();
-        console.log(`Backend: ${output}`);
-
-        // Parse port from Spring Boot log
-        // Example: Tomcat started on port 51399 (http) with context path '/'
-        if (!backendPort) {
-            const match = output.match(/Tomcat started on port (\d+) \(http\)/);
-            if (match) {
-                backendPort = parseInt(match[1]);
-                console.log(`Backend detected on port: ${backendPort}`);
-                createWindow();
-            }
-        }
+        console.log(`Backend: ${data.toString()}`);
     });
 
     backendProcess.stderr.on('data', (data) => {
-        console.error(`Backend Error: ${data}`);
+        console.error(`Backend Error: ${data.toString()}`);
     });
 
     backendProcess.on('close', (code) => {
         console.log(`Backend process exited with code ${code}`);
     });
+
+    // Poll for the port file
+    const pollInterval = setInterval(() => {
+        if (fs.existsSync(PORT_FILE)) {
+            try {
+                const portStr = fs.readFileSync(PORT_FILE, 'utf8').trim();
+                backendPort = parseInt(portStr);
+                console.log(`Backend detected on port: ${backendPort} (via port.txt)`);
+                clearInterval(pollInterval);
+                createWindow();
+            } catch (e) {
+                console.error("Error reading port file:", e);
+            }
+        }
+    }, 200);
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+        if (!backendPort) {
+            console.error("Backend failed to start or write port file within 30s");
+            clearInterval(pollInterval);
+        }
+    }, 30000);
 }
 
 app.on('ready', () => {

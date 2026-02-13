@@ -1,3 +1,9 @@
+/**
+ * PrimeVue Overrides
+ * Description: Customizing PrimeVue components to match the application's design system.
+ */
+
+/* --- Buttons --- */
 .p-button {
     background: transparent !important;
     border: none !important;
@@ -35,7 +41,7 @@
 
 .p-button:enabled:hover {
     transform: translateY(-1px) !important;
-    color: white !important;
+    color: var(--accent-primary) !important;
 }
 
 .p-button:enabled:hover::before {
@@ -44,14 +50,14 @@
 
 .p-button:enabled:hover::after {
     background: var(--bg-btn-inner);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 .p-button:enabled:hover .p-button-label,
 .p-button:enabled:hover .p-button-icon {
     background: none !important;
-    -webkit-text-fill-color: white !important;
-    color: white !important;
+    -webkit-text-fill-color: var(--accent-primary) !important;
+    color: var(--accent-primary) !important;
 }
 
 .p-button:enabled:active {
@@ -68,6 +74,7 @@
     background: var(--bg-btn-inner);
 }
 
+/* --- Inputs & Text Fields --- */
 .p-inputtext {
     background: var(--bg-input) !important;
     border: 1px solid var(--border-input) !important;
@@ -81,6 +88,7 @@
     box-shadow: var(--shadow-glow-primary) !important;
 }
 
+/* --- Cards & Panels --- */
 .surface-card {
     background: var(--bg-card) !important;
     border: var(--border-glass) !important;
@@ -95,6 +103,7 @@
     box-shadow: 0 12px 40px rgba(0,0,0,0.9) !important;
 }
 
+/* --- Tree & Navigation --- */
 .p-treenode-content {
     border-radius: 6px !important;
     transition: background 0.2s !important;
@@ -112,6 +121,7 @@
     border-left: 2px solid var(--accent-primary) !important;
 }
 
+/* --- Overlays & Menus --- */
 .p-sidebar {
     background: rgba(0, 0, 0, 0.9) !important;
     backdrop-filter: blur(20px) !important;
@@ -139,26 +149,42 @@
     color: white !important;
 }
 
-.p-slider .p-slider-range {
-    background: var(--grad-hover) !important;
+/* --- Sliders --- */
+html body .p-slider .p-slider-range {
+    background: var(--accent-primary) !important;
+    background-image: var(--grad-hover) !important;
 }
 
-.p-slider .p-slider-handle {
+html body .p-slider .p-slider-handle,
+html body .p-slider:not(.p-disabled) .p-slider-handle {
+    background: var(--accent-primary) !important;
     background-color: var(--accent-primary) !important;
     background-image: none !important;
     border: 2px solid var(--accent-primary) !important;
     border-radius: 50% !important;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    outline: none !important;
 }
 
-.p-slider .p-slider-handle:hover {
+html body .p-slider .p-slider-handle::before,
+html body .p-slider .p-slider-handle::after,
+html body .p-slider:not(.p-disabled) .p-slider-handle::before,
+html body .p-slider:not(.p-disabled) .p-slider-handle::after {
+    display: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+html body .p-slider .p-slider-handle:hover,
+html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
+    background: var(--accent-secondary) !important;
     background-color: var(--accent-secondary) !important;
-    transform: scale(1.1);
-    box-shadow: var(--shadow-glow-primary) !important;
     border-color: var(--accent-secondary) !important;
+    transform: scale(1.1) !important;
+    box-shadow: var(--shadow-glow-primary) !important;
 }
 
-/* Dropdown & Menu Overrides for Light Theme Compatibility */
+/* --- Dropdowns & Selects --- */
 .p-dropdown-panel, .p-menu {
     background: var(--bg-menu) !important;
     border: 1px solid var(--border-input) !important;
@@ -177,4 +203,10 @@
 .p-dropdown-item.p-highlight {
     background: var(--grad-hover) !important;
     color: #fff !important;
+}
+
+.p-dropdown:not(.p-disabled).p-focus {
+    box-shadow: var(--shadow-glow-primary) !important;
+    border-image: var(--grad-hover) 1 !important;
+    outline: 0 none !important;
 }

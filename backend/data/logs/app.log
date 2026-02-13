@@ -887,3 +887,1113 @@
 2026-02-13 11:41:50.507 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
 2026-02-13 11:41:50.514 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
 2026-02-13 11:41:50.518 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:01:42.259 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 11812 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:01:42.262 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:01:42.262 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:01:43.079 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:01:43.087 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:01:43.087 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:01:43.109 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:01:43.109 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 806 ms
+2026-02-13 13:01:43.152 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:01:43.162 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:01:43.279 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@949c598
+2026-02-13 13:01:43.279 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:01:43.279 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:01:43.356 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:01:43.376 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.010s)
+2026-02-13 13:01:43.379 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:01:43.381 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:01:43.384 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:01:43.472 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:01:43.564 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:01:43.785 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:01:43.787 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:01:43.787 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:01:43.787 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:01:43.943 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 51581 (http) with context path '/'
+2026-02-13 13:01:43.960 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.063 seconds (process running for 2.449)
+2026-02-13 13:01:44.255 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:01:44.255 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:01:44.256 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:01:44.482 [tomcat-handler-15] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:01:44.483 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:01:44.484 [virtual-109] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:01:44.490 [virtual-109] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:01:44.490 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:03:29.845 [tomcat-handler-52] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 13:03:29.845 [virtual-178] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 13:03:29.847 [virtual-178] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:03:29.932 [virtual-179] INFO  c.n.backend.service.UserDataManager - Detected file move: C:/Downloads/Test images/00047-281793503.jpeg -> D:/AI/Art by me/00047-281793503.jpeg
+2026-02-13 13:03:29.948 [virtual-179] INFO  c.n.backend.service.UserDataManager - Detected file move: C:/Downloads/Test images/115626293.png -> D:/AI/Art by me/115626293.png
+2026-02-13 13:03:53.914 [tomcat-handler-130] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:03:54.426 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:03:54.436 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:03:54.444 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:07:19.410 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 30760 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:07:19.410 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:07:19.410 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:07:20.216 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:07:20.225 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:07:20.225 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:07:20.245 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:07:20.245 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 792 ms
+2026-02-13 13:07:20.278 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:07:20.294 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:07:20.406 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@40d23c82
+2026-02-13 13:07:20.408 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:07:20.408 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:07:20.481 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:07:20.501 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.009s)
+2026-02-13 13:07:20.505 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:07:20.508 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:07:20.511 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:07:20.594 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:07:20.675 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:07:20.904 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:07:20.906 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-13 13:07:20.907 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:07:20.907 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:07:21.059 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 51736 (http) with context path '/'
+2026-02-13 13:07:21.075 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.049 seconds (process running for 2.422)
+2026-02-13 13:07:21.281 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:07:21.281 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:07:21.281 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:07:21.482 [tomcat-handler-15] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 13:07:21.482 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 13:07:21.489 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:09:57.581 [tomcat-handler-43] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:09:58.086 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:09:58.093 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:09:58.098 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:13:12.704 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 3180 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:13:12.705 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:13:12.705 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:13:13.543 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:13:13.551 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:13:13.551 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:13:13.571 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:13:13.571 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 820 ms
+2026-02-13 13:13:13.610 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:13:13.619 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:13:13.734 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@36920bd6
+2026-02-13 13:13:13.736 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:13:13.736 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:13:13.805 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:13:13.826 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.011s)
+2026-02-13 13:13:13.830 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:13:13.830 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:13:13.833 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:13:13.914 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:13:13.973 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:13:14.210 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:13:14.212 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-13 13:13:14.212 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:13:14.212 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:13:14.347 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 51881 (http) with context path '/'
+2026-02-13 13:13:14.361 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.046 seconds (process running for 2.417)
+2026-02-13 13:13:14.559 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:13:14.559 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:13:14.559 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:13:14.794 [tomcat-handler-15] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 13:13:14.797 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 13:13:14.811 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:13:20.168 [tomcat-handler-31] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:13:20.680 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:13:20.687 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:13:20.691 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:13:58.332 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 31956 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:13:58.333 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:13:58.333 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:13:59.211 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:13:59.220 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:13:59.220 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:13:59.237 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:13:59.237 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 851 ms
+2026-02-13 13:13:59.272 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:13:59.280 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:13:59.395 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@3a90c13c
+2026-02-13 13:13:59.396 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:13:59.396 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:13:59.469 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:13:59.490 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.009s)
+2026-02-13 13:13:59.493 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:13:59.495 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:13:59.496 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:13:59.582 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:13:59.650 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:13:59.885 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:13:59.887 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:13:59.888 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:13:59.888 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:14:00.045 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 51917 (http) with context path '/'
+2026-02-13 13:14:00.064 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.094 seconds (process running for 2.466)
+2026-02-13 13:14:00.268 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:14:00.268 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:14:00.269 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:14:00.481 [tomcat-handler-15] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 13:14:00.482 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 13:14:00.491 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:14:15.637 [tomcat-handler-42] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 13:14:15.637 [virtual-130] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 13:14:15.638 [virtual-130] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:14:52.867 [tomcat-handler-47] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:14:52.867 [virtual-149] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:14:52.867 [virtual-151] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:14:52.871 [virtual-149] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:14:52.871 [virtual-151] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:14:52.900 [virtual-150] INFO  c.n.backend.service.UserDataManager - Detected file move: D:/AI/Art by me/00047-281793503.jpeg -> C:/Downloads/Test images/00047-281793503.jpeg
+2026-02-13 13:14:52.914 [virtual-150] INFO  c.n.backend.service.UserDataManager - Detected file move: D:/AI/Art by me/115626293.png -> C:/Downloads/Test images/115626293.png
+2026-02-13 13:15:03.626 [tomcat-handler-81] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:15:03.626 [virtual-233] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:15:03.626 [virtual-235] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:15:03.632 [virtual-235] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:15:03.632 [virtual-233] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:15:20.745 [tomcat-handler-83] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:15:21.256 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:15:21.262 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:15:21.270 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:24:02.060 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 32920 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:24:02.061 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:24:02.062 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:24:02.896 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:24:02.905 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:24:02.905 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:24:02.924 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:24:02.924 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 807 ms
+2026-02-13 13:24:02.973 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:24:02.985 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:24:03.105 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@1a565afb
+2026-02-13 13:24:03.106 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:24:03.106 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:24:03.182 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:24:03.202 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.010s)
+2026-02-13 13:24:03.206 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:24:03.208 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:24:03.211 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:24:03.295 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:24:03.362 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:24:03.576 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:24:03.578 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-13 13:24:03.578 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:24:03.578 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:24:03.722 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 49899 (http) with context path '/'
+2026-02-13 13:24:03.738 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.076 seconds (process running for 2.455)
+2026-02-13 13:24:03.941 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:24:03.941 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:24:03.941 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:24:04.117 [tomcat-handler-14] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:24:04.117 [virtual-76] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:24:04.119 [virtual-107] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:24:04.127 [virtual-107] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:24:04.127 [virtual-76] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:24:51.480 [tomcat-handler-114] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:24:51.481 [virtual-235] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:24:51.481 [virtual-237] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:24:51.486 [virtual-235] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:24:51.486 [virtual-237] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:25:13.125 [tomcat-handler-136] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:25:13.125 [virtual-294] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:25:13.125 [virtual-296] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:25:13.130 [virtual-296] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:25:13.130 [virtual-294] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:25:36.239 [tomcat-handler-144] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:25:36.743 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:25:36.749 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:25:36.755 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:31:56.414 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 30780 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:31:56.415 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:31:56.415 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:31:57.533 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:31:57.545 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:31:57.545 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:31:57.570 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:31:57.570 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1106 ms
+2026-02-13 13:31:57.622 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:31:57.636 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:31:57.785 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@188598ad
+2026-02-13 13:31:57.787 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:31:57.787 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:31:57.868 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:31:57.893 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.014s)
+2026-02-13 13:31:57.898 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:31:57.900 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:31:57.902 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:31:57.998 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:31:58.072 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:31:58.308 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:31:58.309 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:31:58.310 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:31:58.310 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:31:58.446 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 50167 (http) with context path '/'
+2026-02-13 13:31:58.462 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.458 seconds (process running for 2.858)
+2026-02-13 13:31:58.701 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:31:58.701 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:31:58.701 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:31:58.886 [tomcat-handler-14] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:31:58.887 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:31:58.887 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:31:58.892 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:31:58.892 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:48:00.691 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 2628 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:48:00.692 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:48:00.692 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:48:01.505 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:48:01.514 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:48:01.514 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:48:01.532 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:48:01.532 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 786 ms
+2026-02-13 13:48:01.574 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:48:01.584 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:48:01.704 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@39c96e48
+2026-02-13 13:48:01.704 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:48:01.704 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:48:01.780 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:48:01.798 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.009s)
+2026-02-13 13:48:01.802 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:48:01.805 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:48:01.807 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:48:01.890 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:48:01.944 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:48:02.117 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:48:02.120 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-13 13:48:02.120 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:48:02.120 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:48:02.265 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 50555 (http) with context path '/'
+2026-02-13 13:48:02.282 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 1.971 seconds (process running for 2.341)
+2026-02-13 13:48:02.478 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:48:02.478 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:48:02.479 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:48:02.674 [tomcat-handler-14] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:48:02.676 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:48:02.676 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:48:02.683 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:48:02.683 [virtual-77] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:48:07.507 [tomcat-handler-45] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:48:07.509 [virtual-163] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:48:07.509 [virtual-165] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:48:07.521 [virtual-165] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:48:07.521 [virtual-163] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:48:46.913 [tomcat-handler-72] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:48:47.422 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:48:47.428 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:48:47.434 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:49:41.937 [main] INFO  c.n.b.c.LibraryControllerTest - Starting LibraryControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:41.937 [main] DEBUG c.n.b.c.LibraryControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:41.937 [main] INFO  c.n.b.c.LibraryControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:43.039 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:43.307 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:43.307 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:43.308 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:49:43.344 [main] INFO  c.n.b.c.LibraryControllerTest - Started LibraryControllerTest in 1.693 seconds (process running for 2.884)
+2026-02-13 13:49:43.667 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.repository.PinnedFolderRepositoryTest]: PinnedFolderRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:43.676 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.repository.PinnedFolderRepositoryTest
+2026-02-13 13:49:43.682 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:43.708 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Starting PinnedFolderRepositoryTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:43.708 [main] DEBUG c.n.b.r.PinnedFolderRepositoryTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:43.708 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - The following 1 profile is active: "test"
+2026-02-13 13:49:43.987 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:49:43.993 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:49:44.116 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@6782feb8
+2026-02-13 13:49:44.117 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:49:44.117 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:49:44.185 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:49:44.211 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.012s)
+2026-02-13 13:49:44.216 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:49:44.223 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:49:44.225 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:49:44.305 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:49:44.403 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:44.468 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:49:44.470 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:49:44.470 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:49:44.472 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:49:44.528 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Started PinnedFolderRepositoryTest in 0.846 seconds (process running for 4.068)
+2026-02-13 13:49:44.662 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9715933004416001487\test-lifecycle.db
+2026-02-13 13:49:44.662 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:49:44.665 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@5308b244
+2026-02-13 13:49:44.665 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:49:44.665 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:49:44.669 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9715933004416001487\test-lifecycle.db (SQLite 3.45)
+2026-02-13 13:49:44.673 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 13:49:44.673 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:49:44.673 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 13:49:44.688 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 13:49:44.697 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 13:49:44.706 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 13:49:44.710 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.002s)
+2026-02-13 13:49:44.711 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:49:44.712 [main] INFO  c.n.backend.service.DatabaseService - Database cleared and vacuumed.
+2026-02-13 13:49:44.712 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 13:49:44.712 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:49:44.715 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:49:44.718 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit4025477936843745467\test-lifecycle.db
+2026-02-13 13:49:44.718 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:49:44.721 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@740e38e9
+2026-02-13 13:49:44.721 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:49:44.721 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:49:44.724 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit4025477936843745467\test-lifecycle.db (SQLite 3.45)
+2026-02-13 13:49:44.727 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 13:49:44.727 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:49:44.728 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 13:49:44.729 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 13:49:44.731 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 13:49:44.733 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 13:49:44.735 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 13:49:44.735 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:49:44.735 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 13:49:44.735 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:49:44.737 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:49:44.738 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9427580447835136537\test-lifecycle.db
+2026-02-13 13:49:44.738 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:49:44.742 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@52c86b9f
+2026-02-13 13:49:44.742 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:49:44.742 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:49:44.745 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9427580447835136537\test-lifecycle.db (SQLite 3.45)
+2026-02-13 13:49:44.747 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 13:49:44.747 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 13:49:44.748 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 13:49:44.749 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 13:49:44.750 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 13:49:44.753 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 13:49:44.753 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 13:49:44.753 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:49:44.753 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 13:49:44.753 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:49:44.757 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:49:44.882 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.CollectionControllerTest]: CollectionControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:44.886 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.CollectionControllerTest
+2026-02-13 13:49:44.887 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:44.901 [main] INFO  c.n.b.c.CollectionControllerTest - Starting CollectionControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:44.901 [main] DEBUG c.n.b.c.CollectionControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:44.901 [main] INFO  c.n.b.c.CollectionControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:44.961 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:44.978 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:44.978 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:44.978 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:49:44.980 [main] INFO  c.n.b.c.CollectionControllerTest - Started CollectionControllerTest in 0.093 seconds (process running for 4.521)
+2026-02-13 13:49:45.020 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Collection not found with id: Missing
+2026-02-13 13:49:45.152 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SystemControllerTest]: SystemControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:45.156 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SystemControllerTest
+2026-02-13 13:49:45.158 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:45.170 [main] INFO  c.n.b.c.SystemControllerTest - Starting SystemControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:45.170 [main] DEBUG c.n.b.c.SystemControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:45.170 [main] INFO  c.n.b.c.SystemControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:45.343 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:45.360 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:45.360 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:45.361 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:49:45.362 [main] INFO  c.n.b.c.SystemControllerTest - Started SystemControllerTest in 0.204 seconds (process running for 4.902)
+2026-02-13 13:49:45.439 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Starting background ghost record cleanup...
+2026-02-13 13:49:45.441 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] File missing: /ghost/path/img.png. Deleting record from DB.
+2026-02-13 13:49:45.441 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Background cleanup finished. Removed 1 ghost records in 2ms
+2026-02-13 13:49:45.629 [pool-1-thread-4] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.630 [pool-1-thread-8] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.631 [pool-1-thread-9] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.632 [pool-1-thread-12] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.632 [pool-1-thread-10] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.633 [pool-1-thread-20] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.634 [pool-1-thread-2] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.634 [pool-1-thread-5] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.635 [pool-1-thread-6] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.636 [pool-1-thread-15] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.637 [pool-1-thread-7] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.638 [pool-1-thread-16] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.638 [pool-1-thread-1] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.639 [pool-1-thread-14] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.640 [pool-1-thread-13] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.641 [pool-1-thread-11] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.641 [pool-1-thread-3] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.643 [pool-1-thread-19] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.644 [pool-1-thread-17] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.645 [pool-1-thread-18] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit3459780998507068597\concurrent_test.jpg.)
+2026-02-13 13:49:45.651 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.BackendApplicationTests]: BackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:45.654 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.BackendApplicationTests
+2026-02-13 13:49:45.659 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SpeedSorterControllerTest]: SpeedSorterControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:45.663 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SpeedSorterControllerTest
+2026-02-13 13:49:45.665 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:45.680 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Starting SpeedSorterControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:45.680 [main] DEBUG c.n.b.c.SpeedSorterControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:45.680 [main] INFO  c.n.b.c.SpeedSorterControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:45.735 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:45.750 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:45.750 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:45.751 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:49:45.752 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Started SpeedSorterControllerTest in 0.088 seconds (process running for 5.292)
+2026-02-13 13:49:45.912 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.ImageControllerTest]: ImageControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:45.917 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.ImageControllerTest
+2026-02-13 13:49:45.918 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:45.930 [main] INFO  c.n.b.controller.ImageControllerTest - Starting ImageControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:45.930 [main] DEBUG c.n.b.controller.ImageControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:45.930 [main] INFO  c.n.b.controller.ImageControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:45.993 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:46.008 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:46.008 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:46.008 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:49:46.009 [main] INFO  c.n.b.controller.ImageControllerTest - Started ImageControllerTest in 0.091 seconds (process running for 5.549)
+2026-02-13 13:49:46.016 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Image not found with id: missing.png
+2026-02-13 13:49:46.125 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.FolderControllerTest]: FolderControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 13:49:46.128 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.FolderControllerTest
+2026-02-13 13:49:46.130 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 13:49:46.140 [main] INFO  c.n.b.c.FolderControllerTest - Starting FolderControllerTest using Java 21.0.10 with PID 19044 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:49:46.140 [main] DEBUG c.n.b.c.FolderControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:49:46.140 [main] INFO  c.n.b.c.FolderControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:49:46.192 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:49:46.208 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 13:49:46.209 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 13:49:46.209 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 13:49:46.210 [main] INFO  c.n.b.c.FolderControllerTest - Started FolderControllerTest in 0.08 seconds (process running for 5.75)
+2026-02-13 13:49:46.267 [main] INFO  c.n.b.controller.FolderController - Requesting children for path: /parent
+2026-02-13 13:49:46.713 [main] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: corrupt.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit363236178049065151\corrupt.jpg.)
+2026-02-13 13:49:46.725 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: APPLICATION_ERROR - The requested item does not exist
+2026-02-13 13:49:46.725 [main] ERROR c.n.b.c.GlobalExceptionHandler - Unexpected System Error
+java.lang.RuntimeException: Unexpected failure
+	at com.nilsson.backend.controller.GlobalExceptionHandlerTest.handleGenericException_ShouldReturn500(GlobalExceptionHandlerTest.java:57)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:63)
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:66)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:237)
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:58)
+2026-02-13 13:49:46.728 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:49:46.729 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:49:46.730 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:49:47.422 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:49:47.424 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 13:55:53.207 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 10292 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 13:55:53.208 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 13:55:53.208 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 13:55:54.160 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 13:55:54.168 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 13:55:54.168 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 13:55:54.189 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 13:55:54.189 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 934 ms
+2026-02-13 13:55:54.237 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 13:55:54.247 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 13:55:54.357 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@3a1706e1
+2026-02-13 13:55:54.358 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 13:55:54.358 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 13:55:54.424 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:55:54.444 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.010s)
+2026-02-13 13:55:54.448 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:55:54.449 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:55:54.451 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 13:55:54.545 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 13:55:54.618 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 13:55:54.844 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 13:55:54.845 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.000s)
+2026-02-13 13:55:54.845 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 13:55:54.845 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 13:55:54.991 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 63852 (http) with context path '/'
+2026-02-13 13:55:55.010 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.225 seconds (process running for 2.616)
+2026-02-13 13:55:55.229 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 13:55:55.230 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 13:55:55.231 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-02-13 13:55:55.457 [tomcat-handler-15] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 13:55:55.458 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 13:55:55.459 [virtual-81] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 13:55:55.464 [virtual-81] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:55:55.464 [virtual-79] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 13:56:11.754 [tomcat-handler-67] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 13:56:12.261 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 13:56:12.267 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 13:56:12.274 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:01:19.444 [main] INFO  c.n.b.c.LibraryControllerTest - Starting LibraryControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:19.445 [main] DEBUG c.n.b.c.LibraryControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:19.445 [main] INFO  c.n.b.c.LibraryControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:20.405 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:20.673 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:20.674 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:20.674 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:01:20.708 [main] INFO  c.n.b.c.LibraryControllerTest - Started LibraryControllerTest in 1.526 seconds (process running for 2.547)
+2026-02-13 14:01:21.032 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.repository.PinnedFolderRepositoryTest]: PinnedFolderRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:21.041 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.repository.PinnedFolderRepositoryTest
+2026-02-13 14:01:21.046 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:21.073 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Starting PinnedFolderRepositoryTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:21.073 [main] DEBUG c.n.b.r.PinnedFolderRepositoryTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:21.073 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - The following 1 profile is active: "test"
+2026-02-13 14:01:21.343 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 14:01:21.349 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:01:21.467 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@49ba8aa8
+2026-02-13 14:01:21.468 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:01:21.468 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:01:21.545 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:01:21.572 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.012s)
+2026-02-13 14:01:21.579 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:01:21.580 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:01:21.586 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:01:21.664 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:01:21.760 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:21.821 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:01:21.823 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:01:21.824 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:01:21.824 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:01:21.874 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Started PinnedFolderRepositoryTest in 0.828 seconds (process running for 3.713)
+2026-02-13 14:01:22.003 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit17588216615128555110\test-lifecycle.db
+2026-02-13 14:01:22.003 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:01:22.005 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@713d2fe8
+2026-02-13 14:01:22.006 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:01:22.006 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:01:22.011 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit17588216615128555110\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:01:22.012 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:01:22.013 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:01:22.013 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:01:22.028 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:01:22.037 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:01:22.043 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:01:22.048 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.002s)
+2026-02-13 14:01:22.049 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:01:22.049 [main] INFO  c.n.backend.service.DatabaseService - Database cleared and vacuumed.
+2026-02-13 14:01:22.050 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:01:22.050 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:01:22.053 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:01:22.055 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit2915336488364296981\test-lifecycle.db
+2026-02-13 14:01:22.055 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:01:22.058 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@6eb61a31
+2026-02-13 14:01:22.058 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:01:22.059 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:01:22.063 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit2915336488364296981\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:01:22.065 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:01:22.065 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:01:22.065 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:01:22.067 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:01:22.069 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:01:22.071 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:01:22.072 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 14:01:22.072 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:01:22.073 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:01:22.073 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:01:22.075 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:01:22.076 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit11801842139728617809\test-lifecycle.db
+2026-02-13 14:01:22.077 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:01:22.080 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@1062f767
+2026-02-13 14:01:22.080 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:01:22.080 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:01:22.084 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit11801842139728617809\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:01:22.086 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:01:22.086 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:01:22.086 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:01:22.088 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:01:22.089 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:01:22.091 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:01:22.093 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 14:01:22.093 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:01:22.093 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:01:22.093 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:01:22.095 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:01:22.209 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.CollectionControllerTest]: CollectionControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:22.213 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.CollectionControllerTest
+2026-02-13 14:01:22.214 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:22.227 [main] INFO  c.n.b.c.CollectionControllerTest - Starting CollectionControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:22.227 [main] DEBUG c.n.b.c.CollectionControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:22.227 [main] INFO  c.n.b.c.CollectionControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:22.288 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:22.304 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:22.304 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:22.305 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-02-13 14:01:22.307 [main] INFO  c.n.b.c.CollectionControllerTest - Started CollectionControllerTest in 0.093 seconds (process running for 4.146)
+2026-02-13 14:01:22.346 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Collection not found with id: Missing
+2026-02-13 14:01:22.469 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SystemControllerTest]: SystemControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:22.473 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SystemControllerTest
+2026-02-13 14:01:22.475 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:22.485 [main] INFO  c.n.b.c.SystemControllerTest - Starting SystemControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:22.485 [main] DEBUG c.n.b.c.SystemControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:22.485 [main] INFO  c.n.b.c.SystemControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:22.649 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:22.664 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:22.664 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:22.664 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:01:22.666 [main] INFO  c.n.b.c.SystemControllerTest - Started SystemControllerTest in 0.191 seconds (process running for 4.505)
+2026-02-13 14:01:22.734 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Starting background ghost record cleanup...
+2026-02-13 14:01:22.736 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] File missing: /ghost/path/img.png. Deleting record from DB.
+2026-02-13 14:01:22.736 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Background cleanup finished. Removed 1 ghost records in 2ms
+2026-02-13 14:01:22.884 [pool-1-thread-17] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.886 [pool-1-thread-2] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.887 [pool-1-thread-19] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.888 [pool-1-thread-6] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.888 [pool-1-thread-1] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.889 [pool-1-thread-16] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.889 [pool-1-thread-9] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.890 [pool-1-thread-8] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.891 [pool-1-thread-4] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.892 [pool-1-thread-15] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.892 [pool-1-thread-3] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.892 [pool-1-thread-20] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.894 [pool-1-thread-18] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.894 [pool-1-thread-13] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.895 [pool-1-thread-14] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.895 [pool-1-thread-11] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.897 [pool-1-thread-12] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.897 [pool-1-thread-7] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.897 [pool-1-thread-10] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.899 [pool-1-thread-5] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit11660184984279803837\concurrent_test.jpg.)
+2026-02-13 14:01:22.904 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.BackendApplicationTests]: BackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:22.907 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.BackendApplicationTests
+2026-02-13 14:01:22.910 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SpeedSorterControllerTest]: SpeedSorterControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:22.913 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SpeedSorterControllerTest
+2026-02-13 14:01:22.915 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:22.926 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Starting SpeedSorterControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:22.926 [main] DEBUG c.n.b.c.SpeedSorterControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:22.926 [main] INFO  c.n.b.c.SpeedSorterControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:22.980 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:22.992 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:22.994 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:22.994 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:01:22.996 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Started SpeedSorterControllerTest in 0.083 seconds (process running for 4.835)
+2026-02-13 14:01:23.152 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.ImageControllerTest]: ImageControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:23.155 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.ImageControllerTest
+2026-02-13 14:01:23.156 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:23.165 [main] INFO  c.n.b.controller.ImageControllerTest - Starting ImageControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:23.165 [main] DEBUG c.n.b.controller.ImageControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:23.165 [main] INFO  c.n.b.controller.ImageControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:23.220 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:23.234 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:23.234 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:23.234 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:01:23.235 [main] INFO  c.n.b.controller.ImageControllerTest - Started ImageControllerTest in 0.079 seconds (process running for 5.074)
+2026-02-13 14:01:23.242 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Image not found with id: missing.png
+2026-02-13 14:01:23.352 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.FolderControllerTest]: FolderControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:01:23.354 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.FolderControllerTest
+2026-02-13 14:01:23.356 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:01:23.366 [main] INFO  c.n.b.c.FolderControllerTest - Starting FolderControllerTest using Java 21.0.10 with PID 30748 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:01:23.366 [main] DEBUG c.n.b.c.FolderControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:01:23.366 [main] INFO  c.n.b.c.FolderControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:01:23.417 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:01:23.430 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:01:23.431 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:01:23.431 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:01:23.431 [main] INFO  c.n.b.c.FolderControllerTest - Started FolderControllerTest in 0.075 seconds (process running for 5.271)
+2026-02-13 14:01:23.482 [main] INFO  c.n.b.controller.FolderController - Requesting children for path: /parent
+2026-02-13 14:01:23.903 [main] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: corrupt.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit13707558394183380658\corrupt.jpg.)
+2026-02-13 14:01:23.916 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: APPLICATION_ERROR - The requested item does not exist
+2026-02-13 14:01:23.916 [main] ERROR c.n.b.c.GlobalExceptionHandler - Unexpected System Error
+java.lang.RuntimeException: Unexpected failure
+	at com.nilsson.backend.controller.GlobalExceptionHandlerTest.handleGenericException_ShouldReturn500(GlobalExceptionHandlerTest.java:57)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:63)
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:66)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:237)
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:58)
+2026-02-13 14:01:23.918 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:01:23.919 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:01:23.919 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:01:24.553 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:01:24.554 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:02:36.273 [main] INFO  c.n.b.c.LibraryControllerTest - Starting LibraryControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:36.274 [main] DEBUG c.n.b.c.LibraryControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:36.274 [main] INFO  c.n.b.c.LibraryControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:37.245 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:37.512 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:37.512 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:37.514 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 2 ms
+2026-02-13 14:02:37.547 [main] INFO  c.n.b.c.LibraryControllerTest - Started LibraryControllerTest in 1.531 seconds (process running for 2.62)
+2026-02-13 14:02:37.860 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.repository.PinnedFolderRepositoryTest]: PinnedFolderRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:37.868 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.repository.PinnedFolderRepositoryTest
+2026-02-13 14:02:37.874 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:37.899 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Starting PinnedFolderRepositoryTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:37.899 [main] DEBUG c.n.b.r.PinnedFolderRepositoryTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:37.899 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - The following 1 profile is active: "test"
+2026-02-13 14:02:38.169 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 14:02:38.175 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:02:38.292 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@67091f3b
+2026-02-13 14:02:38.294 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:02:38.294 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:02:38.369 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:02:38.397 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.015s)
+2026-02-13 14:02:38.403 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:02:38.405 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:02:38.411 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:02:38.488 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:02:38.590 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:38.651 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:02:38.652 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:02:38.654 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:02:38.654 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:02:38.702 [main] INFO  c.n.b.r.PinnedFolderRepositoryTest - Started PinnedFolderRepositoryTest in 0.829 seconds (process running for 3.774)
+2026-02-13 14:02:38.829 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit3215592342060523568\test-lifecycle.db
+2026-02-13 14:02:38.829 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:02:38.832 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@6626204e
+2026-02-13 14:02:38.832 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:02:38.832 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:02:38.837 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit3215592342060523568\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:02:38.838 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:02:38.840 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:02:38.840 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:02:38.849 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:02:38.854 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:02:38.866 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:02:38.875 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.002s)
+2026-02-13 14:02:38.875 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:02:38.877 [main] INFO  c.n.backend.service.DatabaseService - Database cleared and vacuumed.
+2026-02-13 14:02:38.878 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:02:38.878 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:02:38.883 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:02:38.885 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9616338011261724233\test-lifecycle.db
+2026-02-13 14:02:38.885 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:02:38.888 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@6d7232a5
+2026-02-13 14:02:38.888 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:02:38.888 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:02:38.892 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit9616338011261724233\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:02:38.894 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:02:38.894 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:02:38.895 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:02:38.896 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:02:38.898 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:02:38.900 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:02:38.901 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 14:02:38.901 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:02:38.901 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:02:38.901 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:02:38.903 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:02:38.905 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit16776581096964079596\test-lifecycle.db
+2026-02-13 14:02:38.905 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:02:38.908 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@3aee9ce3
+2026-02-13 14:02:38.908 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:02:38.908 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:02:38.911 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\AppData\Local\Temp\junit16776581096964079596\test-lifecycle.db (SQLite 3.45)
+2026-02-13 14:02:38.912 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "main"."flyway_schema_history" does not exist yet
+2026-02-13 14:02:38.912 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:02:38.912 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "main"."flyway_schema_history" ...
+2026-02-13 14:02:38.915 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+2026-02-13 14:02:38.916 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - Initial Schema"
+2026-02-13 14:02:38.918 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - Collection Enhancements"
+2026-02-13 14:02:38.920 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 2 migrations to schema "main", now at version v2 (execution time 00:00.000s)
+2026-02-13 14:02:38.920 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:02:38.920 [main] INFO  c.n.backend.service.DatabaseService - Shutting down connection pool...
+2026-02-13 14:02:38.920 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:02:38.921 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:02:39.037 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.CollectionControllerTest]: CollectionControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:39.041 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.CollectionControllerTest
+2026-02-13 14:02:39.044 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:39.055 [main] INFO  c.n.b.c.CollectionControllerTest - Starting CollectionControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:39.055 [main] DEBUG c.n.b.c.CollectionControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:39.055 [main] INFO  c.n.b.c.CollectionControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:39.116 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:39.133 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:39.133 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:39.133 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:02:39.134 [main] INFO  c.n.b.c.CollectionControllerTest - Started CollectionControllerTest in 0.091 seconds (process running for 4.207)
+2026-02-13 14:02:39.176 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Collection not found with id: Missing
+2026-02-13 14:02:39.302 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SystemControllerTest]: SystemControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:39.307 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SystemControllerTest
+2026-02-13 14:02:39.308 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:39.320 [main] INFO  c.n.b.c.SystemControllerTest - Starting SystemControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:39.320 [main] DEBUG c.n.b.c.SystemControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:39.320 [main] INFO  c.n.b.c.SystemControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:39.479 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:39.496 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:39.496 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:39.496 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:02:39.497 [main] INFO  c.n.b.c.SystemControllerTest - Started SystemControllerTest in 0.19 seconds (process running for 4.569)
+2026-02-13 14:02:39.567 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Starting background ghost record cleanup...
+2026-02-13 14:02:39.569 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] File missing: /ghost/path/img.png. Deleting record from DB.
+2026-02-13 14:02:39.569 [virtual-65] INFO  c.n.backend.service.IndexingService - [Reconcile] Background cleanup finished. Removed 1 ghost records in 1ms
+2026-02-13 14:02:39.731 [pool-1-thread-2] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.731 [pool-1-thread-6] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.732 [pool-1-thread-1] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.734 [pool-1-thread-9] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.734 [pool-1-thread-11] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.735 [pool-1-thread-3] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.735 [pool-1-thread-10] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.737 [pool-1-thread-5] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.737 [pool-1-thread-16] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.738 [pool-1-thread-13] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.739 [pool-1-thread-15] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.739 [pool-1-thread-17] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.740 [pool-1-thread-19] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.741 [pool-1-thread-18] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.742 [pool-1-thread-12] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.742 [pool-1-thread-4] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.743 [pool-1-thread-8] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.744 [pool-1-thread-20] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.745 [pool-1-thread-7] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.746 [pool-1-thread-14] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: concurrent_test.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit15304412940017248415\concurrent_test.jpg.)
+2026-02-13 14:02:39.750 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.BackendApplicationTests]: BackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:39.753 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.BackendApplicationTests
+2026-02-13 14:02:39.757 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.SpeedSorterControllerTest]: SpeedSorterControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:39.760 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.SpeedSorterControllerTest
+2026-02-13 14:02:39.761 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:39.773 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Starting SpeedSorterControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:39.773 [main] DEBUG c.n.b.c.SpeedSorterControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:39.773 [main] INFO  c.n.b.c.SpeedSorterControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:39.828 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:39.843 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:39.843 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:39.843 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:02:39.844 [main] INFO  c.n.b.c.SpeedSorterControllerTest - Started SpeedSorterControllerTest in 0.083 seconds (process running for 4.916)
+2026-02-13 14:02:39.987 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.ImageControllerTest]: ImageControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:39.990 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.ImageControllerTest
+2026-02-13 14:02:39.992 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:40.002 [main] INFO  c.n.b.controller.ImageControllerTest - Starting ImageControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:40.002 [main] DEBUG c.n.b.controller.ImageControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:40.002 [main] INFO  c.n.b.controller.ImageControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:40.050 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:40.064 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:40.064 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:40.065 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-02-13 14:02:40.066 [main] INFO  c.n.b.controller.ImageControllerTest - Started ImageControllerTest in 0.076 seconds (process running for 5.138)
+2026-02-13 14:02:40.075 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: RESOURCE_NOT_FOUND - Image not found with id: missing.png
+2026-02-13 14:02:40.176 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.nilsson.backend.controller.FolderControllerTest]: FolderControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-02-13 14:02:40.179 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.nilsson.backend.BackendApplication for test class com.nilsson.backend.controller.FolderControllerTest
+2026-02-13 14:02:40.180 [main] INFO  o.s.b.d.r.RestartApplicationListener - Restart disabled due to context in which it is running
+2026-02-13 14:02:40.190 [main] INFO  c.n.b.c.FolderControllerTest - Starting FolderControllerTest using Java 21.0.10 with PID 29380 (started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:02:40.190 [main] DEBUG c.n.b.c.FolderControllerTest - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:02:40.190 [main] INFO  c.n.b.c.FolderControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:02:40.241 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:02:40.257 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-02-13 14:02:40.257 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-02-13 14:02:40.257 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:02:40.258 [main] INFO  c.n.b.c.FolderControllerTest - Started FolderControllerTest in 0.078 seconds (process running for 5.33)
+2026-02-13 14:02:40.309 [main] INFO  c.n.b.controller.FolderController - Requesting children for path: /parent
+2026-02-13 14:02:40.724 [main] WARN  c.n.backend.service.ThumbnailService - Failed to generate thumbnail for: corrupt.jpg (No suitable ImageReader found for C:\Users\error\AppData\Local\Temp\junit1433061532472535712\corrupt.jpg.)
+2026-02-13 14:02:40.738 [main] WARN  c.n.b.c.GlobalExceptionHandler - Application Error: APPLICATION_ERROR - The requested item does not exist
+2026-02-13 14:02:40.739 [main] ERROR c.n.b.c.GlobalExceptionHandler - Unexpected System Error
+java.lang.RuntimeException: Unexpected failure
+	at com.nilsson.backend.controller.GlobalExceptionHandlerTest.handleGenericException_ShouldReturn500(GlobalExceptionHandlerTest.java:57)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:63)
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:66)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:237)
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:58)
+2026-02-13 14:02:40.741 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:02:40.742 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:02:40.742 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:02:41.393 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:02:41.395 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.
+2026-02-13 14:05:30.290 [main] INFO  c.nilsson.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 31800 (C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\target\backend-0.0.1-SNAPSHOT.jar started by error in C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend)
+2026-02-13 14:05:30.291 [main] DEBUG c.nilsson.backend.BackendApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-02-13 14:05:30.291 [main] INFO  c.nilsson.backend.BackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-13 14:05:31.170 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+2026-02-13 14:05:31.177 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-13 14:05:31.177 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-02-13 14:05:31.196 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-13 14:05:31.197 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 854 ms
+2026-02-13 14:05:31.239 [main] INFO  c.n.backend.service.DatabaseService - Initializing DatabaseService with URL: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db
+2026-02-13 14:05:31.248 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Starting...
+2026-02-13 14:05:31.373 [main] INFO  com.zaxxer.hikari.pool.HikariPool - ImageToolboxPool - Added connection org.sqlite.jdbc4.JDBC4Connection@51dae791
+2026-02-13 14:05:31.373 [main] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Start completed.
+2026-02-13 14:05:31.374 [main] INFO  c.n.backend.service.DatabaseService - Starting Flyway migration...
+2026-02-13 14:05:31.448 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:05:31.468 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.011s)
+2026-02-13 14:05:31.473 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:05:31.474 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:05:31.476 [main] INFO  c.n.backend.service.DatabaseService - Flyway migration completed successfully.
+2026-02-13 14:05:31.563 [main] INFO  c.n.backend.service.PathService - PathService initialized in open (local file browser) mode.
+2026-02-13 14:05:31.629 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2026-02-13 14:05:31.840 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:sqlite:C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\backend\data\library.db (SQLite 3.45)
+2026-02-13 14:05:31.842 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 2 migrations (execution time 00:00.001s)
+2026-02-13 14:05:31.843 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "main": 2
+2026-02-13 14:05:31.843 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+2026-02-13 14:05:31.957 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 64118 (http) with context path '/'
+2026-02-13 14:05:31.959 [main] INFO  c.n.backend.config.PortFileWriter - Server port 64118 written to data/port.txt
+2026-02-13 14:05:31.968 [main] INFO  c.nilsson.backend.BackendApplication - Started BackendApplication in 2.092 seconds (process running for 2.482)
+2026-02-13 14:05:32.304 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-13 14:05:32.305 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-13 14:05:32.305 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2026-02-13 14:05:32.479 [tomcat-handler-14] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 14:05:32.480 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 14:05:32.481 [virtual-80] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 14:05:32.486 [virtual-80] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 14:05:32.486 [virtual-78] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 14:05:36.670 [tomcat-handler-45] INFO  c.n.backend.service.IndexingService - Indexing folder: Test images
+2026-02-13 14:05:36.672 [virtual-169] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 20 files using Virtual Threads...
+2026-02-13 14:05:36.672 [virtual-171] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 6 files using Virtual Threads...
+2026-02-13 14:05:36.676 [virtual-171] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 14:05:36.676 [virtual-169] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 14:05:37.480 [tomcat-handler-47] INFO  c.n.backend.service.IndexingService - Indexing folder: Art by me
+2026-02-13 14:05:37.480 [virtual-201] INFO  c.n.backend.service.ThumbnailService - Starting background preload for 11 files using Virtual Threads...
+2026-02-13 14:05:37.481 [virtual-201] INFO  c.n.backend.service.ThumbnailService - Preload completed.
+2026-02-13 14:05:37.553 [virtual-202] INFO  c.n.backend.service.UserDataManager - Detected file move: C:/Downloads/Test images/00047-281793503.jpeg -> D:/AI/Art by me/00047-281793503.jpeg
+2026-02-13 14:05:37.563 [virtual-202] INFO  c.n.backend.service.UserDataManager - Detected file move: C:/Downloads/Test images/115626293.png -> D:/AI/Art by me/115626293.png
+2026-02-13 14:05:42.506 [tomcat-handler-63] INFO  c.n.b.controller.SystemController - Shutdown request received via API.
+2026-02-13 14:05:43.011 [Thread-1] INFO  c.n.b.controller.SystemController - Closing application context...
+2026-02-13 14:05:43.018 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown initiated...
+2026-02-13 14:05:43.026 [Thread-1] INFO  com.zaxxer.hikari.HikariDataSource - ImageToolboxPool - Shutdown completed.

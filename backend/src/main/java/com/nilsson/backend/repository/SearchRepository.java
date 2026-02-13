@@ -15,6 +15,25 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Repository for executing complex, multi-criteria searches across the image library.
+ * <p>
+ * This class serves as the primary engine for the application's search functionality. It dynamically
+ * constructs SQL queries that combine standard relational filtering (e.g., ratings, collection membership)
+ * with high-performance full-text search (FTS) using SQLite's FTS5 extension.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Dynamic Query Construction:</b> Builds complex SQL statements on-the-fly based on a combination
+ *   of text queries, metadata filters (Model, Sampler, etc.), and collection constraints.</li>
+ *   <li><b>FTS Integration:</b> Leverages the {@code metadata_fts} virtual table to perform rapid
+ *   text-based lookups across all indexed image metadata and prompts.</li>
+ *   <li><b>Filter Orchestration:</b> Manages the intersection of multiple filter types, ensuring that
+ *   rating filters, collection boundaries, and search terms are applied correctly in a single atomic operation.</li>
+ *   <li><b>Pagination Support:</b> Implements efficient {@code LIMIT} and {@code OFFSET} logic to support
+ *   infinite scrolling and large result sets in the UI.</li>
+ * </ul>
+ */
 @Repository
 public class SearchRepository {
 
@@ -66,8 +85,6 @@ public class SearchRepository {
         }
 
         if (!ftsClauses.isEmpty()) {
-            // FIX: Explicitly target the 'global_text' column via the alias 'fts'
-            // This prevents "no such column: fts" errors in some SQLite versions
             sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.global_text MATCH ? ");
             params.add(String.join(" AND ", ftsClauses));
         } else {

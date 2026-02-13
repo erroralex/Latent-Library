@@ -1,30 +1,9 @@
-/* Global Layout & Utility Classes */
+/**
+ * Layout & UI Components
+ * Description: Reusable UI patterns like inputs, dialogs, and chips.
+ */
 
-body {
-    background-color: var(--bg-app);
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    overflow: hidden;
-}
-
-.text-gradient {
-    background: var(--grad-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Glass Panels */
-.glass-panel {
-    background: var(--bg-panel);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-panel);
-}
-
-/* Inputs */
+/* --- Inputs --- */
 .glass-input {
     background: var(--bg-input) !important;
     border: 1px solid var(--border-input) !important;
@@ -40,7 +19,7 @@ body {
     border-image: var(--grad-hover) 1 !important;
 }
 
-/* Dialogs */
+/* --- Dialogs --- */
 .glass-dialog {
     background: var(--bg-panel-opaque) !important;
     border: 1px solid var(--border-input) !important;
@@ -66,7 +45,7 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* Scrollbars */
+/* --- Custom Scrollbars --- */
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
 }
@@ -84,7 +63,7 @@ body {
     background: var(--scrollbar-thumb-hover);
 }
 
-/* Chips (Tags) */
+/* --- Chips & Tags --- */
 .collection-chip {
     background: rgba(102, 252, 241, 0.15) !important;
     color: var(--accent-primary) !important;
@@ -113,7 +92,7 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--bg-btn-inner); /* Use theme variable */
+    background: var(--bg-btn-inner);
     border-radius: 16px;
     z-index: -1;
 }

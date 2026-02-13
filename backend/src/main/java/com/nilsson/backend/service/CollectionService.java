@@ -9,6 +9,7 @@ import com.nilsson.backend.repository.SearchRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,6 +144,19 @@ public class CollectionService {
 
         collectionRepository.addImage(collectionName, imageId);
         collectionRepository.removeExclusion(collectionName, imageId);
+    }
+
+    @Transactional
+    public void addImagesToCollection(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
+        }
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        collectionRepository.addImages(collectionName, imageIds);
+        collectionRepository.removeExclusions(collectionName, imageIds);
     }
 
     public void blacklistImageFromCollection(String collectionName, int imageId) {

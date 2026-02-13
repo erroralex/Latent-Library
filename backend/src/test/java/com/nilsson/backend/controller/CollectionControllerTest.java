@@ -79,4 +79,28 @@ class CollectionControllerTest {
         mockMvc.perform(get("/api/collections/Missing"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("POST /api/collections/{name}/batch/add should invoke batch service")
+    void batchAddImages_ShouldInvokeService() throws Exception {
+        List<String> paths = List.of("/img1.png", "/img2.png");
+        String json = "[\"/img1.png\", \"/img2.png\"]";
+
+        mockMvc.perform(post("/api/collections/MyColl/batch/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        verify(dataManager).addImagesToCollection("MyColl", paths);
+    }
+
+    @Test
+    @DisplayName("POST /api/collections/{name}/images should delegate to batch logic")
+    void addImage_ShouldDelegateToBatch() throws Exception {
+        mockMvc.perform(post("/api/collections/MyColl/images")
+                        .param("path", "/img1.png"))
+                .andExpect(status().isOk());
+
+        verify(dataManager).addImagesToCollection("MyColl", List.of("/img1.png"));
+    }
 }

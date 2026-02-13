@@ -1,5 +1,9 @@
-/* Button Styles */
+/**
+ * Button Styles
+ * Description: Navigation and specialized window control buttons.
+ */
 
+/* --- Navigation Buttons --- */
 .nav-btn {
     color: var(--text-secondary) !important;
     border-radius: 8px;
@@ -7,10 +11,9 @@
     z-index: 1 !important;
     background: transparent !important;
     overflow: visible !important;
-    border: 1px solid transparent; /* Placeholder for layout */
+    border: 1px solid transparent;
 }
 
-/* The Gradient Glow/Border Effect */
 .nav-btn::before {
     content: '';
     position: absolute;
@@ -23,7 +26,6 @@
     transition: opacity 0.3s ease;
 }
 
-/* The Background Mask (to make it look like a border) */
 .nav-btn::after {
     content: '';
     position: absolute;
@@ -44,20 +46,20 @@
 }
 
 .nav-btn:hover::after {
-    background: var(--bg-btn-inner); /* Use theme variable */
+    background: var(--bg-btn-inner);
 }
 
-/* Active State - Increased Specificity */
+/* --- Active Navigation State --- */
 .nav-btn.active-nav-btn {
-    color: transparent !important; /* Text is gradient */
+    color: transparent !important;
 }
 
 .nav-btn.active-nav-btn::before {
-    opacity: 0.8; /* Ensure glow is visible */
+    opacity: 0.8;
 }
 
 .nav-btn.active-nav-btn::after {
-    background: var(--bg-btn-inner); /* Ensure text is readable against theme bg */
+    background: var(--bg-btn-inner);
 }
 
 .nav-btn.active-nav-btn .p-button-label,
@@ -70,7 +72,7 @@
     font-weight: 700;
 }
 
-/* Window Control Buttons */
+/* --- Window Control Buttons --- */
 .window-close-btn {
     position: relative !important;
     z-index: 1 !important;
@@ -96,7 +98,7 @@
     inset: 0;
     background: transparent;
     border-radius: 8px;
-    z-index: -1;
+    z-1: -1;
     transition: background 0.3s ease;
 }
 

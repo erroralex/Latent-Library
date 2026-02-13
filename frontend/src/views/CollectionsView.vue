@@ -22,7 +22,6 @@ import InputText from 'primevue/inputtext';
 import InputSwitch from 'primevue/inputswitch';
 import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
-import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
 import {useRouter} from 'vue-router';
 import CustomContextMenu from '@/components/CustomContextMenu.vue';
@@ -40,7 +39,7 @@ const menuModel = ref([]);
 const contextMenuSelection = ref(null);
 
 const newCollectionName = ref('');
-const originalCollectionName = ref(''); // Track original name for renaming
+const originalCollectionName = ref('');
 const isSmartCollection = ref(false);
 const prompt = ref('');
 const selectedModels = ref([]);
@@ -120,7 +119,7 @@ const editCollection = async (name) => {
     const data = response.data;
 
     newCollectionName.value = data.name;
-    originalCollectionName.value = data.name; // Store original name
+    originalCollectionName.value = data.name;
     isSmartCollection.value = data.isSmart;
 
     if (data.filters) {
@@ -145,7 +144,6 @@ const editCollection = async (name) => {
     displayCreateDialog.value = true;
   } catch (error) {
     console.error('Error fetching collection details:', error);
-    // Error handled by api interceptor
   }
 };
 
@@ -169,7 +167,6 @@ const saveCollection = async () => {
 
   try {
     if (isEditing.value) {
-      // Use originalCollectionName in the URL to identify the resource to update
       await api.put(`/collections/${originalCollectionName.value}`, collectionData);
       toast.add({severity: 'success', summary: 'Success', detail: 'Collection updated!', life: 3000});
     } else {
@@ -182,7 +179,6 @@ const saveCollection = async () => {
     displayCreateDialog.value = false;
   } catch (error) {
     console.error('Error saving collection:', error);
-    // Error handled by api interceptor
   }
 };
 
@@ -244,7 +240,6 @@ onMounted(() => {
 <template>
   <div class="flex h-full overflow-hidden">
     <div class="flex-grow-1 flex flex-column overflow-y-auto collections-view p-4">
-      <!-- Removed local Toast -->
       <div class="flex flex-column align-items-center mb-4">
         <h1 class="text-4xl font-bold text-gradient">Collections</h1>
         <Button label="Create New Collection" icon="pi pi-plus" @click="openCreateDialog"

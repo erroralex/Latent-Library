@@ -62,16 +62,13 @@ class SpeedSorterControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/speedsorter/delete should move file to trash")
-    void deleteFile_ShouldInvokeTrash() throws Exception {
-        File tempFile = File.createTempFile("to-delete", ".png");
-        tempFile.deleteOnExit();
+    @DisplayName("POST /api/speedsorter/delete should delegate to batch delete")
+    void deleteFile_ShouldInvokeBatchDelete() throws Exception {
+        String path = "/to-delete.png";
 
-        when(dataManager.moveFileToTrash(any(File.class))).thenReturn(true);
-
-        mockMvc.perform(post("/api/speedsorter/delete").param("path", tempFile.getAbsolutePath()))
+        mockMvc.perform(post("/api/speedsorter/delete").param("path", path))
                 .andExpect(status().isOk());
 
-        verify(dataManager).moveFileToTrash(any(File.class));
+        verify(dataManager).batchDeleteFiles(List.of(path));
     }
 }

@@ -9,11 +9,11 @@
  * without requiring additional network requests, as it consumes data passed via the `file` prop.
  *
  * Key functionalities:
- * - **Visual Consistency:** Implements a "glass" overlay and blurred background for a premium aesthetic.
- * - **Contextual Interaction:** Emits a custom `contextmenu` event to allow parent components to handle right-click actions.
- * - **Lazy Loading:** Utilizes native browser lazy loading for images to optimize initial page load and scroll performance.
- * - **Responsive Metadata:** Conditionally renders star ratings and model information based on availability.
- * - **Optimized Thumbnails:** Uses the dedicated thumbnail API endpoint to reduce bandwidth and memory usage.
+ * - Visual Consistency: Implements a "glass" overlay and blurred background for a premium aesthetic.
+ * - Contextual Interaction: Emits a custom `contextmenu` event to allow parent components to handle right-click actions.
+ * - Lazy Loading: Utilizes native browser lazy loading for images to optimize initial page load and scroll performance.
+ * - Responsive Metadata: Conditionally renders star ratings and model information based on availability.
+ * - Optimized Thumbnails: Uses the dedicated thumbnail API endpoint to reduce bandwidth and memory usage.
  */
 import {computed} from 'vue';
 import Card from 'primevue/card';
@@ -25,7 +25,6 @@ const props = defineProps({
   }
 });
 
-// Use relative path for portability
 const imageUrl = computed(() => `/api/images/thumbnail?path=${encodeURIComponent(props.file.path)}`);
 
 const emit = defineEmits(['contextmenu']);

@@ -8,11 +8,11 @@
  * common race conditions associated with DOM-based load events.
  *
  * Key features:
- * - **Programmatic Loader:** Uses `new Image()` to track loading progress, ensuring the UI remains responsive and the "ready" state is accurate.
- * - **Advanced Zoom & Pan:** Implements cursor-relative zooming and smooth panning for detailed image inspection.
- * - **Dual-Layer Rendering:** Displays a low-resolution thumbnail as a placeholder while the high-resolution source loads to improve perceived performance.
- * - **Keyboard & Mouse Integration:** Supports mouse wheel zooming, click-to-toggle sidebar, and escape-to-reset zoom.
- * - **Navigation Controls:** Integrated directional arrows and a bottom filmstrip for rapid library traversal.
+ * - Programmatic Loader: Uses `new Image()` to track loading progress, ensuring the UI remains responsive and the "ready" state is accurate.
+ * - Advanced Zoom & Pan: Implements cursor-relative zooming and smooth panning for detailed image inspection.
+ * - Dual-Layer Rendering: Displays a low-resolution thumbnail as a placeholder while the high-resolution source loads to improve perceived performance.
+ * - Keyboard & Mouse Integration: Supports mouse wheel zooming, click-to-toggle sidebar, and escape-to-reset zoom.
+ * - Navigation Controls: Integrated directional arrows and a bottom filmstrip for rapid library traversal.
  */
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
@@ -58,7 +58,6 @@ const resetZoom = () => {
   isDragging.value = false;
 };
 
-// Programmatic image loading to prevent spinner race conditions
 watch(mainImageUrl, (newUrl) => {
   resetZoom();
   isHighResReady.value = false;
@@ -66,7 +65,6 @@ watch(mainImageUrl, (newUrl) => {
 
   if (!newUrl) return;
 
-  // Use a request ID to ignore callbacks from stale requests (rapid navigation)
   const requestId = ++loadRequestId.value;
 
   const img = new Image();
@@ -78,7 +76,7 @@ watch(mainImageUrl, (newUrl) => {
   img.onerror = () => {
     if (loadRequestId.value === requestId) {
       hasLoadError.value = true;
-      isHighResReady.value = true; // Stop spinner even on error
+      isHighResReady.value = true;
     }
   };
   img.src = newUrl;
@@ -160,7 +158,6 @@ const emit = defineEmits(['contextmenu']);
 
 const onRightClick = (event) => {
   if (store.selectedFile) {
-    // Find the full file object from the store if possible, or construct a partial one
     const fileObj = store.files.find(f => f.path === store.selectedFile) || { path: store.selectedFile };
     emit('contextmenu', {event, file: fileObj});
   }
@@ -187,7 +184,6 @@ onUnmounted(() => {
         @mouseup="onMouseUp"
         @mouseleave="onMouseUp"
     >
-      <!-- Thumbnail: Removed !isHighResReady check so it stays visible until covered by high-res -->
       <img v-if="thumbnailImageUrl"
            :src="thumbnailImageUrl"
            class="absolute inset-0 z-0"

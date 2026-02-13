@@ -99,4 +99,37 @@ class UserDataManagerTest {
 
         verify(imageRepo).setRating(123, 5);
     }
+
+    @Test
+    @DisplayName("batchDeleteFiles should resolve paths and delegate to repository")
+    void testBatchDeleteFiles() {
+        String path1 = "/img1.png";
+        String path2 = "/img2.png";
+        File file1 = mock(File.class);
+        File file2 = mock(File.class);
+
+        when(pathService.resolve(path1)).thenReturn(file1);
+        when(pathService.resolve(path2)).thenReturn(file2);
+        when(file1.exists()).thenReturn(false); // Simulate missing file to test DB cleanup fallback
+        when(file2.exists()).thenReturn(false);
+
+        userDataManager.batchDeleteFiles(List.of(path1, path2));
+
+        verify(imageRepo).deleteByPaths(argThat(list -> list.contains(path1) && list.contains(path2)));
+    }
+
+    @Test
+    @DisplayName("addImagesToCollection should resolve IDs and delegate to collection service")
+    void testAddImagesToCollection() {
+        String path1 = "/img1.png";
+        File file1 = mock(File.class);
+        when(pathService.resolve(path1)).thenReturn(file1);
+        when(file1.exists()).thenReturn(true);
+        when(pathService.getNormalizedAbsolutePath(file1)).thenReturn(path1);
+        when(imageRepo.getIdByPath(path1)).thenReturn(101);
+
+        userDataManager.addImagesToCollection("MyColl", List.of(path1));
+
+        verify(collectionService).addImagesToCollection(eq("MyColl"), argThat(list -> list.contains(101)));
+    }
 }

@@ -224,6 +224,44 @@ public class UserDataManager {
         return success;
     }
 
+    public void batchDeleteFiles(List<String> paths) {
+        if (paths == null || paths.isEmpty()) return;
+
+        List<String> deletedPaths = new ArrayList<>();
+        for (String path : paths) {
+            try {
+                File file = pathService.resolve(path);
+                if (file.exists()) {
+                    boolean success = false;
+                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
+                        try {
+                            success = Desktop.getDesktop().moveToTrash(file);
+                        } catch (Exception e) {
+                            logger.warn("System trash operation failed for: {}. Attempting fallback.", file.getAbsolutePath());
+                        }
+                    }
+
+                    if (!success) {
+                        success = moveFileToAppTrash(file);
+                    }
+
+                    if (success) {
+                        deletedPaths.add(pathService.getNormalizedAbsolutePath(file));
+                    }
+                } else {
+                    // File doesn't exist, but we should still clean up the DB record
+                    deletedPaths.add(path);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to delete file in batch: {}", path, e);
+            }
+        }
+
+        if (!deletedPaths.isEmpty()) {
+            imageRepo.deleteByPaths(deletedPaths);
+        }
+    }
+
     private boolean moveFileToAppTrash(File file) {
         try {
             Path trashDir = Paths.get("data", "trash").toAbsolutePath().normalize();
@@ -406,6 +444,23 @@ public class UserDataManager {
     public void addImageToCollection(String collectionName, File file) {
         int id = getOrCreateImageIdInternal(file);
         collectionService.addImageToCollection(collectionName, id);
+    }
+
+    public void addImagesToCollection(String collectionName, List<String> paths) {
+        List<Integer> ids = new ArrayList<>();
+        for (String path : paths) {
+            try {
+                File file = pathService.resolve(path);
+                if (file.exists()) {
+                    ids.add(getOrCreateImageIdInternal(file));
+                }
+            } catch (Exception e) {
+                logger.warn("Skipping invalid path during batch add: {}", path);
+            }
+        }
+        if (!ids.isEmpty()) {
+            collectionService.addImagesToCollection(collectionName, ids);
+        }
     }
 
     public void blacklistImageFromCollection(String collectionName, File file) {

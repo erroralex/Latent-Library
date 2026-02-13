@@ -8,7 +8,7 @@
  * of the view using CSS transforms.
  *
  * Key functionalities:
- * - Reactive centering: Calculates the necessary translateX offset based on the selected image's index and container width.
+ * - Reactive centering: Calculates the exact `translateX` offset needed to center the selected item within the container.
  * - Smooth transitions: Uses CSS transitions for fluid movement when the selection changes.
  * - Responsive design: Utilizes ResizeObserver to adapt centering logic to container size changes.
  * - Interactive thumbnails: Allows users to select images directly from the strip.
@@ -25,10 +25,6 @@ const ITEM_WIDTH = 120;
 const ITEM_GAP = 8;
 const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_GAP;
 
-/**
- * Calculates the exact `translateX` offset needed to center the selected item within the container.
- * This is the core logic for the carousel's positioning.
- */
 const carouselOffset = computed(() => {
   if (!store.selectedFile || containerWidth.value === 0) {
     return 0;
@@ -134,7 +130,7 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--bg-filmstrip); /* Use theme variable */
+  background: var(--bg-filmstrip);
   border-radius: inherit;
   z-index: -1;
 }

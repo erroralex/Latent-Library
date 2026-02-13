@@ -7,9 +7,9 @@
  *
  * Key architectural features:
  * - Multi-Root Navigation: Organizes navigation into logical sections: Collections, Pinned Folders, and Local Drives (This PC).
- * - Lazy Loading: Implements on-demand directory traversal. Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
+ * - Lazy Loading: Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
  * - Reactive State Integration: Synchronizes with the global Pinia store to trigger library scans and update the browser view when a folder or collection is selected.
- * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
+ * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations.
  * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
  */
 import {ref, onMounted, watch, computed} from 'vue';
@@ -26,7 +26,6 @@ import {useConfirm} from 'primevue/useconfirm';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 
-// Import logos
 import logoNeon from '@/assets/alx_logo_neon.png';
 import logoGold from '@/assets/alx_logo_gold.png';
 import logoLight from '@/assets/alx_logo_light.png';
@@ -271,7 +270,7 @@ const openInExplorer = async (path) => {
 
 const openSettings = async () => {
   showSettings.value = true;
-  currentTheme.value = store.currentTheme; // Sync with store
+  currentTheme.value = store.currentTheme;
   try {
     const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
@@ -302,7 +301,7 @@ const clearDatabase = () => {
       try {
         await api.post('/system/clear-database');
         toast.add({severity: 'success', summary: 'Success', detail: 'Database cleared', life: 3000});
-        store.initialize(); // Reload
+        store.initialize();
       } catch (e) {
         // Error handled by api interceptor
       }
@@ -345,7 +344,6 @@ const selectExcludedFolder = async () => {
       newExcludedPath.value = path;
     }
   } else {
-    // Fallback for browser dev mode
     const path = prompt("Enter absolute path to exclude:");
     if (path) {
       newExcludedPath.value = path;
@@ -494,12 +492,12 @@ onMounted(loadTree);
 :deep(.p-tree) {
   background: transparent !important;
   border: none !important;
-  padding: 0.5rem 0.5rem 0.5rem 1.5rem; /* Increased left padding to 1.5rem */
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
   padding: 0.5rem 0.75rem;
-  margin: 4px 4px; /* Add horizontal margin to prevent shadow clipping */
+  margin: 4px 4px;
   border-radius: 6px;
   color: var(--text-secondary);
   transition: all 0.2s ease;
@@ -509,17 +507,15 @@ onMounted(loadTree);
   z-index: 1;
   background: transparent !important;
   overflow: visible !important;
-  width: fit-content; /* Fix: Button only as wide as text */
-  min-width: 100%; /* Ensure it still spans if needed for hover effect, wait... user said "less wide" */
+  width: fit-content;
 }
 
-/* Reverting min-width: 100% to allow fit-content behavior as requested */
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {
   min-width: auto;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content .p-treenode-label) {
-  font-size: 0.9rem; /* Smaller font size */
+  font-size: 0.9rem;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:focus),
@@ -552,7 +548,7 @@ onMounted(loadTree);
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
+  background: var(--bg-btn-inner);
   border-radius: 6px;
   z-index: -1;
   transition: background 0.3s ease;
@@ -568,7 +564,7 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover::after) {
-  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
+  background: var(--bg-btn-inner);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content:hover .p-treenode-label),
@@ -599,7 +595,7 @@ onMounted(loadTree);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight::after) {
-  background: var(--bg-btn-inner); /* Use theme variable for solid mask */
+  background: var(--bg-btn-inner);
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight:hover) {

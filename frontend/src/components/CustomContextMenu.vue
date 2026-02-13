@@ -95,7 +95,7 @@ defineExpose({show, hide});
   color: var(--text-primary);
   font-family: var(--font-family, sans-serif);
   font-size: 14px;
-  overflow: visible; /* Allow submenus to overflow */
+  overflow: visible;
   user-select: none;
 }
 </style>

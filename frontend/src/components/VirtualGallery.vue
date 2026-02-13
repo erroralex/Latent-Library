@@ -24,10 +24,6 @@ const galleryContainer = ref(null);
 const scrollerRef = ref(null);
 const gridCols = ref(4);
 
-/**
- * Chunks the flat file list into rows based on the current grid column count.
- * This is required for the VirtualScroller to render a grid layout.
- */
 const chunkedFiles = computed(() => {
   const chunks = [];
   for (let i = 0; i < store.files.length; i += gridCols.value) {
@@ -122,7 +118,6 @@ const handleGalleryItemDoubleClick = (file) => {
 const emit = defineEmits(['contextmenu']);
 
 const onImageContextMenu = (payload) => {
-  // If the right-clicked item isn't in the selection, select it exclusively
   if (!store.selectedFiles.has(payload.file.path)) {
     store.selectFile(payload.file);
   }
