@@ -16,10 +16,8 @@
 import {useBrowserStore} from '@/stores/browser';
 import {computed, ref} from 'vue';
 import api from '@/services/api';
-import Sidebar from 'primevue/sidebar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
 import Chip from 'primevue/chip';
 import Divider from 'primevue/divider';
 import Dialog from 'primevue/dialog';
@@ -71,7 +69,6 @@ const resetRating = () => {
 const setRating = (rating, event) => {
   store.setRating(rating);
   if (event && event.target) {
-    // Attempt to blur the button itself, or its closest button ancestor
     const button = event.target.closest('button');
     if (button) {
       button.blur();
@@ -266,7 +263,7 @@ const setRating = (rating, event) => {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--bg-btn-inner); /* Use theme variable */
+  background: var(--bg-btn-inner);
   border-radius: 16px;
   z-index: -1;
 }
@@ -327,7 +324,6 @@ const setRating = (rating, event) => {
   border-color: var(--border-light) !important;
 }
 
-/* Explicitly remove focus outline for star buttons */
 .star-btn:focus {
   box-shadow: none !important;
   outline: none !important;

@@ -18,7 +18,6 @@ import api from '@/services/api';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
-import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
 
 const toast = useToast();
@@ -34,11 +33,6 @@ const onUpload = async (event) => {
   try {
     const response = await api.post('/scrub/upload', formData);
     uploadedFile.value = response.data;
-    // Note: Preview URL still needs full path if not proxied, but api.defaults.baseURL handles /api
-    // However, for <img> src, we need the full URL or relative to root.
-    // Since we are using dynamic ports, we should rely on relative paths if possible,
-    // but the backend returns just the filename.
-    // Let's assume the frontend is served from the same origin.
     previewUrl.value = `/api/scrub/preview/${uploadedFile.value}`;
     toast.add({severity: 'success', summary: 'Uploaded', detail: 'Image ready to scrub', life: 3000});
   } catch (error) {
@@ -89,8 +83,6 @@ const clear = () => {
 
 <template>
   <div class="flex flex-column align-items-center justify-content-center h-full p-4">
-    <!-- Removed local Toast -->
-
     <div class="text-center mb-5">
       <h1 class="text-4xl font-bold text-gradient mb-2">Metadata Scrubber</h1>
       <p class="text-gray-400">Remove hidden metadata (EXIF, Prompts, Workflow) for privacy.</p>

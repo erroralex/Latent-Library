@@ -105,7 +105,6 @@ const onContextMenu = async (payload) => {
   const { event, file } = payload;
   contextMenuSelection.value = file;
 
-  // Fetch collections for the submenu
   let collections = [];
   try {
     const res = await api.get('/collections');
@@ -124,7 +123,6 @@ const onContextMenu = async (payload) => {
     command: () => addToCollection(colName, isBatch ? Array.from(store.selectedFiles) : [file.path])
   }));
 
-  // Add "Create New Collection" option
   addToCollectionItems.unshift({
     label: 'Create New Collection...',
     icon: 'pi pi-plus',
@@ -137,14 +135,12 @@ const onContextMenu = async (payload) => {
 
   const items = [];
 
-  // "Add to Collection" is always available
   items.push({
     label: `Add to Collection${batchLabel}`,
     icon: 'pi pi-plus',
     items: addToCollectionItems
   });
 
-  // "Blacklist" only if inside a collection
   if (store.activeCollection) {
     items.push({
       label: `Blacklist (Remove)${batchLabel}`,
@@ -184,9 +180,7 @@ const onContextMenu = async (payload) => {
 
 const addToCollection = async (collectionName, paths) => {
   try {
-    for (const path of paths) {
-        await api.post(`/collections/${collectionName}/images`, null, { params: { path } });
-    }
+    await api.post(`/collections/${collectionName}/batch/add`, paths);
     toast.add({ severity: 'success', summary: 'Added', detail: `Added ${paths.length} items to ${collectionName}`, life: 2000 });
   } catch (e) {
     // Error handled by api interceptor
@@ -194,7 +188,7 @@ const addToCollection = async (collectionName, paths) => {
 };
 
 const createNewCollection = () => {
-    store.collectionToEdit = null; // Ensure we are creating new
+    store.collectionToEdit = null;
     router.push('/collections');
 };
 
@@ -204,7 +198,6 @@ const blacklistImage = async (collectionName, paths) => {
         await api.post(`/collections/${collectionName}/blacklist`, null, { params: { path } });
     }
     toast.add({ severity: 'success', summary: 'Removed', detail: `Removed ${paths.length} items from ${collectionName}`, life: 2000 });
-    // Refresh the current view to hide the removed image
     store.loadCollection(collectionName);
   } catch (e) {
     // Error handled by api interceptor
@@ -223,19 +216,17 @@ const deleteImage = async (paths) => {
   if (!confirm(`Are you sure you want to move ${paths.length} file(s) to the trash?`)) return;
 
   try {
+    await api.post('/images/batch/delete', paths);
+
     let deletedCount = 0;
     for (const path of paths) {
-        await api.post('/speedsorter/delete', null, { params: { path } });
-
-        // Remove from local store to update UI immediately
         const index = store.files.findIndex(f => f.path === path);
         if (index !== -1) {
           store.files.splice(index, 1);
+          deletedCount++;
         }
-        deletedCount++;
     }
 
-    // Fix selection if current file was deleted
     if (store.selectedFile && paths.includes(store.selectedFile)) {
         if (store.files.length > 0) {
             store.selectFile(store.files[0]);
@@ -254,7 +245,6 @@ const deleteImage = async (paths) => {
 
 const openRenameDialog = (path) => {
     fileToRename.value = path;
-    // Extract filename from path
     const parts = path.split(/[\\/]/);
     newFileName.value = parts.pop();
     showRenameDialog.value = true;
@@ -274,8 +264,6 @@ const performRename = async () => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'File renamed successfully', life: 2000 });
         showRenameDialog.value = false;
 
-        // Refresh the current view to reflect the name change
-        // If we are in a folder, reload the folder. If in a collection, reload the collection.
         if (store.activeCollection) {
             store.loadCollection(store.activeCollection);
         } else if (store.lastFolderPath) {

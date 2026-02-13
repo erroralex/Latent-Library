@@ -9,55 +9,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
-
  * Repository for managing image collections and their relational associations.
-
  * <p>
-
  * This class handles the persistence of both "Static Collections" (manual associations) and
-
  * "Smart Collections" (dynamic, filter-based groupings). It manages the {@code collections}
-
  * table, which stores collection definitions and serialized JSON filters, and the
-
  * {@code collection_images} join table, which maintains the many-to-many relationship
-
  * between images and collections.
-
  * <p>
-
  * Key Responsibilities:
-
  * <ul>
-
- * <li><b>Collection CRUD:</b> Implements full lifecycle management for collection entities,
-
- * including creation, updates, and deletion.</li>
-
- * <li><b>Smart Filter Persistence:</b> Serializes and deserializes complex search criteria
-
- * using Jackson to store dynamic collection rules in the database.</li>
-
- * <li><b>Membership Management:</b> Handles adding images to collections, distinguishing
-
- * between manual additions and smart population, and managing blacklisted exclusions.</li>
-
- * <li><b>Path Resolution:</b> Retrieves absolute file system paths for all images within
-
- * a specific collection, respecting user-defined exclusions.</li>
-
- * <li><b>Atomic Operations:</b> Utilizes {@code INSERT OR IGNORE} and transactional updates
-
- * to safely manage image associations and collection state.</li>
-
+ *   <li><b>Collection CRUD:</b> Implements full lifecycle management for collection entities,
+ *   including creation, updates, and deletion.</li>
+ *   <li><b>Smart Filter Persistence:</b> Serializes and deserializes complex search criteria
+ *   using Jackson to store dynamic collection rules in the database.</li>
+ *   <li><b>Membership Management:</b> Handles adding images to collections, distinguishing
+ *   between manual additions and smart population, and managing blacklisted exclusions.</li>
+ *   <li><b>Path Resolution:</b> Retrieves absolute file system paths for all images within
+ *   a specific collection, respecting user-defined exclusions.</li>
+ *   <li><b>Atomic Operations:</b> Utilizes {@code INSERT OR IGNORE} and transactional updates
+ *   to safely manage image associations and collection state.</li>
  * </ul>
-
  */
 @Repository
 public class CollectionRepository {
@@ -92,7 +72,6 @@ public class CollectionRepository {
                         try {
                             filters = objectMapper.readValue(filtersJson, CreateCollectionRequest.CollectionFilters.class);
                         } catch (JsonProcessingException e) {
-                            // Technical failure reading from DB
                             logger.error("Failed to parse filters for collection: {}", colName, e);
                             throw new ApplicationException("Error reading collection filter data from database", e);
                         }
@@ -172,6 +151,43 @@ public class CollectionRepository {
                 .update();
     }
 
+    @Transactional
+    public void addImages(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required to add images.");
+        }
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        Integer collectionId = jdbcClient.sql("SELECT id FROM collections WHERE name = ?")
+                .param(collectionName.trim())
+                .query(Integer.class)
+                .optional()
+                .orElseThrow(() -> new ValidationException("Collection not found: " + collectionName));
+
+        long now = System.currentTimeMillis();
+        int batchSize = 500;
+        for (int i = 0; i < imageIds.size(); i += batchSize) {
+            List<Integer> batch = imageIds.subList(i, Math.min(i + batchSize, imageIds.size()));
+
+            StringBuilder sql = new StringBuilder("INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) VALUES ");
+            List<Object> params = new java.util.ArrayList<>();
+
+            for (int j = 0; j < batch.size(); j++) {
+                sql.append("(?, ?, ?, 1)");
+                if (j < batch.size() - 1) sql.append(", ");
+                params.add(collectionId);
+                params.add(batch.get(j));
+                params.add(now);
+            }
+
+            jdbcClient.sql(sql.toString())
+                    .params(params)
+                    .update();
+        }
+    }
+
     public void removeAllImages(String collectionName) {
         if (collectionName == null || collectionName.isBlank()) {
             throw new ValidationException("Collection name is required to clear images.");
@@ -218,6 +234,37 @@ public class CollectionRepository {
                 .update();
     }
 
+    @Transactional
+    public void removeExclusions(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
+        }
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        Integer collectionId = jdbcClient.sql("SELECT id FROM collections WHERE name = ?")
+                .param(collectionName.trim())
+                .query(Integer.class)
+                .optional()
+                .orElseThrow(() -> new ValidationException("Collection not found: " + collectionName));
+
+        int batchSize = 500;
+        for (int i = 0; i < imageIds.size(); i += batchSize) {
+            List<Integer> batch = imageIds.subList(i, Math.min(i + batchSize, imageIds.size()));
+            String placeholders = batch.stream().map(id -> "?").collect(Collectors.joining(","));
+            String sql = "DELETE FROM collection_exclusions WHERE collection_id = ? AND image_id IN (" + placeholders + ")";
+
+            List<Object> params = new java.util.ArrayList<>();
+            params.add(collectionId);
+            params.addAll(batch);
+
+            jdbcClient.sql(sql)
+                    .params(params)
+                    .update();
+        }
+    }
+
     public void removeExclusion(String collectionName, int imageId) {
         if (collectionName == null || collectionName.isBlank()) {
             throw new ValidationException("Collection name is required to remove exclusion.");
@@ -231,7 +278,7 @@ public class CollectionRepository {
 
     public void addSmartImage(String collectionName, int imageId) {
         if (collectionName == null || collectionName.isBlank()) {
-            return; // Usually called in background cycles, silent return is safer here
+            return;
         }
         String sql = "INSERT OR IGNORE INTO collection_images (collection_id, image_id, added_at, is_manual) SELECT id, ?, ?, 0 FROM collections WHERE name = ?";
         jdbcClient.sql(sql)

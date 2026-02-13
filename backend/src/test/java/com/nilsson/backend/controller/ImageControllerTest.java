@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -88,5 +89,18 @@ class ImageControllerTest {
 
         mockMvc.perform(get("/api/images/metadata").param("path", "missing.png"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void batchDeleteImages_ShouldInvokeService() throws Exception {
+        List<String> paths = List.of("/path/1.png", "/path/2.png");
+        String json = "[\"/path/1.png\", \"/path/2.png\"]";
+
+        mockMvc.perform(post("/api/images/batch/delete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        verify(dataManager).batchDeleteFiles(paths);
     }
 }

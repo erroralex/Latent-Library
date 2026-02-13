@@ -126,13 +126,12 @@ public class SpeedSorterController {
 
     @PostMapping("/delete")
     public ResponseEntity<String> deleteFile(@RequestParam("path") String path) {
-        File file = new File(path);
-        if (!file.exists()) throw new ResourceNotFoundException("File", path);
-
-        if (dataManager.moveFileToTrash(file)) {
-            return ResponseEntity.ok("Deleted");
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("Path cannot be empty.");
         }
-        throw new ApplicationException("Failed to delete file (System Trash operation failed).");
+        // Delegate to batch delete logic for consistency
+        dataManager.batchDeleteFiles(List.of(path));
+        return ResponseEntity.ok("Deleted");
     }
 
     @PostMapping("/undo")

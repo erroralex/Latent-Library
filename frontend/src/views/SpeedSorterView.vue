@@ -17,7 +17,6 @@
 import {ref, onMounted, onUnmounted, computed} from 'vue';
 import api from '@/services/api';
 import Button from 'primevue/button';
-import Toast from 'primevue/toast';
 import {useToast} from 'primevue/usetoast';
 
 const toast = useToast();
@@ -126,7 +125,7 @@ const deleteFile = async () => {
   const fileToDelete = currentFile.value;
 
   try {
-    await api.post('/speedsorter/delete', null, {params: {path: fileToDelete}});
+    await api.post('/images/batch/delete', [fileToDelete]);
 
     history.value.push({source: fileToDelete, dest: null, isDelete: true});
     files.value.splice(currentIndex.value, 1);
@@ -217,8 +216,6 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-column h-full overflow-hidden p-3">
-    <!-- Removed local Toast -->
-
     <div class="flex align-items-center justify-content-between mb-3 glass-panel p-3 border-round">
       <div class="flex align-items-center gap-3">
         <span class="text-xl font-bold text-gradient">Speed Sorter</span>

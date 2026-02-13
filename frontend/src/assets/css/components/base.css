@@ -1,6 +1,11 @@
+/**
+ * Base Styles
+ * Description: Global resets, body styles, and core utility classes.
+ */
+
 body {
     margin: 0;
-    font-family: var(--font-family);
+    font-family: var(--font-family, 'Inter', sans-serif);
     background-color: var(--bg-app);
     background-image:
             radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
@@ -12,7 +17,7 @@ body {
     overflow: hidden;
 }
 
-/* Global Scrollbar Styling using Theme Variables */
+/* --- Global Scrollbar Styling --- */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -31,6 +36,7 @@ body {
     background: var(--scrollbar-thumb-hover);
 }
 
+/* --- Typography Utilities --- */
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
@@ -39,9 +45,11 @@ body {
     background: var(--grad-text);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     font-weight: 800;
 }
 
+/* --- Glass Effects --- */
 .glass-panel {
     background: var(--bg-panel);
     backdrop-filter: var(--glass-blur);

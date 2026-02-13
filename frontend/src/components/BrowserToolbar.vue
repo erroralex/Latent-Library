@@ -118,7 +118,7 @@ const refreshFilters = () => {
 
           <div class="flex align-items-center">
             <Button label="Model" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm text-white"
+                    class="p-button-text p-button-secondary p-button-sm"
                     @click="(e) => { refreshFilters(); modelMenu.toggle(e); }"/>
             <Menu ref="modelMenu" :model="modelItems" :popup="true" class="w-15rem"/>
 
@@ -130,7 +130,7 @@ const refreshFilters = () => {
 
           <div class="flex align-items-center">
             <Button label="Sampler" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm text-white"
+                    class="p-button-text p-button-secondary p-button-sm"
                     @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }"/>
             <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="w-15rem"/>
 
@@ -142,7 +142,7 @@ const refreshFilters = () => {
 
           <div class="flex align-items-center">
             <Button label="LoRA" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm text-white"
+                    class="p-button-text p-button-secondary p-button-sm"
                     @click="(e) => { refreshFilters(); loraMenu.toggle(e); }"/>
             <Menu ref="loraMenu" :model="loraItems" :popup="true" class="w-15rem"/>
 
@@ -154,7 +154,7 @@ const refreshFilters = () => {
 
           <div class="flex align-items-center">
             <Button label="Stars" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm text-white"
+                    class="p-button-text p-button-secondary p-button-sm"
                     @click="(e) => ratingMenu.toggle(e)"/>
             <Menu ref="ratingMenu" :model="ratingItems" :popup="true">
               <template #item="{ item, props }">
@@ -187,7 +187,7 @@ const refreshFilters = () => {
     <template #end>
       <div class="flex gap-3 align-items-center">
         <Button icon="pi pi-info-circle"
-                :class="[ store.isSidebarOpen ? 'text-primary' : 'text-white' ]"
+                :class="[ store.isSidebarOpen ? 'text-primary' : 'text-secondary' ]"
                 class="p-button-rounded p-button-text"
                 @click="toggleSidebar"
                 tooltip="Toggle Metadata"

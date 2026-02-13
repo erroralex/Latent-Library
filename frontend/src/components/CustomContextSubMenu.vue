@@ -1,4 +1,18 @@
 <script setup>
+/**
+ * @file CustomContextSubMenu.vue
+ * @description A recursive submenu component for the CustomContextMenu.
+ *
+ * This component handles the rendering of individual menu items, separators, and nested submenus.
+ * It implements hover-based submenu triggering and ensures that commands are executed correctly
+ * when an item is clicked.
+ *
+ * Key functionalities:
+ * - Recursive Rendering: Can render infinitely nested menu structures by self-referencing.
+ * - Hover Management: Tracks the active submenu index to show/hide nested lists dynamically.
+ * - Command Execution: Triggers the `command` callback of menu items and emits an `execute` event to close the root menu.
+ * - Conditional Visibility: Respects the `visible` and `disabled` properties of menu item objects.
+ */
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -56,7 +70,6 @@ const execute = (item) => {
 </template>
 
 <style scoped>
-/* Re-use styles from parent or define here */
 .custom-menu-list {
   list-style: none;
   padding: 0;

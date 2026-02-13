@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Repository for managing core image entities and their persistent state within the library.
@@ -102,6 +103,24 @@ public class ImageRepository {
         jdbcClient.sql("DELETE FROM images WHERE file_path = ?")
                 .param(path)
                 .update();
+    }
+
+    @Transactional
+    public void deleteByPaths(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return;
+        }
+        // SQLite limit for parameters is usually 999 or 32766 depending on version.
+        // Batching in chunks of 500 is safe.
+        int batchSize = 500;
+        for (int i = 0; i < paths.size(); i += batchSize) {
+            List<String> batch = paths.subList(i, Math.min(i + batchSize, paths.size()));
+            String placeholders = batch.stream().map(p -> "?").collect(Collectors.joining(","));
+            String sql = "DELETE FROM images WHERE file_path IN (" + placeholders + ")";
+            jdbcClient.sql(sql)
+                    .params(batch)
+                    .update();
+        }
     }
 
     public void forEachFilePath(Consumer<String> action) {

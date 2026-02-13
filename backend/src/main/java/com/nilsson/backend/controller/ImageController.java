@@ -116,6 +116,15 @@ public class ImageController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/batch/delete")
+    public ResponseEntity<Void> batchDeleteImages(@RequestBody List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            throw new ValidationException("Path list cannot be empty.");
+        }
+        dataManager.batchDeleteFiles(paths);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/content")
     public ResponseEntity<Resource> getImageContent(@RequestParam String path) {
         validatePath(path);
