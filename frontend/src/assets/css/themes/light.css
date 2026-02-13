@@ -1,0 +1,61 @@
+/*
+   Theme: Clean Light (Sleek Blue-Gray)
+   Based on Wigell Camping UI Reference
+*/
+.theme-light {
+    /* Main Backgrounds */
+    --bg-app: #f0f4f8; /* Soft, Cool Blue-Gray */
+
+    /* Component Backgrounds */
+    --bg-header: #e6eef5; /* Custom title bar color */
+    --bg-sidebar-left: #e6eef5; /* Side navigation color */
+    --bg-sidebar-right: #ffffff; /* Metadata sidebar */
+    --bg-toolbar: #ffffff;
+    --bg-filmstrip: #ffffff;
+
+    /* Generic Panels */
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-panel-opaque: #ffffff;
+    --bg-input: #ffffff;
+    --bg-overlay: rgba(33, 37, 41, 0.2); /* Dark overlay for modals */
+    --bg-menu: #ffffff; /* For dropdowns/menus */
+
+    /* Button Internals */
+    --bg-btn-inner: #e9ecef; /* Button background */
+
+    /* Borders */
+    --border-light: #dde5ed; /* Subtle border */
+    --border-input: #ced4da; /* Input border */
+
+    /* Text */
+    --text-primary: #212529; /* Deep gray */
+    --text-secondary: #495057; /* Darker gray for better contrast */
+    --text-muted: #6c757d;
+
+    /* Accents & Gradients */
+    --accent-primary: #007bff; /* Modern Blue */
+    --accent-secondary: #0056b3; /* Darker Blue */
+
+    /* Gradients - Blue Accent for Borders/Glows */
+    --grad-text: linear-gradient(90deg, #007bff, #0056b3);
+    --grad-hover: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Blue gradient for borders */
+    --grad-border: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+
+    /* Status Colors */
+    --status-danger: #dc3545;
+    --status-warning: #ffc107;
+    --status-success: #28a745;
+
+    /* Effects */
+    --glass-blur: blur(0px); /* Disable blur for clean look */
+    --shadow-panel: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+    /* Glow Effects - Blue Dropshadow */
+    --shadow-glow-primary: 0 0 8px rgba(0, 123, 255, 0.4);
+    --shadow-glow-secondary: 0 0 8px rgba(0, 86, 179, 0.4);
+
+    /* Scrollbars */
+    --scrollbar-track: #e9ecef;
+    --scrollbar-thumb: #adb5bd;
+    --scrollbar-thumb-hover: #6c757d;
+}

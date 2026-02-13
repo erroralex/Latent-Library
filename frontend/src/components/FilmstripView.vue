@@ -90,10 +90,10 @@ onUnmounted(() => {
 
 <style scoped>
 .filmstrip-glass {
-  background: var(--app-bg-panel, rgba(20, 25, 35, 0.6));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-filmstrip);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--border-light);
   box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -124,7 +124,7 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: -2px;
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   border-radius: inherit;
   z-index: -2;
   filter: blur(2px);
@@ -134,7 +134,7 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000000;
+  background: var(--bg-filmstrip); /* Use theme variable */
   border-radius: inherit;
   z-index: -1;
 }

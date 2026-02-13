@@ -1,0 +1,60 @@
+/*
+   Theme: Sleek Modern Grey (Gold Accent)
+*/
+.theme-gold {
+    /* Main Backgrounds */
+    --bg-app: #212121;
+
+    /* Component Backgrounds */
+    --bg-header: rgba(33, 33, 33, 0.95);
+    --bg-sidebar-left: rgba(38, 38, 38, 0.95);
+    --bg-sidebar-right: rgba(38, 38, 38, 0.95);
+    --bg-toolbar: rgba(45, 45, 45, 0.9);
+    --bg-filmstrip: rgba(30, 30, 30, 0.9);
+
+    /* Generic Panels */
+    --bg-panel: rgba(45, 45, 45, 0.8);
+    --bg-panel-opaque: #2d2d2d;
+    --bg-input: #1a1a1a;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+    --bg-menu: #2d2d2d; /* For dropdowns/menus */
+
+    /* Button Internals - Adjusted to match panel opaque for better visibility */
+    --bg-btn-inner: #2d2d2d;
+
+    /* Borders */
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-input: rgba(255, 255, 255, 0.15);
+
+    /* Text */
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b0b0;
+    --text-muted: #757575;
+
+    /* Accents & Gradients */
+    --accent-primary: #e69d67;
+    --accent-secondary: #d4af37;
+
+    /* Gold Gradient */
+    --grad-text: linear-gradient(135deg, #e69d67 0%, #f0c27b 100%);
+    --grad-hover: linear-gradient(135deg, #e69d67 0%, #d4af37 100%);
+    --grad-border: linear-gradient(135deg, #e69d67 0%, #d4af37 100%);
+
+    /* Status Colors */
+    --status-danger: #ef5350;
+    --status-warning: #ffca28;
+    --status-success: #66bb6a;
+
+    /* Effects */
+    --glass-blur: blur(12px);
+    --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* Gold Glow Effects */
+    --shadow-glow-primary: 0 0 10px rgba(230, 157, 103, 0.3);
+    --shadow-glow-secondary: 0 0 15px rgba(212, 175, 55, 0.3);
+
+    /* Scrollbars */
+    --scrollbar-track: rgba(255, 255, 255, 0.05);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+}

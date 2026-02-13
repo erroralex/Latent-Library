@@ -230,7 +230,15 @@ onUnmounted(() => {
 
 <style scoped>
 .image-viewer-glass {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-overlay);
+}
+
+.text-red-400 {
+  color: var(--status-danger) !important;
+}
+
+.text-white {
+  color: var(--text-primary) !important;
 }
 
 .opacity-0 {

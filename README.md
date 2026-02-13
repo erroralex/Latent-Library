@@ -115,6 +115,6 @@ If **AI Toolbox** has streamlined your workflow, consider supporting its ongoing
 
 <p align="center">
   <b>Developed by</b><br>
-  <img src="frontend/src/assets/alx_logo.png" width="120" alt="Alexander Nilsson Logo"><br>
+  <img src="frontend/src/assets/alx_logo_neon.png" width="120" alt="Alexander Nilsson Logo"><br>
   Copyright (c) 2026 Alexander Nilsson
 </p>

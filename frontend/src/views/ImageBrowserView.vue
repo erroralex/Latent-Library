@@ -388,14 +388,14 @@ watch(() => store.imageFocusRequested, (requested) => {
 .glass-dialog .p-dialog-header,
 .glass-dialog .p-dialog-content,
 .glass-dialog .p-dialog-footer {
-  background: rgba(10, 10, 10, 0.95) !important;
-  color: white;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-panel-opaque) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-input) !important;
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
+  color: var(--text-primary) !important;
 }
 </style>

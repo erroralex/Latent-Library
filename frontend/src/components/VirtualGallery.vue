@@ -169,7 +169,7 @@ defineExpose({gridCols});
   content: '';
   position: absolute;
   inset: -2px;
-  background: var(--app-grad-hover);
+  background: var(--grad-hover);
   border-radius: inherit;
   z-index: -2;
   filter: blur(2px);
@@ -179,7 +179,7 @@ defineExpose({gridCols});
   content: '';
   position: absolute;
   inset: 0;
-  background: #000000;
+  background: var(--bg-app);
   border-radius: inherit;
   z-index: -1;
 }

@@ -113,18 +113,12 @@ const closeWindow = () => {
 
 <style scoped>
 .menubar-glass {
-  background: var(--app-bg-header, rgba(15, 18, 25, 0.75));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  background: var(--bg-header);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: var(--shadow-panel);
   z-index: 1000;
-}
-
-.text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .draggable-header {
@@ -135,121 +129,6 @@ const closeWindow = () => {
   -webkit-app-region: no-drag;
 }
 
-.nav-btn {
-  color: #9ca3af !important;
-  border-radius: 8px;
-  position: relative !important;
-  z-index: 1 !important;
-  background: transparent !important;
-  overflow: visible !important;
-}
-
-.nav-btn::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: var(--app-grad-hover);
-  border-radius: 9px;
-  z-index: -2;
-  opacity: 0;
-  filter: blur(4px);
-  transition: opacity 0.3s ease;
-}
-
-.nav-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  border-radius: 8px;
-  z-index: -1;
-  transition: background 0.3s ease;
-}
-
-.nav-btn:hover {
-  color: white !important;
-  transform: translateY(-1px);
-}
-
-.nav-btn:hover::before {
-  opacity: 0.8;
-}
-
-.nav-btn:hover::after {
-  background: #000000;
-}
-
-:deep(.nav-btn:hover .p-button-label),
-:deep(.nav-btn:hover .p-button-icon) {
-  background: none !important;
-  -webkit-text-fill-color: white !important;
-  color: white !important;
-}
-
-.active-nav-btn::before {
-  opacity: 0.8;
-}
-
-.active-nav-btn::after {
-  background: #000000;
-}
-
-:deep(.active-nav-btn .p-button-label),
-:deep(.active-nav-btn .p-button-icon) {
-  background: var(--app-grad-hover);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent !important;
-}
-
-.window-close-btn {
-  position: relative !important;
-  z-index: 1 !important;
-  background: transparent !important;
-  overflow: visible !important;
-}
-
-.window-close-btn::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: var(--app-red-warning);
-  border-radius: 9px;
-  z-index: -2;
-  opacity: 0;
-  filter: blur(4px);
-  transition: opacity 0.3s ease;
-}
-
-.window-close-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  border-radius: 8px;
-  z-index: -1;
-  transition: background 0.3s ease;
-}
-
-.window-close-btn:hover {
-  color: white !important;
-  transform: translateY(-1px);
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.window-close-btn:hover::before {
-  opacity: 0.8;
-}
-
-.window-close-btn:hover::after {
-  background: #000000;
-}
-
-:deep(.window-close-btn:hover .p-button-icon) {
-  background: none !important;
-  -webkit-text-fill-color: white !important;
-  color: white !important;
-}
+/* Window close button styles moved to buttons.css, but keeping specific overrides here if needed */
+/* Actually, they are fully defined in buttons.css now, so we can remove them from here to avoid conflicts */
 </style>

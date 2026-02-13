@@ -14,7 +14,7 @@
  * - Automated Download: Facilitates the immediate download of the processed, clean image file.
  */
 import {ref} from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -32,12 +32,17 @@ const onUpload = async (event) => {
   formData.append('file', file);
 
   try {
-    const response = await axios.post('/api/scrub/upload', formData);
+    const response = await api.post('/scrub/upload', formData);
     uploadedFile.value = response.data;
-    previewUrl.value = `http://localhost:8080/api/scrub/preview/${uploadedFile.value}`;
+    // Note: Preview URL still needs full path if not proxied, but api.defaults.baseURL handles /api
+    // However, for <img> src, we need the full URL or relative to root.
+    // Since we are using dynamic ports, we should rely on relative paths if possible,
+    // but the backend returns just the filename.
+    // Let's assume the frontend is served from the same origin.
+    previewUrl.value = `/api/scrub/preview/${uploadedFile.value}`;
     toast.add({severity: 'success', summary: 'Uploaded', detail: 'Image ready to scrub', life: 3000});
   } catch (error) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Upload failed', life: 3000});
+    // Error handled by api interceptor
   }
 };
 
@@ -46,7 +51,7 @@ const scrubAndDownload = async () => {
   isProcessing.value = true;
 
   try {
-    const response = await axios.post('/api/scrub/process', null, {
+    const response = await api.post('/scrub/process', null, {
       params: {filename: uploadedFile.value},
       responseType: 'blob'
     });
@@ -70,7 +75,7 @@ const scrubAndDownload = async () => {
 
     toast.add({severity: 'success', summary: 'Success', detail: 'Metadata scrubbed & downloaded', life: 3000});
   } catch (error) {
-    toast.add({severity: 'error', summary: 'Error', detail: 'Processing failed', life: 3000});
+    // Error handled by api interceptor
   } finally {
     isProcessing.value = false;
   }
@@ -84,7 +89,7 @@ const clear = () => {
 
 <template>
   <div class="flex flex-column align-items-center justify-content-center h-full p-4">
-    <Toast/>
+    <!-- Removed local Toast -->
 
     <div class="text-center mb-5">
       <h1 class="text-4xl font-bold text-gradient mb-2">Metadata Scrubber</h1>
@@ -120,16 +125,17 @@ const clear = () => {
 
 <style scoped>
 .text-gradient {
-  background: var(--app-grad-text, linear-gradient(90deg, #66fcf1, #d870ff));
+  background: var(--grad-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .glass-panel {
-  background: rgba(20, 20, 20, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  box-shadow: var(--shadow-panel) !important;
 }
 
 :deep(.p-card-body) {

@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: var(--font-family);
-    background-color: var(--app-bg-deepest);
+    background-color: var(--bg-app);
     background-image:
             radial-gradient(circle at 15% 25%, rgba(102, 252, 241, 0.08) 0%, transparent 40%),
             radial-gradient(circle at 85% 75%, rgba(216, 112, 255, 0.08) 0%, transparent 40%);
@@ -12,22 +12,23 @@ body {
     overflow: hidden;
 }
 
+/* Global Scrollbar Styling using Theme Variables */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #000;
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--scrollbar-thumb-hover);
 }
 
 .text-primary { color: var(--text-primary); }
@@ -35,18 +36,18 @@ body {
 .text-muted { color: var(--text-muted); }
 
 .text-gradient {
-    background: var(--app-grad-text);
+    background: var(--grad-text);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 800;
 }
 
 .glass-panel {
-    background: var(--app-bg-panel);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: var(--border-glass);
-    box-shadow: var(--shadow-glass);
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-panel);
     position: relative;
     overflow: hidden;
 }

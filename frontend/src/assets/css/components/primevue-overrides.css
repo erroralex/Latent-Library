@@ -14,7 +14,7 @@
     content: '';
     position: absolute;
     inset: -1px;
-    background: var(--app-grad-hover);
+    background: var(--grad-hover);
     border-radius: 9px;
     z-index: -2;
     opacity: 0;
@@ -43,7 +43,7 @@
 }
 
 .p-button:enabled:hover::after {
-    background: #000000;
+    background: var(--bg-btn-inner);
     border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -65,24 +65,24 @@
 }
 
 .p-button.p-button-text:enabled:hover::after {
-    background: #000000;
+    background: var(--bg-btn-inner);
 }
 
 .p-inputtext {
-    background: var(--app-bg-input) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
     color: var(--text-primary) !important;
     border-radius: 8px !important;
     transition: all 0.2s !important;
 }
 
 .p-inputtext:enabled:focus {
-    border-image: var(--app-grad-hover) 1 !important;
-    box-shadow: 0 0 15px rgba(102, 252, 241, 0.1) !important;
+    border-image: var(--grad-hover) 1 !important;
+    box-shadow: var(--shadow-glow-primary) !important;
 }
 
 .surface-card {
-    background: var(--app-bg-card) !important;
+    background: var(--bg-card) !important;
     border: var(--border-glass) !important;
     backdrop-filter: blur(16px) !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.8) !important;
@@ -108,8 +108,8 @@
 
 .p-treenode-content.p-highlight {
     background: rgba(102, 252, 241, 0.1) !important;
-    color: var(--app-cyan) !important;
-    border-left: 2px solid var(--app-cyan) !important;
+    color: var(--accent-primary) !important;
+    border-left: 2px solid var(--accent-primary) !important;
 }
 
 .p-sidebar {
@@ -140,20 +140,41 @@
 }
 
 .p-slider .p-slider-range {
-    background: var(--app-grad-hover) !important;
+    background: var(--grad-hover) !important;
 }
 
 .p-slider .p-slider-handle {
-    background: linear-gradient(#000, #000) padding-box,
-                var(--app-grad-hover) border-box !important;
-    border: 2px solid transparent !important;
+    background-color: var(--accent-primary) !important;
+    background-image: none !important;
+    border: 2px solid var(--accent-primary) !important;
     border-radius: 50% !important;
     box-shadow: 0 0 10px rgba(0,0,0,0.5) !important;
 }
 
 .p-slider .p-slider-handle:hover {
-    background: linear-gradient(#000, #000) padding-box,
-                var(--app-grad-hover) border-box !important;
+    background-color: var(--accent-secondary) !important;
     transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(102, 252, 241, 0.4) !important;
+    box-shadow: var(--shadow-glow-primary) !important;
+    border-color: var(--accent-secondary) !important;
+}
+
+/* Dropdown & Menu Overrides for Light Theme Compatibility */
+.p-dropdown-panel, .p-menu {
+    background: var(--bg-menu) !important;
+    border: 1px solid var(--border-input) !important;
+    color: var(--text-primary) !important;
+}
+
+.p-dropdown-item, .p-menuitem-link {
+    color: var(--text-primary) !important;
+}
+
+.p-dropdown-item:hover, .p-menuitem-link:hover {
+    background: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+}
+
+.p-dropdown-item.p-highlight {
+    background: var(--grad-hover) !important;
+    color: #fff !important;
 }

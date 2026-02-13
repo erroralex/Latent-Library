@@ -13,7 +13,14 @@ import 'primevue/resources/themes/aura-dark-green/theme.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
 
-import './assets/css/main.css'
+// Import Theme System (Directly to avoid Vite @import resolution issues)
+import './assets/css/themes/neon.css';
+import './assets/css/themes/light.css';
+import './assets/css/themes/gold.css';
+import './assets/css/components/base.css';
+import './assets/css/components/primevue-overrides.css';
+import './assets/css/components/layout.css';
+import './assets/css/components/buttons.css';
 
 import App from './App.vue'
 import router from './router'

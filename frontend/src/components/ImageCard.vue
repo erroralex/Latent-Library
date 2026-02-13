@@ -80,14 +80,18 @@ const onRightClick = (event) => {
 .aspect-ratio-container {
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background-color: var(--surface-ground);
+  background-color: var(--bg-card);
 }
 
 .glass-overlay {
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--bg-overlay);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-light);
+}
+
+.text-yellow-500 {
+  color: var(--status-warning) !important;
 }
 
 :deep(.p-card-body) {

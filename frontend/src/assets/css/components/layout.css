@@ -1,0 +1,119 @@
+/* Global Layout & Utility Classes */
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+.text-gradient {
+    background: var(--grad-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glass Panels */
+.glass-panel {
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-panel);
+}
+
+/* Inputs */
+.glass-input {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+    color: var(--text-primary) !important;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-input:enabled:focus {
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: transparent !important;
+    border-image: var(--grad-hover) 1 !important;
+}
+
+/* Dialogs */
+.glass-dialog {
+    background: var(--bg-panel-opaque) !important;
+    border: 1px solid var(--border-input) !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    color: var(--text-primary) !important;
+}
+
+.glass-dialog .p-dialog-header,
+.glass-dialog .p-dialog-content,
+.glass-dialog .p-dialog-footer {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-input) !important;
+}
+
+.glass-dialog .p-dialog-header-icon {
+    color: var(--text-secondary) !important;
+}
+
+.glass-dialog .p-dialog-header-icon:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* Chips (Tags) */
+.collection-chip {
+    background: rgba(102, 252, 241, 0.15) !important;
+    color: var(--accent-primary) !important;
+    border: 1px solid rgba(102, 252, 241, 0.3) !important;
+}
+
+.lora-chip {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    position: relative;
+    z-index: 1;
+    overflow: visible !important;
+}
+
+.lora-chip::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: var(--grad-hover);
+    border-radius: 16px;
+    z-index: -2;
+}
+
+.lora-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg-btn-inner); /* Use theme variable */
+    border-radius: 16px;
+    z-index: -1;
+}
