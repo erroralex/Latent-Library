@@ -1,64 +1,19 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# Dependencies
-**/node_modules/
-**/bower_components/
-
-# Maven (Java)
-**/target/
-**.mvn/wrapper/maven-wrapper.properties
-
-# Build Artifacts (Frontend/Electron)
-**/dist/
-**/build/
-**/out/
-
-# IDE Configs
 .idea/
-*.iml
 .vscode/
-
-# OS Generated
-.DS_Store
-Thumbs.db
-
-# Databases (Local SQLite)
+*.iml
 *.db
 *.db-shm
 *.db-wal
-.cache/
+.DS_Store
+node_modules/
+dist/
+build/
+out/
+target/
+electron/dist/
+electron/node_modules/
 
-# Environment Variables
-.env
+# Application Data
+data/
+backend/data/
+frontend/data/

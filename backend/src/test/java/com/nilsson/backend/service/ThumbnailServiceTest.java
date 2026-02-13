@@ -31,11 +31,13 @@ class ThumbnailServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        thumbnailService = new ThumbnailService();
+        thumbnailService = new ThumbnailService(tempDir.toString());
 
         Field cacheDirField = ThumbnailService.class.getDeclaredField("thumbnailCacheDir");
         cacheDirField.setAccessible(true);
-        cacheDirField.set(thumbnailService, tempDir);
+        // The constructor now correctly initializes this based on the passed path,
+        // but we can verify or override if needed.
+        // For this test, the constructor logic is sufficient as we pass tempDir.toString()
     }
 
     @Test

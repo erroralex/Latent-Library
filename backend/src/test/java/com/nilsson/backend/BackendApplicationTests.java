@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * BackendApplicationTests serves as a fundamental smoke test for the Spring Boot application.
@@ -14,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@TestPropertySource(properties = "app.data.dir=.")
 class BackendApplicationTests {
 
     @Test

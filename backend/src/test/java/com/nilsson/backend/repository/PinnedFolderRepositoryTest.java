@@ -3,11 +3,7 @@ package com.nilsson.backend.repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -26,12 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * list of all pinned folders, and remove existing pins. The tests also check for
  * uniqueness constraints to prevent duplicate entries for the same directory path.
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@Transactional
 class PinnedFolderRepositoryTest {
 
-    @Autowired
     private PinnedFolderRepository repository;
 
     @BeforeEach
@@ -41,8 +33,7 @@ class PinnedFolderRepositoryTest {
         DataSource dataSource = new DriverManagerDataSource(connectionString);
 
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-            String schema = new String(getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes());
-            stmt.executeUpdate(schema);
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS pinned_folders (path TEXT UNIQUE NOT NULL)");
         }
 
         repository = new PinnedFolderRepository(dataSource);

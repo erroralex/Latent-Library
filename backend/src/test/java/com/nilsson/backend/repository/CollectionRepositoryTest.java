@@ -39,8 +39,11 @@ class CollectionRepositoryTest {
         DataSource dataSource = new DriverManagerDataSource(connectionString);
 
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-            String schema = new String(getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes());
-            stmt.executeUpdate(schema);
+            // Manually create tables with the latest schema including is_missing
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT UNIQUE, file_hash TEXT, is_starred BOOLEAN DEFAULT 0, rating INTEGER DEFAULT 0, last_scanned INTEGER, is_missing BOOLEAN DEFAULT 0)");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS collections (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER, is_smart BOOLEAN DEFAULT FALSE, filters_json TEXT)");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS collection_images (collection_id INTEGER, image_id INTEGER, added_at INTEGER, is_manual BOOLEAN DEFAULT 0, PRIMARY KEY (collection_id, image_id), FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE, FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE)");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS collection_exclusions (collection_id INTEGER, image_id INTEGER, PRIMARY KEY (collection_id, image_id), FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE, FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE)");
         }
 
         repository = new CollectionRepository(dataSource, objectMapper);

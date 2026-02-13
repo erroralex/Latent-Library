@@ -5,6 +5,7 @@ import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -27,20 +28,21 @@ public class FileSystemService {
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
     private static final String APP_TRASH_DIR = "data/trash";
+    
+    private final String appDataDir;
+
+    public FileSystemService(@Value("${app.data.dir:.}") String appDataDir) {
+        this.appDataDir = appDataDir;
+    }
 
     /**
      * Attempts to move a file to the system trash. Falls back to an application-specific
      * trash directory if the OS does not support the operation or if it fails.
      *
-     * @param file
-     *         The file to delete.
-     *
+     * @param file The file to delete.
      * @return true if the file was successfully moved to trash.
-     *
-     * @throws ResourceNotFoundException
-     *         if the file does not exist.
-     * @throws ApplicationException
-     *         if both system trash and fallback fail.
+     * @throws ResourceNotFoundException if the file does not exist.
+     * @throws ApplicationException if both system trash and fallback fail.
      */
     public boolean moveFileToTrash(File file) {
         if (file == null || !file.exists()) {
@@ -63,13 +65,13 @@ public class FileSystemService {
         if (!success) {
             throw new ApplicationException("Failed to delete file. System trash unavailable and fallback failed.");
         }
-
+        
         return true;
     }
 
     private boolean moveFileToAppTrash(File file) {
         try {
-            Path trashDir = Paths.get(APP_TRASH_DIR).toAbsolutePath().normalize();
+            Path trashDir = Paths.get(appDataDir).resolve(APP_TRASH_DIR).toAbsolutePath().normalize();
             if (!Files.exists(trashDir)) {
                 Files.createDirectories(trashDir);
             }
@@ -89,19 +91,12 @@ public class FileSystemService {
     /**
      * Renames a file on the physical disk.
      *
-     * @param file
-     *         The source file.
-     * @param newName
-     *         The new filename (not full path).
-     *
+     * @param file    The source file.
+     * @param newName The new filename (not full path).
      * @return The new File object.
-     *
-     * @throws ResourceNotFoundException
-     *         if the source file is missing.
-     * @throws ValidationException
-     *         if the new name is empty or already exists.
-     * @throws ApplicationException
-     *         if the OS rename operation fails.
+     * @throws ResourceNotFoundException if the source file is missing.
+     * @throws ValidationException       if the new name is empty or already exists.
+     * @throws ApplicationException      if the OS rename operation fails.
      */
     public File renameFile(File file, String newName) {
         if (file == null || !file.exists()) {

@@ -33,8 +33,8 @@ class ImageMetadataRepositoryTest {
         DataSource dataSource = new DriverManagerDataSource(connectionString);
 
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-            String schema = new String(getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes());
-            stmt.executeUpdate(schema);
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT UNIQUE, file_hash TEXT, is_starred BOOLEAN DEFAULT 0, rating INTEGER DEFAULT 0, last_scanned INTEGER, is_missing BOOLEAN DEFAULT 0)");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS image_metadata (image_id INTEGER, key TEXT, value TEXT, FOREIGN KEY(image_id) REFERENCES images(id))");
         }
 
         imageRepository = new ImageRepository(dataSource);
