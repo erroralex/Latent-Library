@@ -1,9 +1,0 @@
-{
-  "lastFolder" : "C:/Downloads/Test images",
-  "theme" : "neon",
-  "excludedPaths" : [ "D:\\AI\\Art ideas" ],
-  "speedSorter" : {
-    "inputDir" : "D:\\AI\\Art by me",
-    "targets" : [ "D:\\AI\\Art by me\\Keep", "D:\\AI\\Art by me\\Upscale Ready", "D:\\AI\\Art by me\\Remove", null, null ]
-  }
-}
