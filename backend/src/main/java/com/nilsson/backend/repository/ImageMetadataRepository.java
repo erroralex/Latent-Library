@@ -13,21 +13,21 @@ import java.util.Map;
 /**
  * Repository for managing granular technical metadata associated with images.
  * <p>
- * This class provides persistent storage for the key-value pairs extracted from image files,
- * such as generation parameters (e.g., "Steps", "Sampler", "CFG Scale"). It manages the
- * {@code image_metadata} table, which serves as the primary source for both detailed
- * metadata display in the UI and the generation of tokens for the SQLite FTS5 search index.
+ * This class provides persistent storage for key-value pairs extracted from image files,
+ * such as generation parameters (Prompt, Sampler, Model, etc.). It manages the
+ * {@code image_metadata} table, which allows for flexible, schema-less storage of
+ * tool-specific metadata while maintaining a relational link to the core image record.
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Metadata Persistence:</b> Saves a comprehensive map of metadata keys and values
- *   for a specific image ID, ensuring technical data is cached for rapid access.</li>
- *   <li><b>Atomic Updates:</b> Implements a transactional delete-then-insert strategy to
- *   ensure metadata consistency and prevent stale data during re-indexing.</li>
- *   <li><b>Retrieval:</b> Fetches all metadata associated with an image as a {@link Map},
- *   allowing for efficient rendering of technical details in the frontend.</li>
- *   <li><b>Discovery:</b> Provides distinct values for specific metadata keys (e.g., a list
- *   of all unique Models used) to dynamically populate UI filter menus.</li>
+ *   <li><b>Metadata Persistence:</b> Saves a map of metadata keys and values for a specific
+ *   image, ensuring old metadata is purged before new data is inserted.</li>
+ *   <li><b>Efficient Retrieval:</b> Fetches all metadata for an image and reconstructs it
+ *   into a {@link Map} for easy consumption by the service layer.</li>
+ *   <li><b>Discovery:</b> Provides a mechanism to fetch distinct values for a specific
+ *   metadata key (e.g., all unique Model names) to populate UI filters.</li>
+ *   <li><b>Perceptual Hash Storage:</b> Manages the persistence of the 64-bit dHash
+ *   within the core {@code images} table for similarity-based lookups.</li>
  * </ul>
  */
 @Repository
@@ -85,6 +85,16 @@ public class ImageMetadataRepository {
                     .param(entry.getValue())
                     .update();
         }
+    }
+
+    public void saveDHash(int imageId, long dHash) {
+        if (imageId <= 0) {
+            throw new ValidationException("Invalid image ID provided for dHash persistence.");
+        }
+        jdbcClient.sql("UPDATE images SET dhash = ? WHERE id = ?")
+                .param(dHash)
+                .param(imageId)
+                .update();
     }
 
     public List<String> getDistinctValues(String key) {

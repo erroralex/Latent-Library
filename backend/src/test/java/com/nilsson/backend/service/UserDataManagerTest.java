@@ -52,6 +52,8 @@ class UserDataManagerTest {
     private FtsService ftsService;
     @Mock
     private FileSystemService fileSystemService;
+    @Mock
+    private DHashService dHashService;
 
     @InjectMocks
     private UserDataManager userDataManager;

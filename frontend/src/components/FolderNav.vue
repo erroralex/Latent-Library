@@ -3,14 +3,20 @@
  * @file FolderNav.vue
  * @description A sophisticated navigation sidebar component that provides a unified interface for exploring the local file system and user-defined collections.
  *
- * This component implements a hierarchical tree structure using PrimeVue's Tree component. It serves as the primary entry point for users to locate and load images into the browser.
+ * This component implements a lazy-loading tree structure that allows users to traverse their
+ * entire local file system, access pinned folders, and manage image collections. It integrates
+ * deeply with the backend to provide real-time folder expansion and system-level operations
+ * via a custom context menu.
  *
- * Key architectural features:
- * - Multi-Root Navigation: Organizes navigation into logical sections: Collections, Pinned Folders, and Local Drives (This PC).
- * - Lazy Loading: Implements on-demand directory traversal. Child nodes for folders and drives are only fetched from the backend when a node is expanded, optimizing performance for deep file systems.
- * - Reactive State Integration: Synchronizes with the global Pinia store to trigger library scans and update the browser view when a folder or collection is selected.
- * - Contextual Actions: Features a custom context menu providing quick access to folder pinning, collection management, and OS-level integrations (Show in Explorer, Speed Sorter).
- * - Persistence Awareness: Automatically attempts to re-select and expand the last visited folder on initialization.
+ * Key functionalities:
+ * - **Unified Navigation:** Combines collections, pinned folders, and physical drives into a single tree view.
+ * - **Lazy Loading:** Fetches child directories on-demand to ensure high performance even with deep file structures.
+ * - **Contextual Management:** Provides a rich right-click menu for pinning folders, editing collections,
+ *   and opening directories in external tools (Explorer, Speed Sorter).
+ * - **Settings Integration:** Hosts the application's global settings dialog, including theme selection,
+ *   database maintenance, and path exclusion rules.
+ * - **State Synchronization:** Automatically synchronizes the tree selection with the global browser store
+ *   to reflect the currently active folder or collection.
  */
 import {ref, onMounted, watch, computed} from 'vue';
 import api from '@/services/api';
@@ -26,7 +32,6 @@ import {useConfirm} from 'primevue/useconfirm';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 
-// Import logos
 import logoNeon from '@/assets/alx_logo_neon.png';
 import logoGold from '@/assets/alx_logo_gold.png';
 import logoLight from '@/assets/alx_logo_light.png';
@@ -51,9 +56,9 @@ const newExcludedPath = ref('');
 
 const currentTheme = ref('neon');
 const themeOptions = ref([
-    {label: 'Deep Neon', value: 'neon'},
-    {label: 'Clean Light', value: 'light'},
-    {label: 'Dark Premium', value: 'gold'}
+  {label: 'Deep Neon', value: 'neon'},
+  {label: 'Clean Light', value: 'light'},
+  {label: 'Dark Premium', value: 'gold'}
 ]);
 
 const currentLogo = computed(() => {
@@ -132,7 +137,6 @@ const loadTree = async () => {
   nodes.value = rootNodes;
   expandedKeys.value = {'collections': true, 'pinned': true, 'drives': true};
 
-  // Restore selection
   syncSelection();
 };
 
@@ -165,13 +169,11 @@ const syncSelection = () => {
     if (node) newSelection[node.key] = true;
   }
 
-  // Only update if changed to avoid unnecessary re-renders
   if (JSON.stringify(newSelection) !== JSON.stringify(selectedKey.value)) {
     selectedKey.value = newSelection;
   }
 };
 
-// Watch for changes in the store to update selection
 watch(() => [store.lastFolderPath, store.activeCollection], syncSelection);
 watch(nodes, syncSelection);
 
@@ -180,16 +182,13 @@ const navigateToNode = (node) => {
 
   if (node.type === 'collection') {
     const collectionName = node.data;
-    // If we're already on the browser view with this collection, router.push won't trigger anything
-    // So we manually trigger the load to ensure reliability.
     if (router.currentRoute.value.path === '/' && route.query.collection === collectionName) {
       store.loadCollection(collectionName);
     } else {
-      router.push({ path: '/', query: { collection: collectionName } });
+      router.push({path: '/', query: {collection: collectionName}});
     }
   } else if (node.data?.path) {
     const path = node.data.path;
-    // For folders, we load and then ensure we are on the browser view
     store.loadFolder(path);
     if (router.currentRoute.value.path !== '/') {
       router.push('/');
@@ -202,7 +201,6 @@ const onNodeSelect = (event) => {
 };
 
 const onNodeClick = (event) => {
-  // node-click is essential for re-triggering navigation on already-selected nodes
   navigateToNode(event.node);
 };
 
@@ -224,7 +222,6 @@ const onNodeExpand = async (node) => {
     actualNode._loaded = true;
     syncSelection();
   } catch (e) {
-    // Error handled by api interceptor
   } finally {
     actualNode.loading = false;
   }
@@ -294,7 +291,6 @@ const removeCollection = async (name) => {
     toast.add({severity: 'success', summary: 'Success', detail: 'Collection removed', life: 2000});
     store.refreshNav();
   } catch (e) {
-    // Error handled by api interceptor
   }
 };
 const editCollection = (name) => {
@@ -311,7 +307,7 @@ const openInExplorer = async (path) => {
 
 const openSettings = async () => {
   showSettings.value = true;
-  currentTheme.value = store.currentTheme; // Sync with store
+  currentTheme.value = store.currentTheme;
   try {
     const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
@@ -321,30 +317,28 @@ const openSettings = async () => {
 };
 
 const changeTheme = () => {
-    store.setTheme(currentTheme.value);
+  store.setTheme(currentTheme.value);
 };
 
 const openDataFolder = async () => {
   try {
     await api.post('/system/open-data-folder');
   } catch (e) {
-    // Error handled by api interceptor
   }
 };
 
 const clearDatabase = () => {
   confirm.require({
     message: 'Are you sure you want to clear the database? All metadata and collections will be lost.',
-    header: 'Clear Database',
+    header: 'Clear Entire Database',
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
         await api.post('/system/clear-database');
         toast.add({severity: 'success', summary: 'Success', detail: 'Database cleared', life: 3000});
-        store.initialize(); // Reload
+        store.initialize();
       } catch (e) {
-        // Error handled by api interceptor
       }
     }
   });
@@ -361,7 +355,72 @@ const clearThumbnails = () => {
         await api.post('/system/clear-thumbnails');
         toast.add({severity: 'success', summary: 'Success', detail: 'Thumbnails cleared', life: 3000});
       } catch (e) {
-        // Error handled by api interceptor
+      }
+    }
+  });
+};
+
+const clearTagModels = () => {
+  confirm.require({
+    message: 'Are you sure you want to delete the AI tagging models? You will need to download them again to use the auto-tagger.',
+    header: 'Clear Tag Models',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await api.post('/tagger/clear-models');
+        toast.add({severity: 'success', summary: 'Success', detail: 'Tag models cleared', life: 3000});
+      } catch (e) {
+      }
+    }
+  });
+};
+
+const clearAiTags = () => {
+  confirm.require({
+    message: 'Are you sure you want to clear all AI-generated tags? Your manual collections and ratings will be kept.',
+    header: 'Clear AI Tags',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await api.post('/system/clear-ai-tags');
+        toast.add({severity: 'success', summary: 'Success', detail: 'AI tags cleared', life: 3000});
+        if (store.selectedFile) store.fetchMetadata(store.selectedFile);
+      } catch (e) {
+      }
+    }
+  });
+};
+
+const clearUnorganized = () => {
+  confirm.require({
+    message: 'Are you sure you want to clear all unorganized images from the index? Images in collections or with ratings will be kept.',
+    header: 'Clear Unorganized',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await api.post('/system/clear-unorganized');
+        toast.add({severity: 'success', summary: 'Success', detail: 'Unorganized images cleared', life: 3000});
+        store.initialize();
+      } catch (e) {
+      }
+    }
+  });
+};
+
+const reIndexAll = () => {
+  confirm.require({
+    message: 'Are you sure you want to re-index the entire library? This will clear the database and re-scan your last folder.',
+    header: 'Re-index All',
+    icon: 'pi pi-refresh',
+    acceptClass: 'p-button-warning',
+    accept: async () => {
+      try {
+        await api.post('/system/re-index-all');
+        toast.add({severity: 'info', summary: 'Started', detail: 'Full re-index initiated in background', life: 3000});
+      } catch (e) {
       }
     }
   });
@@ -374,7 +433,6 @@ const addExcludedPath = async () => {
     excludedPaths.value.push(newExcludedPath.value);
     newExcludedPath.value = '';
   } catch (e) {
-    // Error handled by api interceptor
   }
 };
 
@@ -385,7 +443,6 @@ const selectExcludedFolder = async () => {
       newExcludedPath.value = path;
     }
   } else {
-    // Fallback for browser dev mode
     const path = prompt("Enter absolute path to exclude:");
     if (path) {
       newExcludedPath.value = path;
@@ -398,7 +455,6 @@ const removeExcludedPath = async (path) => {
     await api.delete('/system/excluded-paths', {params: {path}});
     excludedPaths.value = excludedPaths.value.filter(p => p !== path);
   } catch (e) {
-    // Error handled by api interceptor
   }
 };
 
@@ -410,12 +466,13 @@ onMounted(loadTree);
        style="width: 290px; min-width: 300px;">
     <ConfirmDialog></ConfirmDialog>
 
-    <div class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center justify-content-between"
-         style="background: rgba(255,255,255,0.02)">
+    <div
+        class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center justify-content-between"
+        style="background: rgba(255,255,255,0.02)">
       <div class="flex align-items-center gap-2">
         <span class="text-gradient">Library</span>
       </div>
-      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white" @click="openSettings" />
+      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white" @click="openSettings"/>
     </div>
 
     <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
@@ -452,16 +509,32 @@ onMounted(loadTree);
           <div class="flex align-items-center gap-3">
             <label class="text-white">Theme</label>
             <Dropdown v-model="currentTheme" :options="themeOptions" optionLabel="label" optionValue="value"
-                      class="w-full md:w-14rem glass-input" @change="changeTheme" />
+                      class="w-full md:w-14rem glass-input" @change="changeTheme"/>
           </div>
         </div>
 
         <div>
           <h3 class="text-lg font-semibold mb-2 text-white">Data Management</h3>
-          <div class="flex gap-2">
-            <Button label="Open Data Folder" icon="pi pi-folder-open" class="p-button-outlined" @click="openDataFolder" />
-            <Button label="Clear Database" icon="pi pi-database" class="p-button-danger p-button-outlined" @click="clearDatabase" />
-            <Button label="Clear Thumbnails" icon="pi pi-images" class="p-button-warning p-button-outlined" @click="clearThumbnails" />
+          <div class="flex flex-column gap-3">
+            <div class="flex flex-wrap gap-2">
+              <Button label="Open Data Folder" icon="pi pi-folder-open" class="p-button-outlined"
+                      @click="openDataFolder"/>
+              <Button label="Clear Entire Database" icon="pi pi-database" class="p-button-danger p-button-outlined"
+                      @click="clearDatabase"/>
+              <Button label="Full Re-index" icon="pi pi-refresh" class="p-button-warning p-button-outlined"
+                      @click="reIndexAll"/>
+              <Button label="Delete Tag Models" icon="pi pi-tags" class="p-button-danger p-button-outlined"
+                      @click="clearTagModels"/>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <Button label="Clear AI Tags" icon="pi pi-tag" class="p-button-danger p-button-outlined"
+                      @click="clearAiTags"/>
+              <Button label="Clear Unorganized" icon="pi pi-trash" class="p-button-danger p-button-outlined"
+                      @click="clearUnorganized"/>
+              <Button label="Clear Thumbnails" icon="pi pi-images" class="p-button-warning p-button-outlined"
+                      @click="clearThumbnails"/>
+            </div>
           </div>
         </div>
 
@@ -471,16 +544,18 @@ onMounted(loadTree);
 
           <div class="flex gap-2 mb-3">
             <div class="p-inputgroup flex-grow-1">
-                <InputText v-model="newExcludedPath" placeholder="Enter path to exclude..." class="glass-input" />
-                <Button icon="pi pi-folder-open" @click="selectExcludedFolder" />
+              <InputText v-model="newExcludedPath" placeholder="Enter path to exclude..." class="glass-input"/>
+              <Button icon="pi pi-folder-open" @click="selectExcludedFolder"/>
             </div>
-            <Button icon="pi pi-plus" @click="addExcludedPath" />
+            <Button icon="pi pi-plus" @click="addExcludedPath"/>
           </div>
 
           <div class="glass-box p-2 border-round" style="max-height: 200px; overflow-y: auto;">
-            <div v-for="path in excludedPaths" :key="path" class="flex justify-content-between align-items-center p-2 hover:surface-white-alpha-10 border-round">
+            <div v-for="path in excludedPaths" :key="path"
+                 class="flex justify-content-between align-items-center p-2 hover:surface-white-alpha-10 border-round">
               <span class="text-sm text-white">{{ path }}</span>
-              <Button icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" @click="removeExcludedPath(path)" />
+              <Button icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                      @click="removeExcludedPath(path)"/>
             </div>
             <div v-if="excludedPaths.length === 0" class="text-center text-gray-500 text-sm p-2">No excluded paths</div>
           </div>

@@ -17,6 +17,25 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for managing image collections, supporting both static and dynamic groupings.
+ * <p>
+ * This controller provides the API for the application's collection management system. It
+ * supports the full CRUD lifecycle for collections, including the definition of "Smart
+ * Collections" via metadata filters. It also handles the association of images with
+ * collections, batch additions, and the management of blacklisted exclusions.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Collection Lifecycle:</b> Manages the creation, retrieval, update, and deletion
+ *   of collection entities.</li>
+ *   <li><b>Membership Management:</b> Facilitates adding individual or batches of images
+ *   to static collections.</li>
+ *   <li><b>Smart Population:</b> Provides endpoints for retrieving images that match a
+ *   collection's dynamic filter criteria.</li>
+ *   <li><b>Exclusion Handling:</b> Allows for the blacklisting of specific images from
+ *   appearing in a collection.</li>
+ *   <li><b>Relational Mapping:</b> Transforms database records into enriched {@link ImageDTO}
+ *   objects for frontend display.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/collections")
@@ -74,7 +93,6 @@ public class CollectionController {
         if (path == null || path.isBlank()) {
             throw new ValidationException("Path cannot be empty.");
         }
-        // Delegate to batch logic for consistency
         dataManager.addImagesToCollection(name, List.of(path));
         return ResponseEntity.ok().build();
     }
@@ -119,8 +137,6 @@ public class CollectionController {
             throw new ValidationException("Collection name is required.");
         }
 
-        // We don't strictly check for existence here because getFilesFromCollection handles empty returns,
-        // but if strictly required, we could add a check.
         List<File> files = dataManager.getFilesFromCollection(name);
 
         List<ImageDTO> dtos = files.stream()

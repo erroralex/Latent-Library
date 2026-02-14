@@ -17,24 +17,6 @@ import java.util.Optional;
 
 /**
  * Service for managing image collections and their dynamic population logic.
- * <p>
- * This service handles the business logic for both "Static Collections" (manual associations)
- * and "Smart Collections" (dynamic, filter-based groupings). For smart collections, it
- * orchestrates the resolution of metadata filters into a concrete set of image associations
- * by querying the search index. It ensures that collections are refreshed when their
- * definitions change or when their contents are accessed.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Collection Lifecycle:</b> Manages the creation, update, and deletion of collection
- *   entities and their associated filters.</li>
- *   <li><b>Smart Population:</b> Translates high-level metadata filters (Models, Samplers,
- *   Ratings, Prompts) into database-level image associations.</li>
- *   <li><b>Dynamic Refresh:</b> Automatically re-populates smart collections to ensure they
- *   reflect the latest state of the image library.</li>
- *   <li><b>Membership Management:</b> Handles manual image additions to static collections
- *   and manages blacklisting/exclusions for smart collections.</li>
- * </ul>
  */
 @Service
 public class CollectionService {
@@ -78,7 +60,6 @@ public class CollectionService {
             throw new ValidationException("Updated collection request is invalid.");
         }
 
-        // Check existence before update
         if (collectionRepository.get(oldName).isEmpty()) {
             throw new ResourceNotFoundException("Collection", oldName);
         }
@@ -113,7 +94,9 @@ public class CollectionService {
                 query = String.join(" ", f.prompt());
             }
 
-            List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, 0, 2000);
+            // Refactored: Pass null for collectionName because we are populating the collection itself, 
+            // not searching within it.
+            List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, null, 0, 2000);
 
             for (String path : matchingPaths) {
                 int id = imageRepository.getIdByPath(path);

@@ -12,6 +12,7 @@
     background: transparent !important;
     overflow: visible !important;
     border: 1px solid transparent;
+    margin: 4px !important; /* Added margin to prevent shadow clipping */
 }
 
 .nav-btn::before {
@@ -98,7 +99,7 @@
     inset: 0;
     background: transparent;
     border-radius: 8px;
-    z-1: -1;
+    z-index: -1;
     transition: background 0.3s ease;
 }
 

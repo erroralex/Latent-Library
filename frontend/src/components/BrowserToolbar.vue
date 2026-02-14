@@ -3,15 +3,21 @@
  * @file BrowserToolbar.vue
  * @description The primary control interface for the Image Browser, providing tools for navigation, search, and advanced filtering.
  *
- * This component acts as the command center for the user's browsing experience. It integrates directly with the global browser store
- * to manage view modes (Gallery vs. Single Image), adjust thumbnail scaling, and apply complex metadata filters.
+ * This component acts as the command center for the image exploration experience. It hosts
+ * a variety of controls including view mode toggles, a global search bar with AI tag
+ * integration, and dynamic metadata filters for Models, Samplers, LoRAs, and Ratings.
  *
  * Key functionalities:
- * - View Orchestration: Switches between 'gallery' and 'browser' modes.
- * - Dynamic Filtering: Provides dropdown menus for filtering by Model, Sampler, LoRA, and Star Rating.
- * - Real-time Search: Implements a search bar with instant feedback and clear capabilities.
- * - UI Customization: Includes a slider for real-time adjustment of image card sizes in the gallery view.
- * - Responsive Feedback: Uses PrimeVue Chips to display and manage active filter states.
+ * - **View Orchestration:** Toggles between Gallery and Browser modes and provides a
+ *   scaling slider for gallery thumbnails.
+ * - **Advanced Search:** Implements a real-time search bar with an optional toggle
+ *   to include AI-generated tags in the query results.
+ * - **Dynamic Filtering:** Generates dropdown menus for technical metadata, allowing
+ *   users to drill down into specific generation parameters.
+ * - **Sidebar Controls:** Provides quick-access buttons to toggle the AI Auto-Tagger
+ *   and Metadata sidebars.
+ * - **State Integration:** Synchronizes all filter and search states with the global
+ *   Pinia store to ensure consistent results across the application.
  */
 import {useBrowserStore} from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
@@ -20,6 +26,7 @@ import InputText from 'primevue/inputtext';
 import Slider from 'primevue/slider';
 import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
+import InputSwitch from 'primevue/inputswitch';
 import {ref, computed} from 'vue';
 
 const store = useBrowserStore();
@@ -36,6 +43,10 @@ const onSearch = (event) => {
 
 const toggleSidebar = () => {
   store.toggleSidebar();
+};
+
+const toggleTagger = () => {
+    store.toggleTagger();
 };
 
 const createMenuItems = (items, type) => {
@@ -72,11 +83,23 @@ const refreshFilters = () => {
   store.loadFilters();
 };
 
+const toggleAiTags = () => {
+    store.toggleIncludeAiTags();
+};
+
 </script>
 
 <template>
   <Toolbar class="browser-toolbar-glass border-none p-2">
     <template #start>
+        <div class="flex gap-2 align-items-center ml-2">
+            <Button icon="pi pi-tags"
+                    :class="[ store.isTaggerOpen ? 'text-primary' : 'text-secondary' ]"
+                    class="p-button-rounded p-button-text"
+                    @click="toggleTagger"
+                    tooltip="Toggle Auto-Tagger"
+                    v-if="store.viewMode === 'browser'"/>
+        </div>
     </template>
 
     <template #center>
@@ -112,6 +135,12 @@ const refreshFilters = () => {
                          @keyup.enter="onSearch"/>
               <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
           </span>
+
+          <div class="flex align-items-center gap-2 ml-2" title="Include AI Tags in Search">
+            <InputSwitch v-model="store.includeAiTags" @change="toggleAiTags" class="ai-tags-toggle" />
+            <label class="text-xs font-bold uppercase tracking-wider select-none"
+                   :class="store.includeAiTags ? 'text-primary' : 'text-gray-500'">AI Tags</label>
+          </div>
         </div>
 
         <div class="flex gap-2 align-items-center">
@@ -232,5 +261,38 @@ const refreshFilters = () => {
 :deep(.p-toolbar) {
   background: transparent !important;
   border: none !important;
+}
+
+/* AI Tags Toggle Specific Overrides */
+:deep(.ai-tags-toggle.p-inputswitch) {
+    width: 2.4rem !important;
+    height: 1.2rem !important;
+}
+
+:deep(.ai-tags-toggle.p-inputswitch .p-inputswitch-slider) {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+}
+
+:deep(.ai-tags-toggle.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider) {
+    background-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+}
+
+:deep(.ai-tags-toggle.p-inputswitch .p-inputswitch-slider:before) {
+    background-color: var(--text-secondary) !important;
+    width: 0.8rem !important;
+    height: 0.8rem !important;
+    left: 0.2rem !important;
+    margin-top: -0.4rem !important;
+}
+
+:deep(.ai-tags-toggle.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before) {
+    background-color: var(--bg-app) !important;
+    transform: translateX(1.2rem) !important;
+}
+
+.text-primary {
+    color: var(--accent-primary) !important;
 }
 </style>

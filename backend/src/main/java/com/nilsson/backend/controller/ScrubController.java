@@ -25,6 +25,23 @@ import java.util.UUID;
 
 /**
  * REST Controller for the Metadata Scrubber utility.
+ * <p>
+ * This controller provides a secure mechanism for stripping technical metadata from images.
+ * It handles the temporary staging of uploaded files, provides a preview mechanism, and
+ * performs the actual scrubbing by re-encoding the image data into a clean file. It
+ * implements strict path validation to prevent directory traversal attacks.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Secure Upload:</b> Manages the ingestion of images into a dedicated temporary
+ *   directory with unique filenames.</li>
+ *   <li><b>Preview Generation:</b> Serves staged images for UI confirmation before
+ *   processing.</li>
+ *   <li><b>Metadata Stripping:</b> Re-writes image data using {@link ImageIO} to ensure
+ *   all non-essential metadata chunks (EXIF, Prompts, Workflows) are removed.</li>
+ *   <li><b>Download Orchestration:</b> Serves the processed "clean" image as a downloadable
+ *   attachment.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/scrub")
@@ -58,14 +75,13 @@ public class ScrubController {
     @GetMapping("/preview/{filename}")
     public ResponseEntity<Resource> getPreview(@PathVariable String filename) {
         try {
-            // Validate filename to prevent traversal
             if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
                 throw new ValidationException("Invalid filename");
             }
-            
+
             Path file = tempDir.resolve(filename).normalize();
             if (!file.startsWith(tempDir)) {
-                 throw new ValidationException("Access denied");
+                throw new ValidationException("Access denied");
             }
 
             Resource resource = new UrlResource(file.toUri());
@@ -84,14 +100,13 @@ public class ScrubController {
 
     @PostMapping("/process")
     public ResponseEntity<Resource> processImage(@RequestParam("filename") String filename) {
-        // Validate filename
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             throw new ValidationException("Invalid filename");
         }
 
         Path sourcePath = tempDir.resolve(filename).normalize();
         if (!sourcePath.startsWith(tempDir)) {
-             throw new ValidationException("Access denied");
+            throw new ValidationException("Access denied");
         }
 
         if (!Files.exists(sourcePath)) {
