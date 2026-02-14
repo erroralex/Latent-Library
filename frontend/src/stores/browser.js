@@ -1,9 +1,19 @@
 import {defineStore} from 'pinia';
-import api from '../services/api';
+import api, {authenticatedUrl} from '../services/api';
 
 /**
  * @file browser.js
  * @description The central state management hub for the Image Browser application using Pinia.
+ *
+ * This store manages the global application state, including:
+ * - **File Management:** Tracking the current list of images, selection state (single and multi-select),
+ *   and pagination for large collections.
+ * - **Search & Filtering:** Handling complex queries across metadata (models, samplers, ratings)
+ *   and managing the active search context.
+ * - **System State:** Monitoring backend connectivity, theme preferences, and UI component
+ *   visibility (sidebars, taggers).
+ * - **Metadata & Ratings:** Fetching and updating image-specific data and user ratings.
+ * - **Navigation:** Providing logic for sequential image browsing and folder/collection switching.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -46,11 +56,9 @@ export const useBrowserStore = defineStore('browser', {
         async waitForBackend(retries = 20) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    // Use the 'api' instance so the handshake token is included
-                    await api.get('/images/filters', { timeout: 2000 });
+                    await api.get('/images/filters', {timeout: 2000});
                     return true;
                 } catch (e) {
-                    // If it's a 401, the token is wrong (critical)
                     if (e.response && e.response.status === 401) {
                         throw new Error("Security Handshake Failed: Unauthorized.");
                     }
@@ -346,7 +354,7 @@ export const useBrowserStore = defineStore('browser', {
 
             const preload = (path) => {
                 const img = new Image();
-                img.src = `/api/images/content?path=${encodeURIComponent(path)}`;
+                img.src = authenticatedUrl(`/api/images/content?path=${encodeURIComponent(path)}`);
             };
 
             preload(this.files[nextIndex].path);

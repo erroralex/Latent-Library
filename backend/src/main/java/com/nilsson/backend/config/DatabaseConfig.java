@@ -18,7 +18,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Infrastructure configuration for the SQLite database and connection pooling.
+ * Infrastructure configuration for the persistence layer, specifically managing the SQLite database
+ * lifecycle and connection pooling via HikariCP.
+ * <p>
+ * This class is responsible for:
+ * <ul>
+ *   <li><b>Portable Path Resolution:</b> Dynamically determining the database location based on
+ *   application configuration, ensuring the data directory exists.</li>
+ *   <li><b>Connection Pooling:</b> Configuring a {@link HikariDataSource} with optimized settings
+ *   for SQLite, including Write-Ahead Logging (WAL) and foreign key support.</li>
+ *   <li><b>Schema Migration:</b> Initializing and executing Flyway migrations to ensure the
+ *   database schema is consistent with the application version.</li>
+ *   <li><b>Performance Tuning:</b> Applying specific SQLite PRAGMAs (synchronous, busy_timeout)
+ *   to balance data integrity with high-concurrency performance.</li>
+ * </ul>
  */
 @Configuration
 public class DatabaseConfig {
@@ -42,7 +55,6 @@ public class DatabaseConfig {
         config.setMinimumIdle(2);
         config.setPoolName("ImageToolboxPool");
 
-        // SQLite specific optimizations
         config.addDataSourceProperty("journal_mode", "WAL");
         config.addDataSourceProperty("foreign_keys", "ON");
         config.addDataSourceProperty("synchronous", "NORMAL");

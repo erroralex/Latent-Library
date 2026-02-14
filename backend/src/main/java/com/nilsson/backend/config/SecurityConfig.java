@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -12,23 +13,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.UUID;
 
 /**
- * Security configuration that implements a handshake token validation mechanism to protect the local API.
+ * Security configuration for the application, implementing a handshake-based authentication mechanism.
  * <p>
- * This configuration ensures that only the authorized Electron frontend can communicate with the
- * Spring Boot backend. It generates a unique, single-use UUID token upon application startup
- * and enforces its presence in all incoming API requests. This prevents Cross-Site Request
- * Forgery (CSRF) and unauthorized access from other local applications or browsers.
+ * This class configures a {@link HandlerInterceptor} to protect API endpoints from unauthorized access.
+ * It generates a unique, session-based handshake token that must be provided by the frontend in either
+ * the {@code Authorization} header or as a {@code token} query parameter.
  * <p>
- * Key Responsibilities:
+ * Key Security Features:
  * <ul>
- *   <li><b>Token Generation:</b> Creates a secure, random {@code HANDSHAKE_TOKEN} at runtime.</li>
- *   <li><b>Interceptor Registration:</b> Configures a {@link HandshakeInterceptor} to intercept
- *   all requests starting with {@code /api/}.</li>
- *   <li><b>Multi-Channel Validation:</b> Supports token validation via both standard
- *   {@code Authorization} headers (for API calls) and query parameters (for media resources
- *   loaded via {@code <img>} tags).</li>
- *   <li><b>Access Control:</b> Automatically allows requests for static frontend assets while
- *   strictly enforcing security for all data-driven endpoints.</li>
+ *   <li><b>Handshake Token:</b> A cryptographically strong UUID generated at startup, ensuring only
+ *   the local frontend instance can communicate with the backend.</li>
+ *   <li><b>CORS Preflight Handling:</b> Automatically permits {@code OPTIONS} requests to prevent
+ *   browser-level blocking of cross-origin requests.</li>
+ *   <li><b>Endpoint Exclusion:</b> Allows unauthenticated access to static assets and critical
+ *   system commands (e.g., shutdown) that may be triggered by the host environment.</li>
+ *   <li><b>Dual-Channel Auth:</b> Supports both Bearer tokens (for standard API calls) and query
+ *   parameters (for media elements like {@code <img>} tags).</li>
  * </ul>
  */
 @Configuration
@@ -49,9 +49,13 @@ public class SecurityConfig implements WebMvcConfigurer {
     private static class HandshakeInterceptor implements HandlerInterceptor {
         @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+            if (HttpMethod.OPTIONS.name().equalsIgnoreCase(request.getMethod())) {
+                return true;
+            }
+
             String path = request.getRequestURI();
 
-            if (!path.startsWith("/api/")) {
+            if (!path.startsWith("/api/") || path.equals("/api/system/shutdown")) {
                 return true;
             }
 
@@ -60,17 +64,12 @@ public class SecurityConfig implements WebMvcConfigurer {
                 return true;
             }
 
-            if (path.equals("/api/images/content") ||
-                    path.equals("/api/images/thumbnail") ||
-                    path.startsWith("/api/scrub/preview/")) {
-
-                String tokenParam = request.getParameter("token");
-                if (tokenParam != null && tokenParam.equals(HANDSHAKE_TOKEN)) {
-                    return true;
-                }
+            String tokenParam = request.getParameter("token");
+            if (tokenParam != null && tokenParam.equals(HANDSHAKE_TOKEN)) {
+                return true;
             }
 
-            log.warn("Unauthorized access attempt blocked from IP: {} for path: {}", request.getRemoteAddr(), path);
+            log.warn("Unauthorized API access blocked from IP: {} for path: {}", request.getRemoteAddr(), path);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized: Invalid Handshake Token");
             return false;
