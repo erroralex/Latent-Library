@@ -17,6 +17,23 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for the Speed Sorter utility.
+ * <p>
+ * This controller provides the backend logic for a high-efficiency image triage tool. It
+ * manages the configuration of source and target directories and facilitates rapid file
+ * movement between these locations. It also implements a basic undo mechanism to revert
+ * the most recent move operation.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Configuration Management:</b> Persists and retrieves user-defined input and
+ *   target folder paths for the sorting workflow.</li>
+ *   <li><b>File Discovery:</b> Lists all images in the configured input directory, sorted
+ *   by modification date for efficient triage.</li>
+ *   <li><b>Rapid Movement:</b> Executes physical file moves to pre-configured target
+ *   slots, ensuring unique filenames in the destination to prevent overwrites.</li>
+ *   <li><b>Undo Support:</b> Facilitates the restoration of a moved file to its original
+ *   location.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/speedsorter")
@@ -31,13 +48,13 @@ public class SpeedSorterController {
     @GetMapping("/config")
     public ResponseEntity<Map<String, Object>> getConfig() {
         AppSettings.SpeedSorterSettings settings = dataManager.getSettings().getSpeedSorter();
-        
+
         Map<String, Object> config = new HashMap<>();
         config.put("inputDir", settings.getInputDir());
 
         List<Map<String, String>> targets = new ArrayList<>();
         List<String> paths = settings.getTargets();
-        
+
         for (int i = 0; i < 5; i++) {
             String path = (i < paths.size()) ? paths.get(i) : null;
             Map<String, String> target = new HashMap<>();
@@ -66,7 +83,6 @@ public class SpeedSorterController {
         if (index >= 0 && index < 5 && folder.exists() && folder.isDirectory()) {
             dataManager.updateSettings(s -> {
                 List<String> targets = s.getSpeedSorter().getTargets();
-                // Ensure list is big enough
                 while (targets.size() <= index) {
                     targets.add(null);
                 }
@@ -103,11 +119,11 @@ public class SpeedSorterController {
     @PostMapping("/move")
     public ResponseEntity<String> moveFile(@RequestParam("source") String sourcePath, @RequestParam("targetIndex") int targetIndex) {
         List<String> targets = dataManager.getSettings().getSpeedSorter().getTargets();
-        
+
         if (targetIndex < 0 || targetIndex >= targets.size() || targets.get(targetIndex) == null) {
             throw new ValidationException("Target slot " + targetIndex + " is not configured.");
         }
-        
+
         String targetPathStr = targets.get(targetIndex);
         File source = new File(sourcePath);
         File targetDir = new File(targetPathStr);
@@ -129,7 +145,6 @@ public class SpeedSorterController {
         if (path == null || path.isBlank()) {
             throw new ValidationException("Path cannot be empty.");
         }
-        // Delegate to batch delete logic for consistency
         dataManager.batchDeleteFiles(List.of(path));
         return ResponseEntity.ok("Deleted");
     }

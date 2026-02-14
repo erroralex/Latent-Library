@@ -38,12 +38,14 @@ public class ImageMetadataService {
     private final ImageMetadataRepository imageMetadataRepository;
     private final MetadataService metadataService;
     private final FtsService ftsService;
+    private final DHashService dHashService;
 
-    public ImageMetadataService(ImageRepository imageRepository, ImageMetadataRepository imageMetadataRepository, MetadataService metadataService, FtsService ftsService) {
+    public ImageMetadataService(ImageRepository imageRepository, ImageMetadataRepository imageMetadataRepository, MetadataService metadataService, FtsService ftsService, DHashService dHashService) {
         this.imageRepository = imageRepository;
         this.imageMetadataRepository = imageMetadataRepository;
         this.metadataService = metadataService;
         this.ftsService = ftsService;
+        this.dHashService = dHashService;
     }
 
     @Transactional
@@ -61,8 +63,9 @@ public class ImageMetadataService {
         }
 
         Map<String, String> meta = metadataService.getExtractedData(file);
+        long dHash = dHashService.calculateDHash(file);
         if (imageId != -1) {
-            saveMetadataAndIndex(imageId, meta);
+            saveMetadataAndIndex(imageId, meta, dHash);
         }
         return meta;
     }
@@ -76,19 +79,20 @@ public class ImageMetadataService {
     }
 
     @Transactional
-    public void cacheMetadata(int imageId, Map<String, String> meta) {
+    public void cacheMetadata(int imageId, Map<String, String> meta, long dHash) {
         if (imageId <= 0) {
             throw new ValidationException("Invalid image ID for caching metadata.");
         }
         if (meta == null || meta.isEmpty()) {
             throw new ValidationException("Metadata map cannot be null or empty.");
         }
-        saveMetadataAndIndex(imageId, meta);
+        saveMetadataAndIndex(imageId, meta, dHash);
     }
 
-    private void saveMetadataAndIndex(int imageId, Map<String, String> meta) {
+    private void saveMetadataAndIndex(int imageId, Map<String, String> meta, long dHash) {
         if (imageId > 0 && meta != null && !meta.isEmpty()) {
             imageMetadataRepository.saveMetadata(imageId, meta);
+            imageMetadataRepository.saveDHash(imageId, dHash);
             ftsService.updateFtsIndex(imageId);
         }
     }

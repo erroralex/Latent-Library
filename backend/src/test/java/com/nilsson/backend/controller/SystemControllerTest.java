@@ -1,6 +1,8 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.service.DatabaseService;
 import com.nilsson.backend.service.FtsService;
+import com.nilsson.backend.service.IndexingService;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.junit.jupiter.api.DisplayName;
@@ -19,25 +21,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * SystemControllerTest is an integration test suite for the SystemController, focusing on system-level
- * administrative operations and configuration management. It verifies that endpoints for clearing
- * application data, managing excluded directory paths, and initiating asynchronous search index
- * rebuilds correctly delegate to the appropriate services. The tests ensure that the API
- * returns the correct HTTP status codes and response content, validating the system's
- * ability to handle maintenance tasks and configuration updates.
+ * administrative operations and configuration management.
  */
 @WebMvcTest(SystemController.class)
 class SystemControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    
     @MockBean
     private ConfigurableApplicationContext context;
+    
     @MockBean
     private FtsService ftsService;
+    
     @MockBean
     private PathService pathService;
+    
     @MockBean
     private UserDataManager userDataManager;
+
+    @MockBean
+    private IndexingService indexingService;
+
+    @MockBean
+    private DatabaseService databaseService;
 
     @Test
     @DisplayName("POST /api/system/clear-database should invoke userDataManager")

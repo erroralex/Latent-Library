@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -55,7 +53,7 @@ import java.util.stream.Collectors;
 @Service
 public class UserDataManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserDataManager.class);
+    private static final Logger log = LoggerFactory.getLogger(UserDataManager.class);
     private static final int HASH_CHUNK_SIZE = 64 * 1024; // 64KB
 
     private final DatabaseService db;
@@ -70,6 +68,7 @@ public class UserDataManager {
     private final SearchRepository searchRepository;
     private final FtsService ftsService;
     private final FileSystemService fileSystemService;
+    private final DHashService dHashService;
 
     public UserDataManager(DatabaseService db,
                            JsonSettingsService settingsService,
@@ -81,7 +80,8 @@ public class UserDataManager {
                            PathService pathService,
                            SearchRepository searchRepository,
                            FtsService ftsService,
-                           FileSystemService fileSystemService) {
+                           FileSystemService fileSystemService,
+                           DHashService dHashService) {
         this.db = db;
         this.settingsService = settingsService;
         this.imageRepo = imageRepo;
@@ -94,10 +94,11 @@ public class UserDataManager {
         this.searchRepository = searchRepository;
         this.ftsService = ftsService;
         this.fileSystemService = fileSystemService;
+        this.dHashService = dHashService;
     }
 
     public void shutdown() {
-        logger.info("Shutting down data services...");
+        log.info("Shutting down data services...");
         db.shutdown();
     }
 
@@ -106,7 +107,7 @@ public class UserDataManager {
         try {
             return pathService.resolve(dbPath);
         } catch (Exception e) {
-            logger.warn("Could not resolve path: {}", dbPath);
+            log.warn("Could not resolve path: {}", dbPath);
             return null;
         }
     }
@@ -171,12 +172,8 @@ public class UserDataManager {
                     }
                 }
 
-                List<String> collectionPaths = null;
-                if (collectionName != null) {
-                    collectionPaths = collectionService.getFilePathsFromCollection(collectionName);
-                }
+                List<String> paths = searchRepository.findPaths(query, listFilters, collectionName, offset, limit);
 
-                List<String> paths = searchRepository.findPaths(query, listFilters, collectionPaths, offset, limit);
                 return paths.stream()
                         .map(path -> {
                             File file = pathService.resolve(path);
@@ -190,7 +187,7 @@ public class UserDataManager {
                         })
                         .collect(Collectors.toList());
             } catch (Exception e) {
-                logger.error("Async search filter operation failed", e);
+                log.error("Async search filter operation failed", e);
                 throw new ApplicationException("Failed to execute filtered search query.", e);
             }
         });
@@ -221,11 +218,10 @@ public class UserDataManager {
                         deletedPaths.add(pathService.getNormalizedAbsolutePath(file));
                     }
                 } else {
-                    // File doesn't exist, but we should still clean up the DB record
                     deletedPaths.add(path);
                 }
             } catch (Exception e) {
-                logger.error("Failed to delete file in batch: {}", path, e);
+                log.warn("Failed to delete file in batch: {}", path);
             }
         }
 
@@ -236,12 +232,28 @@ public class UserDataManager {
 
     public void renameFile(File file, String newName) {
         String oldPath = pathService.getNormalizedAbsolutePath(file);
-        
+        String oldName = file.getName();
+
         File newFile = fileSystemService.renameFile(file, newName);
         String newPath = pathService.getNormalizedAbsolutePath(newFile);
 
-        // Update database path to preserve metadata
-        imageRepo.updatePath(oldPath, newPath);
+        try {
+            imageRepo.updatePath(oldPath, newPath);
+            log.info("Successfully renamed file and updated DB: {} -> {}", oldPath, newPath);
+        } catch (Exception e) {
+            log.error("Database update failed after file rename. Attempting rollback on disk...", e);
+
+            try {
+                fileSystemService.renameFile(newFile, oldName);
+                log.info("Rollback successful: File renamed back to {}", oldName);
+            } catch (Exception rollbackEx) {
+                log.error("CRITICAL DESYNC ERROR: Failed to rollback file rename on disk. " +
+                        "File is now at {} but DB still points to {}.", newPath, oldPath, rollbackEx);
+            }
+
+            throw new ApplicationException("Failed to update database after renaming file. " +
+                    "The operation was rolled back if possible.", e);
+        }
     }
 
     private int getOrCreateImageIdInternal(File file) {
@@ -257,40 +269,33 @@ public class UserDataManager {
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
             if (!existingPaths.isEmpty()) {
                 String oldPath = existingPaths.get(0);
-                logger.info("Detected file move: {} -> {}", oldPath, path);
+                log.info("Detected file move: {} -> {}", oldPath, path);
                 imageRepo.updatePath(oldPath, path);
                 return imageRepo.getIdByPath(path);
             }
 
             return imageRepo.getOrCreateId(path, hash);
         } catch (Exception e) {
-            logger.error("Failed to reconcile or register file: {}", file.getAbsolutePath(), e);
+            log.error("Failed to reconcile or register file: {}", file.getAbsolutePath(), e);
             throw new ApplicationException("System failed to register image in database.", e);
         }
     }
 
-    /**
-     * Calculates a fast fingerprint for the file to detect moves/renames.
-     * Instead of hashing the entire file, it hashes the size, and the first/last 64KB.
-     */
     private String calculateHash(File file) {
         try {
             long length = file.length();
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            
-            // Include file length in the hash
+
             digest.update(String.valueOf(length).getBytes());
 
             try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
                 byte[] buffer = new byte[HASH_CHUNK_SIZE];
-                
-                // Read first chunk
+
                 int bytesRead = raf.read(buffer);
                 if (bytesRead > 0) {
                     digest.update(buffer, 0, bytesRead);
                 }
 
-                // Read last chunk if file is large enough
                 if (length > HASH_CHUNK_SIZE) {
                     raf.seek(length - HASH_CHUNK_SIZE);
                     bytesRead = raf.read(buffer);
@@ -305,14 +310,18 @@ public class UserDataManager {
             for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
-            logger.error("Fingerprint calculation failed: {}", file.getAbsolutePath(), e);
+            log.error("Fingerprint calculation failed: {}", file.getAbsolutePath(), e);
             throw new ApplicationException("Failed to calculate unique file fingerprint.", e);
         }
     }
 
     public void cacheMetadata(File file, Map<String, String> meta) {
+        cacheMetadata(file, meta, 0);
+    }
+
+    public void cacheMetadata(File file, Map<String, String> meta, long dHash) {
         int id = getOrCreateImageIdInternal(file);
-        imageMetadataService.cacheMetadata(id, meta);
+        imageMetadataService.cacheMetadata(id, meta, dHash);
     }
 
     public Map<String, String> getCachedMetadata(File file) {
@@ -409,7 +418,7 @@ public class UserDataManager {
                     ids.add(getOrCreateImageIdInternal(file));
                 }
             } catch (Exception e) {
-                logger.warn("Skipping invalid path during batch add: {}", path);
+                log.warn("Skipping invalid path during batch add: {}", path);
             }
         }
         if (!ids.isEmpty()) {

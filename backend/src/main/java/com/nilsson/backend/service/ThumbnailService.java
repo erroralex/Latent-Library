@@ -133,8 +133,6 @@ public class ThumbnailService {
     }
 
     private ReentrantLock getLock(String key) {
-        // Use bitwise masking to ensure a positive index, preventing ArrayIndexOutOfBoundsException
-        // if hashCode() returns Integer.MIN_VALUE.
         int index = (key.hashCode() & 0x7FFFFFFF) % STRIPE_COUNT;
         return locks[index];
     }

@@ -21,6 +21,23 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for library-wide management, folder scanning, and indexing orchestration.
+ * <p>
+ * This controller serves as the entry point for synchronizing the application's database with
+ * the local file system. It provides endpoints for scanning specific directories, which
+ * triggers background indexing of metadata and thumbnails while respecting user-defined
+ * exclusion rules.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Folder Scanning:</b> Initiates the indexing process for a given directory path,
+ *   ensuring that new images are registered and metadata is extracted.</li>
+ *   <li><b>Exclusion Enforcement:</b> Verifies that requested paths are not within user-defined
+ *   excluded directories before proceeding with indexing.</li>
+ *   <li><b>State Persistence:</b> Updates the application's "last visited folder" setting
+ *   upon successful scan.</li>
+ *   <li><b>DTO Mapping:</b> Returns a sorted list of {@link ImageDTO} objects for the scanned
+ *   folder, enriched with ratings and model information for immediate UI display.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/library")

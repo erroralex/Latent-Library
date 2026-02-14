@@ -5,11 +5,27 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents the structure of the persistent settings.json file.
+ * Data model representing the persistent application settings stored in {@code settings.json}.
+ * <p>
+ * This class serves as the primary configuration holder for user preferences and application state
+ * that must persist across sessions. It is designed to be serialized and deserialized using Jackson.
+ * It includes settings for the user interface theme, navigation history, directory exclusion rules,
+ * and tool-specific configurations like the Speed Sorter.
+ * <p>
+ * Key Components:
+ * <ul>
+ *   <li><b>Navigation State:</b> Tracks the {@code lastFolder} visited by the user to provide a seamless
+ *   resume experience.</li>
+ *   <li><b>UI Customization:</b> Stores the active {@code theme} name (defaulting to "neon").</li>
+ *   <li><b>Indexer Configuration:</b> Maintains a list of {@code excludedPaths} that the background
+ *   indexing service should ignore.</li>
+ *   <li><b>Speed Sorter Settings:</b> Encapsulates the source directory and the five target slots
+ *   used by the rapid triage utility.</li>
+ * </ul>
  */
 public class AppSettings {
     private String lastFolder;
-    private String theme = "neon"; // Default theme
+    private String theme = "neon";
     private List<String> excludedPaths = new ArrayList<>();
     private SpeedSorterSettings speedSorter = new SpeedSorterSettings();
 
@@ -45,9 +61,11 @@ public class AppSettings {
         this.speedSorter = speedSorter;
     }
 
+    /**
+     * Configuration settings specific to the Speed Sorter utility.
+     */
     public static class SpeedSorterSettings {
         private String inputDir;
-        // Initialize with 5 nulls for the 5 slots
         private List<String> targets = new ArrayList<>(Collections.nCopies(5, null));
 
         public String getInputDir() {
@@ -63,10 +81,8 @@ public class AppSettings {
         }
 
         public void setTargets(List<String> targets) {
-            // Wrap in a mutable ArrayList to allow resizing/modification
             this.targets = (targets != null) ? new ArrayList<>(targets) : new ArrayList<>();
 
-            // Ensure size is always 5
             while (this.targets.size() < 5) {
                 this.targets.add(null);
             }

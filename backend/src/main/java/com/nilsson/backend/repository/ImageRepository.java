@@ -12,34 +12,34 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Repository for managing core image entities and their persistent state within the library.
  * <p>
- * This class serves as the primary data access layer for the {@code images} table. It handles the
- * registration of new images, path updates for file movements, and user-driven state changes
- * such as ratings and "starred" status. It also supports hash-based lookups to detect and
- * reconcile file movements across the local file system, ensuring metadata is preserved
- * even when files are renamed or moved externally.
+ * This class serves as the primary data access layer for the {@code images} table. It handles
+ * the registration of new files, tracking of file movements via cryptographic hashes, and
+ * management of user-facing attributes such as ratings and "starred" status. It also
+ * maintains the "missing" state for files that are indexed but currently unreachable on disk.
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Identity Management:</b> Resolves absolute file system paths to internal database IDs
- *   for relational associations.</li>
- *   <li><b>File Move Detection:</b> Utilizes SHA-256 hashes to identify existing records when a
- *   file is moved, allowing for seamless path updates without data loss.</li>
- *   <li><b>Batch Processing:</b> Provides a streaming mechanism for library-wide operations,
- *   enabling efficient reconciliation and maintenance tasks.</li>
- *   <li><b>Organization Logic:</b> Manages the {@code rating} and {@code is_starred} flags,
- *   which are central to the application's filtering and collection systems.</li>
- *   <li><b>Atomic Registration:</b> Implements thread-safe image indexing using {@code INSERT OR IGNORE}
- *   and transactional ID retrieval.</li>
+ *   <li><b>File Registration & Tracking:</b> Implements {@code getOrCreateId} logic that
+ *   uses file hashes to detect moved or renamed files, preserving metadata across path changes.</li>
+ *   <li><b>State Management:</b> Persists and retrieves image ratings, starred status, and
+ *   perceptual hashes (dHash) used for similarity detection.</li>
+ *   <li><b>Batch Operations:</b> Provides efficient batch deletion mechanisms to handle
+ *   large-scale library reconciliation or folder removals.</li>
+ *   <li><b>Library Traversal:</b> Offers streaming access to all indexed file paths for
+ *   background maintenance tasks like reconciliation and thumbnail generation.</li>
+ *   <li><b>Integrity Maintenance:</b> Manages the {@code is_missing} flag to distinguish
+ *   between permanently deleted files and temporarily disconnected storage media.</li>
  * </ul>
  */
 @Repository
 public class ImageRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(ImageRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(ImageRepository.class);
     private final JdbcClient jdbcClient;
 
     public ImageRepository(DataSource dataSource) {
@@ -110,8 +110,6 @@ public class ImageRepository {
         if (paths == null || paths.isEmpty()) {
             return;
         }
-        // SQLite limit for parameters is usually 999 or 32766 depending on version.
-        // Batching in chunks of 500 is safe.
         int batchSize = 500;
         for (int i = 0; i < paths.size(); i += batchSize) {
             List<String> batch = paths.subList(i, Math.min(i + batchSize, paths.size()));
@@ -123,14 +121,19 @@ public class ImageRepository {
         }
     }
 
+    @Transactional(readOnly = true)
     public void forEachFilePath(Consumer<String> action) {
         if (action == null) {
             throw new ValidationException("Consumer action cannot be null.");
         }
-        jdbcClient.sql("SELECT file_path FROM images")
+        try (Stream<String> pathStream = jdbcClient.sql("SELECT file_path FROM images")
                 .query(String.class)
-                .list()
-                .forEach(action);
+                .stream()) {
+            pathStream.forEach(action);
+        } catch (Exception e) {
+            log.error("Error during streaming library traversal", e);
+            throw new ApplicationException("Failed to traverse image library.", e);
+        }
     }
 
     public int getRating(String path) {
@@ -174,5 +177,13 @@ public class ImageRepository {
                 .query(Boolean.class)
                 .optional()
                 .orElse(false);
+    }
+
+    public Long getDHash(String path) {
+        return jdbcClient.sql("SELECT dhash FROM images WHERE file_path = ?")
+                .param(path)
+                .query(Long.class)
+                .optional()
+                .orElse(null);
     }
 }

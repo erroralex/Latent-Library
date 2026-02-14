@@ -104,6 +104,12 @@
             <version>1.3.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- ONNX Runtime for AI Tagging -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.17.1</version>
+        </dependency>
     </dependencies>
 
     <build>

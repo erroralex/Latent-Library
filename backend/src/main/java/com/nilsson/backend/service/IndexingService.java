@@ -54,6 +54,7 @@ public class IndexingService {
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
     private final FtsService ftsService;
+    private final DHashService dHashService;
 
     private WatchService watchService;
     private Thread watchThread;
@@ -66,13 +67,15 @@ public class IndexingService {
                            UserDataManager dataManager,
                            PathService pathService,
                            ThumbnailService thumbnailService,
-                           FtsService ftsService) {
+                           FtsService ftsService,
+                           DHashService dHashService) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
         this.pathService = pathService;
         this.thumbnailService = thumbnailService;
         this.ftsService = ftsService;
+        this.dHashService = dHashService;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
     }
@@ -82,11 +85,6 @@ public class IndexingService {
         scheduler.shutdownNow();
     }
 
-    /**
-     * Performs a lazy reconciliation of the library.
-     * Instead of checking every file on startup, it marks records as potentially missing
-     * and validates them in a low-priority background thread.
-     */
     public void reconcileLibrary() {
         File lastFolder = dataManager.getLastFolder();
         if (lastFolder != null && lastFolder.exists() && lastFolder.isDirectory()) {
@@ -100,7 +98,6 @@ public class IndexingService {
             AtomicInteger removedCount = new AtomicInteger(0);
             AtomicInteger markedMissingCount = new AtomicInteger(0);
 
-            // Set of parent directories we've already checked for existence
             Set<String> checkedDirs = new HashSet<>();
 
             imageRepo.forEachFilePath(path -> {
@@ -108,13 +105,10 @@ public class IndexingService {
                     File file = pathService.resolve(path);
                     File parentDir = file.getParentFile();
 
-                    // Optimization: Check if parent directory exists first
                     if (parentDir != null) {
                         String parentPath = parentDir.getAbsolutePath();
                         if (!checkedDirs.contains(parentPath)) {
                             if (!parentDir.exists()) {
-                                // Entire folder is missing (e.g. USB unplugged)
-                                // Mark as missing but DO NOT delete metadata
                                 logger.debug("[Reconcile] Parent directory missing, marking as missing: {}", parentPath);
                                 imageRepo.setMissing(path, true);
                                 markedMissingCount.incrementAndGet();
@@ -126,12 +120,9 @@ public class IndexingService {
                     }
 
                     if (!file.exists()) {
-                        // File is specifically missing from an existing directory
-                        // This usually means it was deleted, so we remove the record
                         logger.info("[Reconcile] File missing from disk: {}. Deleting record.", path);
                         imageRepo.deleteByPath(path);
                         
-                        // Cleanup orphaned thumbnail
                         File thumbnail = thumbnailService.getThumbnail(file);
                         if (thumbnail != null && thumbnail.exists()) {
                             thumbnail.delete();
@@ -139,7 +130,6 @@ public class IndexingService {
                         
                         removedCount.incrementAndGet();
                     } else {
-                        // File exists, ensure it's not marked as missing
                         if (imageRepo.isMissing(path)) {
                             imageRepo.setMissing(path, false);
                         }
@@ -284,7 +274,6 @@ public class IndexingService {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (ClosedWatchServiceException e) {
-                    // Service closed explicitly, exit loop
                     break;
                 }
 
@@ -311,7 +300,6 @@ public class IndexingService {
 
                     pendingEvents.put(eventKey, now);
 
-                    // Use ScheduledExecutorService instead of Thread.sleep() to avoid blocking the thread
                     scheduler.schedule(() -> {
                         if (pendingEvents.getOrDefault(eventKey, 0L) == now) {
                             pendingEvents.remove(eventKey);
@@ -356,10 +344,11 @@ public class IndexingService {
     private void handleFileCreation(File file) {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
+            long dHash = dHashService.calculateDHash(file);
 
             dbLock.lock();
             try {
-                dataManager.cacheMetadata(file, meta);
+                dataManager.cacheMetadata(file, meta, dHash);
             } finally {
                 dbLock.unlock();
             }
@@ -382,7 +371,6 @@ public class IndexingService {
                 dbLock.unlock();
             }
             
-            // Cleanup orphaned thumbnail
             File thumbnail = thumbnailService.getThumbnail(file);
             if (thumbnail != null && thumbnail.exists()) {
                 if (thumbnail.delete()) {
@@ -408,10 +396,11 @@ public class IndexingService {
         for (File file : batch) {
             try {
                 Map<String, String> meta = metaService.getExtractedData(file);
+                long dHash = dHashService.calculateDHash(file);
 
                 dbLock.lock();
                 try {
-                    dataManager.cacheMetadata(file, meta);
+                    dataManager.cacheMetadata(file, meta, dHash);
                     int rating = dataManager.getRating(file);
                     ratingMap.put(file, rating);
                 } finally {

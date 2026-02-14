@@ -19,20 +19,32 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Service for managing application settings persisted in a JSON file.
  * <p>
- * This service replaces the database-backed settings for user preferences, ensuring that
- * configuration (excluded paths, last folder, tool settings) is portable and survives
- * database clears. It stores data in 'data/settings.json'.
+ * This service manages user preferences and application configuration (e.g., excluded paths,
+ * last visited folder) by persisting them in a portable JSON file. This ensures that
+ * configuration survives database resets and is easily accessible for manual editing.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>JSON Persistence:</b> Handles the serialization and deserialization of
+ *   {@link AppSettings} to and from {@code data/settings.json}.</li>
+ *   <li><b>Thread-Safe Access:</b> Utilizes a {@link ReentrantReadWriteLock} to ensure
+ *   consistent state when settings are concurrently read or modified.</li>
+ *   <li><b>Default Initialization:</b> Automatically creates a default settings file if
+ *   none exists upon service startup.</li>
+ *   <li><b>Atomic Updates:</b> Provides a safe update mechanism that ensures changes are
+ *   committed to disk immediately after modification.</li>
+ * </ul>
  */
 @Service
 public class JsonSettingsService {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonSettingsService.class);
     private static final String SETTINGS_FILE = "data/settings.json";
-    
+
     private final ObjectMapper mapper;
     private final Path settingsPath;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
+
     private AppSettings currentSettings;
 
     public JsonSettingsService(@Value("${app.data.dir:.}") String appDataDir) {
@@ -44,7 +56,6 @@ public class JsonSettingsService {
     private void initialize() {
         File file = settingsPath.toFile();
         if (!file.exists()) {
-            // Create default settings
             this.currentSettings = new AppSettings();
             save();
         } else {
@@ -58,7 +69,6 @@ public class JsonSettingsService {
             this.currentSettings = mapper.readValue(settingsPath.toFile(), AppSettings.class);
         } catch (IOException e) {
             logger.error("Failed to load settings.json", e);
-            // Fallback to defaults if file is corrupted
             this.currentSettings = new AppSettings();
         } finally {
             lock.writeLock().unlock();
@@ -68,7 +78,6 @@ public class JsonSettingsService {
     public void save() {
         lock.writeLock().lock();
         try {
-            // Ensure parent dir exists
             File parent = settingsPath.getParent().toFile();
             if (!parent.exists()) {
                 parent.mkdirs();
@@ -90,8 +99,7 @@ public class JsonSettingsService {
             lock.readLock().unlock();
         }
     }
-    
-    // Helper to modify settings safely
+
     public void update(java.util.function.Consumer<AppSettings> updater) {
         lock.writeLock().lock();
         try {

@@ -20,10 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * SearchRepositoryTest provides integration tests for the SearchRepository, specifically
  * focusing on the Full-Text Search (FTS5) capabilities and complex filtering logic.
- * It verifies that images can be retrieved based on prompt text, model names, and
- * combinations of multiple metadata filters. The tests simulate a realistic environment
- * by creating temporary SQLite databases with FTS virtual tables and seeding them
- * with sample image data and metadata.
  */
 class SearchRepositoryTest {
 
@@ -84,7 +80,8 @@ class SearchRepositoryTest {
 
     @Test
     void search_ShouldFilterByPromptText() {
-        List<String> results = searchRepository.findPaths("space cat", null, 0, 10);
+        // Refactored: Pass null for collectionName
+        List<String> results = searchRepository.findPaths("space cat", null, null, 0, 10);
 
         assertEquals(1, results.size());
         assertEquals("/img/cat_space.png", results.getFirst());
@@ -94,7 +91,8 @@ class SearchRepositoryTest {
     void search_ShouldFilterByModel() {
         Map<String, List<String>> filters = Map.of("Model", List.of("SDXL"));
 
-        List<String> results = searchRepository.findPaths(null, filters, 0, 10);
+        // Refactored: Pass null for collectionName
+        List<String> results = searchRepository.findPaths(null, filters, null, 0, 10);
 
         assertEquals(1, results.size());
         assertEquals("/img/dog_forest.png", results.getFirst());
@@ -104,7 +102,8 @@ class SearchRepositoryTest {
     void search_ShouldCombineFilters() {
         Map<String, List<String>> filters = Map.of("Model", List.of("Flux V1"));
 
-        List<String> results = searchRepository.findPaths("forest", filters, 0, 10);
+        // Refactored: Pass null for collectionName
+        List<String> results = searchRepository.findPaths("forest", filters, null, 0, 10);
 
         assertTrue(results.isEmpty(), "Should return empty if Model and Prompt do not match same image");
     }

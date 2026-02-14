@@ -5,6 +5,8 @@ import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.service.FtsService;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
+import com.nilsson.backend.service.IndexingService;
+import com.nilsson.backend.service.DatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +27,23 @@ import java.util.stream.Stream;
 
 /**
  * REST Controller for system-level operations, application lifecycle management, and OS integration.
+ * <p>
+ * This controller provides a centralized interface for administrative and system-level tasks.
+ * It handles application shutdown, OS-specific file explorer integration, database maintenance,
+ * and management of application-wide settings such as excluded paths and themes.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Lifecycle Management:</b> Facilitates graceful application shutdown via API.</li>
+ *   <li><b>OS Integration:</b> Implements cross-platform logic to open folders and reveal
+ *   files in the native system explorer (Windows Explorer, macOS Finder, etc.).</li>
+ *   <li><b>Database Maintenance:</b> Provides endpoints for clearing AI tags, purging
+ *   unorganized images, and performing full library re-indexing.</li>
+ *   <li><b>Storage Cleanup:</b> Manages the deletion of cached thumbnails and AI tagging
+ *   models to reclaim disk space.</li>
+ *   <li><b>Settings Persistence:</b> Handles the retrieval and update of user preferences,
+ *   including excluded directory paths and UI themes.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/system")
@@ -35,17 +54,23 @@ public class SystemController {
     private final FtsService ftsService;
     private final PathService pathService;
     private final UserDataManager userDataManager;
+    private final IndexingService indexingService;
+    private final DatabaseService databaseService;
     private final String appDataDir;
 
-    public SystemController(ConfigurableApplicationContext context, 
-                            FtsService ftsService, 
-                            PathService pathService, 
+    public SystemController(ConfigurableApplicationContext context,
+                            FtsService ftsService,
+                            PathService pathService,
                             UserDataManager userDataManager,
+                            IndexingService indexingService,
+                            DatabaseService databaseService,
                             @Value("${app.data.dir:.}") String appDataDir) {
         this.context = context;
         this.ftsService = ftsService;
         this.pathService = pathService;
         this.userDataManager = userDataManager;
+        this.indexingService = indexingService;
+        this.databaseService = databaseService;
         this.appDataDir = appDataDir;
     }
 
@@ -119,6 +144,32 @@ public class SystemController {
         return ResponseEntity.accepted().body("FTS index rebuild initiated.");
     }
 
+    @PostMapping("/re-index-all")
+    public ResponseEntity<String> reIndexAll() {
+        new Thread(() -> {
+            logger.info("Starting full library re-index...");
+            userDataManager.clearDatabase();
+            File lastFolder = userDataManager.getLastFolder();
+            if (lastFolder != null) {
+                indexingService.indexFolder(lastFolder);
+            }
+            logger.info("Full re-index completed.");
+        }).start();
+        return ResponseEntity.accepted().body("Full re-index initiated.");
+    }
+
+    @PostMapping("/clear-ai-tags")
+    public ResponseEntity<String> clearAiTags() {
+        databaseService.clearAiTags();
+        return ResponseEntity.ok("AI tags cleared.");
+    }
+
+    @PostMapping("/clear-unorganized")
+    public ResponseEntity<String> clearUnorganized() {
+        databaseService.clearUnorganizedImages();
+        return ResponseEntity.ok("Unorganized images cleared.");
+    }
+
     @PostMapping("/open-data-folder")
     public ResponseEntity<String> openDataFolder() {
         File dataDir = Paths.get(appDataDir).resolve("data").toAbsolutePath().normalize().toFile();
@@ -142,7 +193,7 @@ public class SystemController {
         if (Files.exists(thumbDir)) {
             try (Stream<Path> walk = Files.walk(thumbDir)) {
                 walk.sorted(Comparator.reverseOrder())
-                        .filter(p -> !p.equals(thumbDir)) // Don't delete the root dir
+                        .filter(p -> !p.equals(thumbDir))
                         .map(Path::toFile)
                         .forEach(File::delete);
             } catch (IOException e) {

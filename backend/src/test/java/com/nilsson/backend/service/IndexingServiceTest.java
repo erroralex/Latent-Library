@@ -43,13 +43,15 @@ class IndexingServiceTest {
     private ThumbnailService thumbnailService;
     @Mock
     private FtsService ftsService;
+    @Mock
+    private DHashService dHashService;
 
     private IndexingService indexingService;
 
     @BeforeEach
     void setUp() {
         indexingService = new IndexingService(
-                imageRepo, metaService, dataManager, pathService, thumbnailService, ftsService
+                imageRepo, metaService, dataManager, pathService, thumbnailService, ftsService, dHashService
         );
     }
 
@@ -59,6 +61,7 @@ class IndexingServiceTest {
         assertTrue(imageFile.createNewFile());
 
         when(metaService.getExtractedData(any())).thenReturn(Map.of("Model", "TestModel"));
+        when(dHashService.calculateDHash(any())).thenReturn(12345L);
 
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -69,7 +72,7 @@ class IndexingServiceTest {
         boolean completed = latch.await(2, TimeUnit.SECONDS);
         assertTrue(completed, "Indexing task did not complete in time");
 
-        verify(dataManager, atLeastOnce()).cacheMetadata(eq(imageFile), any());
+        verify(dataManager, atLeastOnce()).cacheMetadata(eq(imageFile), any(), anyLong());
         verify(thumbnailService, atLeastOnce()).getThumbnail(eq(imageFile));
     }
 

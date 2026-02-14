@@ -1,6 +1,5 @@
 package com.nilsson.backend.controller;
 
-import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ImageProcessingException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
@@ -13,9 +12,11 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -25,6 +26,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * REST Controller for managing image-specific operations, metadata retrieval, and content serving.
+ * <p>
+ * This controller acts as the primary interface for all image-related data. It provides endpoints
+ * for searching images with complex filters, retrieving technical metadata, managing ratings,
+ * and serving both full-resolution image content and optimized thumbnails. It ensures that
+ * file system access is correctly resolved and validated via the {@link PathService}.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Advanced Search:</b> Facilitates multi-criteria searching across models, samplers,
+ *   loras, and ratings, with support for pagination.</li>
+ *   <li><b>Metadata Management:</b> Provides detailed technical metadata for individual images,
+ *   including AI-generated tags and user ratings.</li>
+ *   <li><b>Content Serving:</b> Streams physical image files to the frontend with appropriate
+ *   caching headers and MIME types.</li>
+ *   <li><b>Thumbnail Orchestration:</b> Serves pre-generated thumbnails or falls back to
+ *   full-resolution content if a thumbnail is unavailable.</li>
+ *   <li><b>File Operations:</b> Handles single-file renames and batch deletions, ensuring
+ *   consistency between the file system and the database.</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {
@@ -32,11 +55,13 @@ public class ImageController {
     private final UserDataManager dataManager;
     private final PathService pathService;
     private final ThumbnailService thumbnailService;
+    private final JdbcClient jdbcClient;
 
-    public ImageController(UserDataManager dataManager, PathService pathService, ThumbnailService thumbnailService) {
+    public ImageController(UserDataManager dataManager, PathService pathService, ThumbnailService thumbnailService, DataSource dataSource) {
         this.dataManager = dataManager;
         this.pathService = pathService;
         this.thumbnailService = thumbnailService;
+        this.jdbcClient = JdbcClient.create(dataSource);
     }
 
     @GetMapping("/search")
@@ -47,6 +72,7 @@ public class ImageController {
             @RequestParam(required = false) String lora,
             @RequestParam(required = false) String rating,
             @RequestParam(required = false) String collection,
+            @RequestParam(required = false) Boolean includeAiTags,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
@@ -56,9 +82,9 @@ public class ImageController {
         if (StringUtils.hasText(lora) && !"All".equals(lora)) filters.put("Loras", lora);
         if (StringUtils.hasText(rating)) filters.put("Rating", rating);
         if (StringUtils.hasText(collection)) filters.put("Collection", collection);
+        if (includeAiTags != null) filters.put("includeAiTags", String.valueOf(includeAiTags));
 
         int offset = page * size;
-        // If dataManager throws an error, the GlobalExceptionHandler will catch it.
         List<ImageDTO> results = dataManager.findFilesWithFilters(query, filters, offset, size).join();
         return ResponseEntity.ok(results);
     }
@@ -86,6 +112,14 @@ public class ImageController {
 
         Map<String, Object> response = new HashMap<>(meta);
         response.put("rating", rating);
+
+        String aiTags = jdbcClient.sql("SELECT ai_tags FROM images WHERE file_path = ?")
+                .param(pathService.getNormalizedAbsolutePath(file))
+                .query(String.class)
+                .optional()
+                .orElse("");
+
+        response.put("ai_tags", aiTags);
 
         return ResponseEntity.ok(response);
     }
@@ -130,7 +164,6 @@ public class ImageController {
         validatePath(path);
         File file = pathService.resolve(path);
 
-        // 1. Explicit Check (Throws 404 immediately if missing)
         if (!file.exists()) {
             throw new ResourceNotFoundException("Image", path);
         }
@@ -138,7 +171,6 @@ public class ImageController {
         try {
             Resource resource = new UrlResource(file.toURI());
 
-            // 2. IO Operations (Checked Exceptions)
             String contentType = Files.probeContentType(file.toPath());
             if (contentType == null) {
                 contentType = "application/octet-stream";
@@ -151,13 +183,10 @@ public class ImageController {
                     .body(resource);
 
         } catch (MalformedURLException e) {
-            // 400 Bad Request
             throw new ValidationException("Invalid path format: " + path);
         } catch (IOException e) {
-            // 500 Internal Server Error (Wrapped)
             throw new ImageProcessingException("Failed to read image file: " + path, e);
         }
-        // Do NOT catch generic Exception here, let RuntimeExceptions bubble up!
     }
 
     @GetMapping("/thumbnail")
@@ -172,9 +201,7 @@ public class ImageController {
         try {
             File thumbnail = thumbnailService.getThumbnail(file);
 
-            // Fallback logic
             if (thumbnail == null || !thumbnail.exists()) {
-                // Recursively call getImageContent (safe because we checked file.exists above)
                 return getImageContent(path);
             }
 

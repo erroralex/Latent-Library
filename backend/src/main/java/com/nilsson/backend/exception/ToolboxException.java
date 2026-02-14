@@ -1,8 +1,17 @@
 package com.nilsson.backend.exception;
 
 import org.springframework.http.HttpStatus;
+
 import java.io.Serial;
 
+/**
+ * Base abstract exception for the AI Toolbox application.
+ * <p>
+ * This class serves as the root of the application's custom exception hierarchy. It integrates
+ * with Spring's {@code GlobalExceptionHandler} to provide standardized error responses
+ * across all API endpoints. Each exception carries an HTTP status code and a unique
+ * application-specific error code string.
+ */
 public abstract class ToolboxException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -16,13 +25,17 @@ public abstract class ToolboxException extends RuntimeException {
         this.code = code;
     }
 
-    // Add this constructor to support the 'cause' (Throwable)
     protected ToolboxException(String message, Throwable cause, HttpStatus status, String code) {
         super(message, cause);
         this.status = status;
         this.code = code;
     }
 
-    public HttpStatus getStatus() { return status; }
-    public String getCode() { return code; }
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public String getCode() {
+        return code;
+    }
 }

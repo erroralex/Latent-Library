@@ -88,6 +88,78 @@
     box-shadow: var(--shadow-glow-primary) !important;
 }
 
+/* --- Checkbox --- */
+.p-checkbox {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.p-checkbox .p-checkbox-box {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+    border-radius: 4px !important;
+    width: 20px !important;
+    height: 20px !important;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled):hover .p-checkbox-box {
+    border-color: var(--accent-primary) !important;
+}
+
+.p-checkbox-checked .p-checkbox-box,
+.p-checkbox .p-checkbox-box.p-highlight,
+.p-checkbox .p-checkbox-box.p-checkbox-checked {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+}
+
+.p-checkbox .p-checkbox-box .p-checkbox-icon {
+    color: var(--bg-app) !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    display: block !important;
+}
+
+/* --- InputSwitch (Toggle) --- */
+.p-inputswitch {
+    width: 3rem !important;
+    height: 1.5rem !important;
+}
+
+.p-inputswitch .p-inputswitch-slider {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+    border-radius: 30px !important;
+    transition: background-color 0.2s, border-color 0.2s !important;
+}
+
+/* Checked state - Target the slider directly when the parent has the checked class */
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+    background-color: var(--accent-primary) !important;
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+}
+
+/* Handle */
+.p-inputswitch .p-inputswitch-slider:before {
+    background-color: var(--text-secondary) !important;
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+    left: 0.2rem !important;
+    margin-top: -0.55rem !important;
+    border-radius: 50% !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before {
+    background-color: var(--bg-app) !important;
+    transform: translateX(1.5rem) !important;
+}
+
 /* --- Cards & Panels --- */
 .surface-card {
     background: var(--bg-card) !important;

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -86,9 +87,16 @@ public class FtsService {
 
         String globalText = (metadataText + " " + tagsText).trim();
 
-        jdbcClient.sql("INSERT OR REPLACE INTO metadata_fts(image_id, global_text) VALUES (?, ?)")
+        String aiTags = jdbcClient.sql("SELECT ai_tags FROM images WHERE id = ?")
+                .param(imageId)
+                .query(String.class)
+                .optional()
+                .orElse("");
+
+        jdbcClient.sql("INSERT OR REPLACE INTO metadata_fts(image_id, global_text, ai_tags) VALUES (?, ?, ?)")
                 .param(imageId)
                 .param(globalText)
+                .param(aiTags)
                 .update();
     }
 

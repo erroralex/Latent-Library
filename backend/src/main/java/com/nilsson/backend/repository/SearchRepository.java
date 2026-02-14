@@ -22,10 +22,6 @@ import java.util.stream.Collectors;
  * constructs SQL queries that combine standard relational filtering (e.g., ratings, collection membership)
  * with high-performance full-text search (FTS) using SQLite's FTS5 extension.
  * <p>
- * <b>Security Note:</b> This class implements strict input sanitization to prevent SQL injection and
- * FTS query syntax manipulation. All user-provided text is stripped of non-alphanumeric characters
- * before being passed as a bind parameter to the {@code MATCH} operator.
- * <p>
  * Key Responsibilities:
  * <ul>
  *   <li><b>Dynamic Query Construction:</b> Builds complex SQL statements on-the-fly based on a combination
@@ -41,51 +37,58 @@ import java.util.stream.Collectors;
 @Repository
 public class SearchRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(SearchRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(SearchRepository.class);
     private final JdbcClient jdbcClient;
 
-    // Strict whitelist: Only allow letters and numbers. All other chars (including SQL control chars) are removed.
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]+");
 
     public SearchRepository(DataSource dataSource) {
         this.jdbcClient = JdbcClient.create(dataSource);
     }
 
-    public List<String> findPaths(String query, Map<String, List<String>> filters, int offset, int limit) {
-        return findPaths(query, filters, null, offset, limit);
-    }
-
-    public List<String> findPaths(String query, Map<String, List<String>> filters, List<String> collectionPaths, int offset, int limit) {
+    public List<String> findPaths(String query, Map<String, List<String>> filters, String collectionName, int offset, int limit) {
         if (offset < 0) throw new ValidationException("Offset cannot be negative.");
         if (limit <= 0) throw new ValidationException("Limit must be greater than zero.");
 
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT DISTINCT i.file_path FROM images i ");
+
+        if (collectionName != null && !collectionName.isBlank()) {
+            sql.append("JOIN collection_images ci ON i.id = ci.image_id ");
+            sql.append("JOIN collections c ON ci.collection_id = c.id ");
+        }
+
         List<String> ftsClauses = new ArrayList<>();
 
-        // 1. Handle Free Text Search
         if (query != null && !query.isBlank()) {
-            // Sanitize: "DROP TABLE" -> "DROP TABLE" (safe text), ";--" -> " "
             String generalQuery = Arrays.stream(query.trim().split("\\s+"))
                     .map(s -> NON_ALPHANUMERIC.matcher(s).replaceAll(" ") + "*")
                     .collect(Collectors.joining(" AND "));
-            ftsClauses.add("(" + generalQuery + ")");
+
+            boolean includeAiTags = filters != null && filters.containsKey("includeAiTags") &&
+                    "true".equalsIgnoreCase(filters.get("includeAiTags").get(0));
+
+            if (includeAiTags) {
+                ftsClauses.add("(" + generalQuery + ")");
+            } else {
+                ftsClauses.add("global_text : (" + generalQuery + ")");
+            }
         }
 
-        // 2. Handle Metadata Filters (Model, Sampler, etc.)
         if (filters != null) {
             for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
                 String key = entry.getKey();
                 List<String> values = entry.getValue();
+
+                if ("includeAiTags".equals(key)) continue;
                 if (values == null || values.isEmpty()) continue;
 
                 List<String> validValues = values.stream()
                         .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
                         .toList();
                 if (validValues.isEmpty()) continue;
-                if ("Rating".equals(key)) continue; // Handled separately
+                if ("Rating".equals(key)) continue;
 
-                // FtsService.formatFtsToken also applies strict sanitization
                 String fieldQuery = validValues.stream()
                         .map(v -> FtsService.formatFtsToken(key, v))
                         .collect(Collectors.joining(" OR "));
@@ -93,18 +96,18 @@ public class SearchRepository {
             }
         }
 
-        // 3. Construct FTS Clause
         if (!ftsClauses.isEmpty()) {
-            // We use a parameterized query for the MATCH expression.
-            // The 'ftsClauses' string is passed as a single bind parameter.
-            // Because we sanitized the inputs above, this string is safe FTS syntax.
-            sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE fts.global_text MATCH ? ");
+            sql.append("JOIN metadata_fts fts ON i.id = fts.image_id WHERE metadata_fts MATCH ? ");
             params.add(String.join(" AND ", ftsClauses));
         } else {
             sql.append("WHERE 1=1 ");
         }
 
-        // 4. Handle Rating Filter (Relational)
+        if (collectionName != null && !collectionName.isBlank()) {
+            sql.append(" AND c.name = ? ");
+            params.add(collectionName);
+        }
+
         if (filters != null && filters.containsKey("Rating")) {
             List<String> ratingValues = filters.get("Rating").stream()
                     .filter(v -> v != null && !v.isBlank() && !"All".equalsIgnoreCase(v))
@@ -114,19 +117,6 @@ public class SearchRepository {
             }
         }
 
-        // 5. Handle Collection Constraints (Relational)
-        if (collectionPaths != null) {
-            if (collectionPaths.isEmpty()) return new ArrayList<>();
-            sql.append(" AND i.file_path IN (");
-            for (int i = 0; i < collectionPaths.size(); i++) {
-                sql.append("?");
-                if (i < collectionPaths.size() - 1) sql.append(",");
-                params.add(collectionPaths.get(i));
-            }
-            sql.append(") ");
-        }
-
-        // 6. Pagination
         sql.append(" LIMIT ? OFFSET ?");
         params.add(limit);
         params.add(offset);
@@ -148,7 +138,7 @@ public class SearchRepository {
                     conditions.add("i.rating = ?");
                     params.add(val);
                 } catch (NumberFormatException e) {
-                    logger.warn("Invalid rating value skipped: {}", val);
+                    log.warn("Invalid rating value skipped: {}", val);
                 }
             }
         }

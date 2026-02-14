@@ -1,93 +1,52 @@
 -- Table for indexed images
 CREATE TABLE IF NOT EXISTS images
 (
-    id
-        INTEGER
-        PRIMARY
-            KEY
-        AUTOINCREMENT,
-    file_path
-        TEXT
-        UNIQUE
-        NOT
-            NULL,
-    file_hash
-        TEXT, -- SHA-256 hash for file recovery
-    is_starred
-        BOOLEAN
-        DEFAULT
-            0,
-    rating
-        INTEGER
-        DEFAULT
-            0,
-    last_scanned
-        INTEGER
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path    TEXT UNIQUE NOT NULL,
+    file_hash    TEXT, -- SHA-256 hash for file recovery
+    dhash        INTEGER, -- Perceptual hash for duplicate detection
+    ai_tags      TEXT, -- AI detected tags
+    is_starred   BOOLEAN DEFAULT 0,
+    rating       INTEGER DEFAULT 0,
+    last_scanned INTEGER,
+    is_missing   BOOLEAN DEFAULT 0
 );
 
 -- Table for parsed metadata (Key-Value pairs per image)
 CREATE TABLE IF NOT EXISTS image_metadata
 (
-    image_id
-        INTEGER,
-    key
-        TEXT,
-    value
-        TEXT,
-    FOREIGN
-        KEY
-        (
-         image_id
-            ) REFERENCES images
-        (
-         id
-            ) ON DELETE CASCADE
+    image_id INTEGER,
+    key      TEXT,
+    value    TEXT,
+    FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE
 );
 
 -- FTS5 Virtual Table for high-performance search
--- We store a concatenated "blob" of all metadata here (e.g., "model:flux steps:20")
-CREATE
-    VIRTUAL TABLE IF NOT EXISTS metadata_fts USING fts5
+CREATE VIRTUAL TABLE IF NOT EXISTS metadata_fts USING fts5
 (
     image_id UNINDEXED,
-    global_text
+    global_text,
+    ai_tags
 );
 
--- Table for tags
+-- Table for tags (User defined)
 CREATE TABLE IF NOT EXISTS image_tags
 (
-    image_id
-        INTEGER,
-    tag
-        TEXT,
-    FOREIGN
-        KEY
-        (
-         image_id
-            ) REFERENCES images
-        (
-         id
-            ) ON DELETE CASCADE
+    image_id INTEGER,
+    tag      TEXT,
+    FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE
 );
 
 -- Settings table
 CREATE TABLE IF NOT EXISTS settings
 (
-    key
-        TEXT
-        PRIMARY
-            KEY,
-    value
-        TEXT
+    key   TEXT PRIMARY KEY,
+    value TEXT
 );
 
 CREATE TABLE IF NOT EXISTS pinned_folders
 (
-    path
-        TEXT
-        UNIQUE
-        NOT
-            NULL
+    path TEXT UNIQUE NOT NULL
 );
 
 -- Collections table
@@ -106,6 +65,16 @@ CREATE TABLE IF NOT EXISTS collection_images
     collection_id INTEGER,
     image_id      INTEGER,
     added_at      INTEGER,
+    is_manual     BOOLEAN DEFAULT 0,
+    PRIMARY KEY (collection_id, image_id),
+    FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE
+);
+
+-- Collection Exclusions table
+CREATE TABLE IF NOT EXISTS collection_exclusions (
+    collection_id INTEGER,
+    image_id INTEGER,
     PRIMARY KEY (collection_id, image_id),
     FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE,
     FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE
@@ -114,4 +83,6 @@ CREATE TABLE IF NOT EXISTS collection_images
 -- Indexes for standard lookup
 CREATE INDEX IF NOT EXISTS idx_file_path ON images (file_path);
 CREATE INDEX IF NOT EXISTS idx_file_hash ON images (file_hash);
+CREATE INDEX IF NOT EXISTS idx_images_dhash ON images (dhash);
+CREATE INDEX IF NOT EXISTS idx_images_is_missing ON images (is_missing);
 CREATE INDEX IF NOT EXISTS idx_tags_text ON image_tags (tag);

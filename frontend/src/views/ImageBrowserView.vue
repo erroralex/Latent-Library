@@ -3,16 +3,21 @@
  * @file ImageBrowserView.vue
  * @description The primary application view for exploring and interacting with the image library.
  *
- * This view acts as the main orchestrator for the image browsing experience. It dynamically switches
- * between a high-level 'gallery' grid and a focused 'browser' (single image) view. It manages
- * global keyboard shortcuts for navigation and view control, ensuring a fluid user experience.
+ * This view serves as the central hub of the application, providing a dual-mode interface for
+ * browsing images. It integrates a high-performance virtualized gallery for bulk viewing and
+ * a single-image viewer for detailed inspection. The view orchestrates complex interactions
+ * between the toolbar, sidebars (metadata and AI tagging), and the core image display.
  *
  * Key functionalities:
- * - **View Orchestration:** Toggles between VirtualGallery and SingleImageViewer based on application state.
- * - **Keyboard Navigation:** Implements a comprehensive set of hotkeys (Arrows, WASD, Enter, Escape, G, B) for rapid browsing.
- * - **State Synchronization:** Integrates with the Pinia store to handle folder initialization, collection loading, and search.
- * - **Layout Management:** Controls the visibility of the MetadataSidebar and ensures the main viewer retains focus.
- * - **Deep Linking:** Supports direct navigation to specific collections via URL query parameters.
+ * - Dual View Modes: Seamlessly toggles between a 'Gallery' (grid) and 'Browser' (single) view.
+ * - Keyboard Navigation: Implements comprehensive hotkeys for navigation (Arrows/WASD),
+ *   view switching (G/B), and file management (F2 for rename).
+ * - Contextual Actions: Provides a rich right-click menu for collection management,
+ *   file system operations (Open in Explorer), and deletion.
+ * - State Synchronization: Coordinates with the Vuex/Pinia store to maintain selection state,
+ *   filter criteria, and sidebar visibility across view transitions.
+ * - Batch Processing: Supports multi-selection for bulk operations like adding to collections
+ *   or moving files to the trash.
  */
 import {onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
@@ -20,6 +25,7 @@ import {useRoute, useRouter} from 'vue-router';
 import api from '@/services/api';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import MetadataSidebar from '@/components/MetadataSidebar.vue';
+import TaggerSidebar from '@/components/TaggerSidebar.vue';
 import VirtualGallery from '@/components/VirtualGallery.vue';
 import SingleImageViewer from '@/components/SingleImageViewer.vue';
 import CustomContextMenu from '@/components/CustomContextMenu.vue';
@@ -102,7 +108,7 @@ const handleKeydown = (e) => {
 };
 
 const onContextMenu = async (payload) => {
-  const { event, file } = payload;
+  const {event, file} = payload;
   contextMenuSelection.value = file;
 
   let collections = [];
@@ -130,7 +136,7 @@ const onContextMenu = async (payload) => {
   });
 
   if (addToCollectionItems.length > 1) {
-      addToCollectionItems.splice(1, 0, { separator: true });
+    addToCollectionItems.splice(1, 0, {separator: true});
   }
 
   const items = [];
@@ -149,7 +155,7 @@ const onContextMenu = async (payload) => {
     });
   }
 
-  items.push({ separator: true });
+  items.push({separator: true});
 
   if (!isBatch) {
     items.push({
@@ -181,23 +187,33 @@ const onContextMenu = async (payload) => {
 const addToCollection = async (collectionName, paths) => {
   try {
     await api.post(`/collections/${collectionName}/batch/add`, paths);
-    toast.add({ severity: 'success', summary: 'Added', detail: `Added ${paths.length} items to ${collectionName}`, life: 2000 });
+    toast.add({
+      severity: 'success',
+      summary: 'Added',
+      detail: `Added ${paths.length} items to ${collectionName}`,
+      life: 2000
+    });
   } catch (e) {
     // Error handled by api interceptor
   }
 };
 
 const createNewCollection = () => {
-    store.collectionToEdit = null;
-    router.push('/collections');
+  store.collectionToEdit = null;
+  router.push('/collections');
 };
 
 const blacklistImage = async (collectionName, paths) => {
   try {
     for (const path of paths) {
-        await api.post(`/collections/${collectionName}/blacklist`, null, { params: { path } });
+      await api.post(`/collections/${collectionName}/blacklist`, null, {params: {path}});
     }
-    toast.add({ severity: 'success', summary: 'Removed', detail: `Removed ${paths.length} items from ${collectionName}`, life: 2000 });
+    toast.add({
+      severity: 'success',
+      summary: 'Removed',
+      detail: `Removed ${paths.length} items from ${collectionName}`,
+      life: 2000
+    });
     store.loadCollection(collectionName);
   } catch (e) {
     // Error handled by api interceptor
@@ -206,7 +222,7 @@ const blacklistImage = async (collectionName, paths) => {
 
 const openInExplorer = async (path) => {
   try {
-    await api.post('/system/show-in-explorer', null, { params: { path } });
+    await api.post('/system/show-in-explorer', null, {params: {path}});
   } catch (e) {
     // Error handled by api interceptor
   }
@@ -220,23 +236,23 @@ const deleteImage = async (paths) => {
 
     let deletedCount = 0;
     for (const path of paths) {
-        const index = store.files.findIndex(f => f.path === path);
-        if (index !== -1) {
-          store.files.splice(index, 1);
-          deletedCount++;
-        }
+      const index = store.files.findIndex(f => f.path === path);
+      if (index !== -1) {
+        store.files.splice(index, 1);
+        deletedCount++;
+      }
     }
 
     if (store.selectedFile && paths.includes(store.selectedFile)) {
-        if (store.files.length > 0) {
-            store.selectFile(store.files[0]);
-        } else {
-            store.selectedFile = null;
-        }
+      if (store.files.length > 0) {
+        store.selectFile(store.files[0]);
+      } else {
+        store.selectedFile = null;
+      }
     }
     store.selectedFiles.clear();
 
-    toast.add({ severity: 'success', summary: 'Deleted', detail: `Moved ${deletedCount} files to trash`, life: 2000 });
+    toast.add({severity: 'success', summary: 'Deleted', detail: `Moved ${deletedCount} files to trash`, life: 2000});
 
   } catch (e) {
     // Error handled by api interceptor
@@ -244,35 +260,35 @@ const deleteImage = async (paths) => {
 };
 
 const openRenameDialog = (path) => {
-    fileToRename.value = path;
-    const parts = path.split(/[\\/]/);
-    newFileName.value = parts.pop();
-    showRenameDialog.value = true;
+  fileToRename.value = path;
+  const parts = path.split(/[\\/]/);
+  newFileName.value = parts.pop();
+  showRenameDialog.value = true;
 };
 
 const performRename = async () => {
-    if (!fileToRename.value || !newFileName.value) return;
+  if (!fileToRename.value || !newFileName.value) return;
 
-    try {
-        await api.post('/images/rename', null, {
-            params: {
-                path: fileToRename.value,
-                newName: newFileName.value
-            }
-        });
+  try {
+    await api.post('/images/rename', null, {
+      params: {
+        path: fileToRename.value,
+        newName: newFileName.value
+      }
+    });
 
-        toast.add({ severity: 'success', summary: 'Success', detail: 'File renamed successfully', life: 2000 });
-        showRenameDialog.value = false;
+    toast.add({severity: 'success', summary: 'Success', detail: 'File renamed successfully', life: 2000});
+    showRenameDialog.value = false;
 
-        if (store.activeCollection) {
-            store.loadCollection(store.activeCollection);
-        } else if (store.lastFolderPath) {
-            store.loadFolder(store.lastFolderPath);
-        }
-
-    } catch (e) {
-        // Error handled by api interceptor
+    if (store.activeCollection) {
+      store.loadCollection(store.activeCollection);
+    } else if (store.lastFolderPath) {
+      store.loadFolder(store.lastFolderPath);
     }
+
+  } catch (e) {
+    // Error handled by api interceptor
+  }
 };
 
 onMounted(async () => {
@@ -327,10 +343,15 @@ watch(() => store.imageFocusRequested, (requested) => {
     <BrowserToolbar class="flex-shrink-0"/>
 
     <div class="flex-grow-1 overflow-hidden relative flex">
-      <div class="h-full transition-all duration-300"
-           :class="[
-             (store.viewMode === 'gallery' && store.isSidebarOpen) ? 'flex-grow-1 w-auto' : 'w-full'
-           ]"
+
+      <Transition name="sidebar-slide-left">
+        <div v-if="store.isTaggerOpen"
+             class="h-full shadow-8 z-5 relative flex-shrink-0">
+          <TaggerSidebar/>
+        </div>
+      </Transition>
+
+      <div class="h-full transition-all duration-300 flex-grow-1"
            ref="containerRef" tabindex="0" style="outline: none;">
         <VirtualGallery v-if="store.viewMode === 'gallery'" ref="virtualGalleryRef" @contextmenu="onContextMenu"/>
         <SingleImageViewer v-else @contextmenu="onContextMenu"/>
@@ -350,14 +371,14 @@ watch(() => store.imageFocusRequested, (requested) => {
     <CustomContextMenu ref="cm" :model="menuModel"/>
 
     <Dialog v-model:visible="showRenameDialog" header="Rename File" :modal="true" class="glass-dialog">
-        <div class="flex flex-column gap-3">
-            <span class="p-text-secondary block mb-2">Enter new filename:</span>
-            <InputText v-model="newFileName" class="w-full glass-input" autofocus @keyup.enter="performRename" />
-        </div>
-        <template #footer>
-            <Button label="Cancel" icon="pi pi-times" @click="showRenameDialog = false" class="p-button-text" />
-            <Button label="Rename" icon="pi pi-check" @click="performRename" autofocus />
-        </template>
+      <div class="flex flex-column gap-3">
+        <span class="p-text-secondary block mb-2">Enter new filename:</span>
+        <InputText v-model="newFileName" class="w-full glass-input" autofocus @keyup.enter="performRename"/>
+      </div>
+      <template #footer>
+        <Button label="Cancel" icon="pi pi-times" @click="showRenameDialog = false" class="p-button-text"/>
+        <Button label="Rename" icon="pi pi-check" @click="performRename" autofocus/>
+      </template>
     </Dialog>
   </div>
 </template>
@@ -371,6 +392,16 @@ watch(() => store.imageFocusRequested, (requested) => {
 .sidebar-slide-enter-from,
 .sidebar-slide-leave-to {
   transform: translateX(100%);
+}
+
+.sidebar-slide-left-enter-active,
+.sidebar-slide-left-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-slide-left-enter-from,
+.sidebar-slide-left-leave-to {
+  transform: translateX(-100%);
 }
 
 .glass-dialog .p-dialog-header,

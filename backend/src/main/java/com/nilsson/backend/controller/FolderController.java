@@ -18,6 +18,23 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for file system navigation, directory traversal, and bookmark management.
+ * <p>
+ * This controller provides the backend logic for the application's file explorer. It allows
+ * for the discovery of system roots (drives), lazy-loading of directory contents, and
+ * management of user-pinned folders. It ensures that all path resolutions are handled
+ * consistently via the {@link PathService}.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>System Discovery:</b> Provides access to top-level system roots for initial
+ *   navigation.</li>
+ *   <li><b>Lazy Traversal:</b> Implements efficient directory listing, filtering out hidden
+ *   files and non-directory entries for the navigation tree.</li>
+ *   <li><b>Bookmark Management:</b> Facilitates the pinning and unpinning of frequently
+ *   accessed folders.</li>
+ *   <li><b>DTO Mapping:</b> Transforms raw {@link File} objects into a structured
+ *   {@link FileDTO} format suitable for tree-based UI components.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/folders")
@@ -59,7 +76,6 @@ public class FolderController {
         File[] files = folder.listFiles();
 
         if (files == null) {
-            // This usually happens if the OS denies access or IO error occurs
             logger.warn("Access denied or IO error reading: {}", path);
             throw new ApplicationException("Cannot access folder (Access Denied): " + path);
         }
@@ -102,7 +118,6 @@ public class FolderController {
     @PostMapping("/unpin")
     public ResponseEntity<Void> unpinFolder(@RequestParam String path) {
         File folder = pathService.resolve(path);
-        // We allow unpinning even if the folder no longer exists on disk (cleanup)
         dataManager.removePinnedFolder(folder);
         return ResponseEntity.ok().build();
     }

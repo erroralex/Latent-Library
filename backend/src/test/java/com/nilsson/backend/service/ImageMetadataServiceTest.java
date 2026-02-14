@@ -37,6 +37,8 @@ class ImageMetadataServiceTest {
     private MetadataService metadataService;
     @Mock
     private FtsService ftsService;
+    @Mock
+    private DHashService dHashService;
 
     @InjectMocks
     private ImageMetadataService imageMetadataService;
@@ -70,15 +72,18 @@ class ImageMetadataServiceTest {
 
         int imageId = 1;
         Map<String, String> extractedMeta = Map.of("Prompt", "extracted");
+        long dHash = 12345L;
 
         when(imageRepository.getIdByPath(path)).thenReturn(imageId);
         when(metadataRepository.hasMetadata(imageId)).thenReturn(false);
         when(metadataService.getExtractedData(file)).thenReturn(extractedMeta);
+        when(dHashService.calculateDHash(file)).thenReturn(dHash);
 
         Map<String, String> result = imageMetadataService.getCachedMetadata(file, path);
 
         assertEquals("extracted", result.get("Prompt"));
         verify(metadataRepository).saveMetadata(imageId, extractedMeta);
+        verify(metadataRepository).saveDHash(imageId, dHash);
         verify(ftsService).updateFtsIndex(imageId);
     }
 
@@ -95,10 +100,12 @@ class ImageMetadataServiceTest {
     void cacheMetadata_ShouldSaveAndIndex() {
         int imageId = 1;
         Map<String, String> meta = Map.of("Model", "SDXL");
+        long dHash = 12345L;
 
-        imageMetadataService.cacheMetadata(imageId, meta);
+        imageMetadataService.cacheMetadata(imageId, meta, dHash);
 
         verify(metadataRepository).saveMetadata(imageId, meta);
+        verify(metadataRepository).saveDHash(imageId, dHash);
         verify(ftsService).updateFtsIndex(imageId);
     }
 }

@@ -45,7 +45,6 @@ public class TextParamsParser {
 
         String trimmedText = text.trim();
 
-        // 1. JSON-based Parsing (ComfyUI / Workflow formats)
         if (trimmedText.startsWith("{")) {
             try {
                 JsonNode root = mapper.readTree(trimmedText);
@@ -85,12 +84,10 @@ public class TextParamsParser {
 
             } catch (Exception e) {
                 logger.warn("JSON block detected but parsing failed: {}", e.getMessage());
-                // Wrap in ApplicationException to ensure the failure is reported to the UI
                 throw new ApplicationException("Failed to parse image generation metadata from JSON structure.", e);
             }
         }
 
-        // 2. Text-based Strategy Routing (A1111, InvokeAI, NovelAI, SwarmUI)
         if (text.contains("Steps: ") && text.contains("Sampler: ")) {
             return new CommonStrategy().parse(text);
         }

@@ -22,28 +22,31 @@ import java.nio.file.StandardCopyOption;
  * This service encapsulates OS-specific logic such as moving files to the system trash,
  * performing physical file renames, and managing an application-specific fallback trash
  * directory when system-level integration is unavailable.
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>System Trash Integration:</b> Utilizes the AWT {@link Desktop} API to move files
+ *   to the OS-native trash bin, providing a safe deletion mechanism.</li>
+ *   <li><b>Fallback Deletion:</b> Implements a custom trash directory ({@code data/trash})
+ *   to handle deletions on systems where native trash integration is unsupported or fails.</li>
+ *   <li><b>Physical Renaming:</b> Manages the atomic renaming of files on disk while
+ *   ensuring destination paths do not conflict with existing files.</li>
+ *   <li><b>Path Resolution:</b> Coordinates with application data directories to ensure
+ *   all file operations occur within safe, normalized paths.</li>
+ * </ul>
  */
 @Service
 public class FileSystemService {
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
     private static final String APP_TRASH_DIR = "data/trash";
-    
+
     private final String appDataDir;
 
     public FileSystemService(@Value("${app.data.dir:.}") String appDataDir) {
         this.appDataDir = appDataDir;
     }
 
-    /**
-     * Attempts to move a file to the system trash. Falls back to an application-specific
-     * trash directory if the OS does not support the operation or if it fails.
-     *
-     * @param file The file to delete.
-     * @return true if the file was successfully moved to trash.
-     * @throws ResourceNotFoundException if the file does not exist.
-     * @throws ApplicationException if both system trash and fallback fail.
-     */
     public boolean moveFileToTrash(File file) {
         if (file == null || !file.exists()) {
             throw new ResourceNotFoundException("File to delete", file != null ? file.getAbsolutePath() : "null");
@@ -65,7 +68,7 @@ public class FileSystemService {
         if (!success) {
             throw new ApplicationException("Failed to delete file. System trash unavailable and fallback failed.");
         }
-        
+
         return true;
     }
 
@@ -88,16 +91,6 @@ public class FileSystemService {
         }
     }
 
-    /**
-     * Renames a file on the physical disk.
-     *
-     * @param file    The source file.
-     * @param newName The new filename (not full path).
-     * @return The new File object.
-     * @throws ResourceNotFoundException if the source file is missing.
-     * @throws ValidationException       if the new name is empty or already exists.
-     * @throws ApplicationException      if the OS rename operation fails.
-     */
     public File renameFile(File file, String newName) {
         if (file == null || !file.exists()) {
             throw new ResourceNotFoundException("File to rename", file != null ? file.getAbsolutePath() : "null");

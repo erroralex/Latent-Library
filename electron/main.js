@@ -1,17 +1,27 @@
 /**
  * @file main.js (Electron)
- * @description The main process entry point for the Electron-based desktop application.
+ * @description The main process entry point for the AI Toolbox desktop application.
  *
- * This script manages the application lifecycle, creates the native window, and orchestrates
- * the integration between the Electron frontend and the Spring Boot backend. It handles
- * process spawning, IPC communication for window controls, and graceful shutdown procedures.
+ * This module serves as the core orchestrator for the Electron-based desktop environment.
+ * It manages the entire application lifecycle, from initial process spawning to graceful
+ * system shutdown. The script is responsible for bridging the gap between the native
+ * operating system, the Electron frontend, and the Spring Boot backend service.
  *
- * Key responsibilities:
- * - Backend Lifecycle: Spawns the Java Spring Boot process and monitors its health.
- * - Window Management: Configures a frameless, maximized BrowserWindow with custom title bar support.
- * - IPC Bridge: Implements handlers for native dialogs (folder selection) and window state (min/max/close).
- * - Graceful Shutdown: Sends a shutdown signal to the backend before terminating the Electron process.
- * - Development Support: Assumptions for JAR paths in development vs. production environments.
+ * Key Responsibilities:
+ * - **Backend Lifecycle Management:** Spawns and monitors the Java Spring Boot backend
+ *   process. It implements a dynamic port discovery mechanism via a shared filesystem
+ *   handshake (port.txt) to ensure reliable communication.
+ * - **Portable Runtime Support:** Implements a hybrid Java resolution strategy that
+ *   prioritizes a bundled, private JRE for true "zero-dependency" portability while
+ *   falling back to the system PATH during development.
+ * - **Native Window Orchestration:** Configures and manages the primary BrowserWindow,
+ *   implementing a frameless UI with custom title bar support and native window state
+ *   management (minimize, maximize, close).
+ * - **IPC Communication Bridge:** Provides a secure Inter-Process Communication (IPC)
+ *   layer for the frontend to access native OS features, such as system file dialogs.
+ * - **Graceful Shutdown Protocol:** Ensures system integrity by orchestrating a
+ *   coordinated shutdown sequence, sending termination signals to the backend service
+ *   before exiting the Electron process.
  */
 const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
@@ -21,35 +31,44 @@ const fs = require('fs');
 
 let mainWindow;
 let backendProcess;
-let backendPort = null; // Dynamic port
+let backendPort = null;
 
 const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
 
 function getBackendPaths() {
-    let jarPath, workingDir, portFile, appDataDir;
+    let jarPath, workingDir, portFile, appDataDir, javaBin;
 
     if (app.isPackaged) {
-        // Production: JAR is inside resources/backend
         jarPath = path.join(process.resourcesPath, 'backend', JAR_NAME);
         workingDir = path.join(process.resourcesPath, 'backend');
-        // In production, anchor data to the executable's directory for true portability
+
+        // Bundled JRE support: Check for a local JRE in the resources folder
+        // This ensures the app is truly portable and doesn't require a system-wide Java installation.
+        const bundledJava = path.join(process.resourcesPath, 'jre', 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+
+        if (fs.existsSync(bundledJava)) {
+            javaBin = bundledJava;
+            console.log('Using bundled JRE:', javaBin);
+        } else {
+            javaBin = 'java';
+            console.warn('Bundled JRE not found at ' + bundledJava + '. Falling back to system java.');
+        }
+
         appDataDir = path.dirname(app.getPath('exe'));
     } else {
-        // Development: JAR is in backend/target
         jarPath = path.join(__dirname, '../backend/target', JAR_NAME);
         workingDir = path.join(__dirname, '../backend');
-        // In dev, anchor data to the backend project root
+        javaBin = 'java';
         appDataDir = workingDir;
     }
-    
-    // Ensure data directory exists
+
     const dataDir = path.join(appDataDir, 'data');
     if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+        fs.mkdirSync(dataDir, {recursive: true});
     }
-    
+
     portFile = path.join(dataDir, 'port.txt');
-    return { jarPath, workingDir, portFile, appDataDir };
+    return {jarPath, workingDir, portFile, appDataDir, javaBin};
 }
 
 function createWindow() {
@@ -74,20 +93,19 @@ function createWindow() {
     mainWindow.show();
 
     mainWindow.loadURL(`http://localhost:${backendPort}`);
-    //mainWindow.webContents.openDevTools();
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
 }
 
 function startBackend() {
-    const { jarPath, workingDir, portFile, appDataDir } = getBackendPaths();
+    const {jarPath, workingDir, portFile, appDataDir, javaBin} = getBackendPaths();
 
     console.log('Starting backend JAR:', jarPath);
     console.log('Backend Working Directory:', workingDir);
     console.log('App Data Directory:', appDataDir);
+    console.log('Java Executable:', javaBin);
 
-    // Remove old port file if it exists
     if (fs.existsSync(portFile)) {
         try {
             fs.unlinkSync(portFile);
@@ -96,7 +114,7 @@ function startBackend() {
         }
     }
 
-    backendProcess = spawn('java', [
+    backendProcess = spawn(javaBin, [
         '-jar', jarPath,
         `--app.data.dir=${appDataDir}`
     ], {
@@ -115,7 +133,9 @@ function startBackend() {
         console.log(`Backend process exited with code ${code}`);
     });
 
-    // Poll for the port file
+    // Poll for the port file written by the Spring Boot backend on startup.
+    // This allows the app to use a dynamic port and ensures the UI only loads
+    // once the server is actually ready to accept connections.
     const pollInterval = setInterval(() => {
         if (fs.existsSync(portFile)) {
             try {
@@ -130,7 +150,6 @@ function startBackend() {
         }
     }, 200);
 
-    // Timeout after 30 seconds
     setTimeout(() => {
         if (!backendPort) {
             console.error("Backend failed to start or write port file within 30s");

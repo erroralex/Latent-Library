@@ -1,10 +1,26 @@
-import { defineStore } from 'pinia';
-import axios from 'axios'; // Kept ONLY for silent startup polling
-import api from '../services/api'; // Use centralized API service for everything else
+import {defineStore} from 'pinia';
+import axios from 'axios';
+import api from '../services/api';
 
 /**
  * @file browser.js
- * @description The central state management hub for the Image Browser application.
+ * @description The central state management hub for the Image Browser application using Pinia.
+ *
+ * This store manages the global state for image browsing, including file lists, selection state,
+ * search criteria, and UI configuration. It acts as the primary interface between the frontend
+ * views and the backend API, handling complex data orchestration such as paginated searching,
+ * metadata retrieval, and theme persistence.
+ *
+ * Key Responsibilities:
+ * - **State Management:** Maintains the current list of images, multi-selection sets,
+ *   and active filters (Model, Sampler, LoRA, Rating).
+ * - **Data Orchestration:** Handles asynchronous operations for scanning folders,
+ *   fetching paginated search results, and loading image-specific metadata.
+ * - **UI Configuration:** Manages global UI state such as view modes (Gallery vs. Browser),
+ *   sidebar visibility, and application-wide themes.
+ * - **Backend Synchronization:** Implements a robust initialization sequence that polls
+ *   the backend for readiness and restores the user's last visited folder and theme.
+ * - **Error Handling:** Tracks critical backend connection failures to trigger global error views.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -13,19 +29,18 @@ export const useBrowserStore = defineStore('browser', {
     state: () => ({
         files: [],
         selectedFile: null,
-        selectedFiles: new Set(), // Multi-selection support
+        selectedFiles: new Set(),
         viewMode: 'browser',
         searchQuery: '',
         isLoading: false,
+        backendError: false,
         currentMetadata: {},
         currentRating: 0,
         currentTags: [],
         cardSize: 160,
         isSidebarOpen: false,
-        
-        // Theme State
+        isTaggerOpen: false,
         currentTheme: 'neon',
-
         availableModels: [],
         availableSamplers: [],
         availableLoras: [],
@@ -37,7 +52,7 @@ export const useBrowserStore = defineStore('browser', {
         lastFolderPath: null,
         navRefreshKey: 0,
         collectionToEdit: null,
-
+        includeAiTags: true,
         page: 0,
         pageSize: 50,
         hasMore: true,
@@ -45,19 +60,14 @@ export const useBrowserStore = defineStore('browser', {
     }),
 
     actions: {
-        /**
-         * Polls the backend to ensure it is ready before attempting to load data.
-         * Uses raw axios to avoid triggering global error toasts during polling.
-         */
         async waitForBackend(retries = 20) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    // Raw axios call to avoid global interceptor toasts
-                    await axios.get('/api/images/filters');
+                    await axios.get('/api/images/filters', {timeout: 2000});
                     return true;
                 } catch (e) {
                     console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
-                    await delay(500);
+                    await delay(1000);
                 }
             }
             throw new Error('Backend connection timeout: Server failed to start.');
@@ -65,13 +75,12 @@ export const useBrowserStore = defineStore('browser', {
 
         async initialize() {
             this.isLoading = true;
+            this.backendError = false;
             try {
                 await this.waitForBackend();
-
                 await this.loadFilters();
-                await this.loadTheme(); // Load theme on startup
-                
-                // Fetch last folder from backend settings instead of localStorage
+                await this.loadTheme();
+
                 try {
                     const res = await api.get('/system/last-folder');
                     if (res.data && res.data.path) {
@@ -81,36 +90,34 @@ export const useBrowserStore = defineStore('browser', {
                 } catch (e) {
                     console.warn("Failed to load last folder setting", e);
                 }
-                
+
             } catch (error) {
                 console.error("Initialization failed:", error);
-                // Note: The global interceptor in api.js will handle the visual notification
+                this.backendError = true;
             } finally {
                 this.isLoading = false;
             }
         },
-        
+
         async loadTheme() {
             try {
                 const res = await api.get('/system/theme');
                 if (res.data && res.data.theme) {
-                    this.setTheme(res.data.theme, false); // Don't save again, just apply
+                    this.setTheme(res.data.theme, false);
                 }
             } catch (e) {
                 console.warn("Failed to load theme setting", e);
             }
         },
-        
+
         async setTheme(themeName, save = true) {
             this.currentTheme = themeName;
-            
-            // Apply theme class to body
-            document.body.className = ''; // Clear existing
+            document.body.className = '';
             document.body.classList.add(`theme-${themeName}`);
-            
+
             if (save) {
                 try {
-                    await api.post('/system/theme', null, { params: { theme: themeName } });
+                    await api.post('/system/theme', null, {params: {theme: themeName}});
                 } catch (e) {
                     console.error("Failed to save theme setting", e);
                 }
@@ -141,13 +148,11 @@ export const useBrowserStore = defineStore('browser', {
 
             try {
                 const response = await api.post('/library/scan', null, {
-                    params: { path }
+                    params: {path}
                 });
                 this.files = response.data;
                 this.searchQuery = '';
-
                 this.lastFolderPath = path;
-                // No need to set localStorage anymore, backend handles persistence via scanFolder -> setLastFolder
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
@@ -209,16 +214,15 @@ export const useBrowserStore = defineStore('browser', {
                     this.selectedFiles.clear();
                     this.currentMetadata = {};
                 }
-
-                if (focusImage) {
-                    // Logic for focusing image if implemented in view
-                }
-
             } catch (error) {
                 console.error('Search failed:', error);
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        toggleIncludeAiTags() {
+            this.search(this.searchQuery);
         },
 
         async loadMore() {
@@ -244,6 +248,7 @@ export const useBrowserStore = defineStore('browser', {
                     lora: this.selectedLora,
                     rating: this.selectedRating,
                     collection: this.activeCollection,
+                    includeAiTags: this.includeAiTags,
                     page: this.page,
                     size: this.pageSize
                 }
@@ -308,38 +313,32 @@ export const useBrowserStore = defineStore('browser', {
                 if (this.selectedFiles.has(path)) {
                     this.selectedFiles.delete(path);
                     if (this.selectedFile === path) {
-                        // If we deselected the primary file, pick another one from the set if available
                         const iterator = this.selectedFiles.values();
                         const next = iterator.next();
                         this.selectedFile = next.done ? null : next.value;
                     }
                 } else {
                     this.selectedFiles.add(path);
-                    this.selectedFile = path; // Update primary selection to latest click
+                    this.selectedFile = path;
                 }
             } else if (rangeSelect && this.selectedFile) {
-                // Find index of current primary selection
                 const startIdx = this.files.findIndex(f => f.path === this.selectedFile);
                 const endIdx = this.files.findIndex(f => f.path === path);
 
                 if (startIdx !== -1 && endIdx !== -1) {
                     const min = Math.min(startIdx, endIdx);
                     const max = Math.max(startIdx, endIdx);
-                    
-                    // Add all files in range to selection
                     for (let i = min; i <= max; i++) {
                         this.selectedFiles.add(this.files[i].path);
                     }
-                    this.selectedFile = path; // Update primary to the clicked one
+                    this.selectedFile = path;
                 }
             } else {
-                // Single selection mode
                 this.selectedFiles.clear();
                 this.selectedFiles.add(path);
                 this.selectedFile = path;
             }
 
-            // Only fetch metadata if we have a valid primary selection
             if (this.selectedFile) {
                 this.fetchMetadata(this.selectedFile);
                 this.preloadAdjacentImages(this.selectedFile);
@@ -357,10 +356,8 @@ export const useBrowserStore = defineStore('browser', {
             const nextIndex = (currentIndex + 1) % this.files.length;
             const prevIndex = (currentIndex - 1 + this.files.length) % this.files.length;
 
-            // Note: Preloading uses raw Image object, does not use Axios/API service
             const preload = (path) => {
                 const img = new Image();
-                // Ensure this URL matches your backend serving strategy
                 img.src = `/api/images/content?path=${encodeURIComponent(path)}`;
             };
 
@@ -376,7 +373,7 @@ export const useBrowserStore = defineStore('browser', {
             }
             try {
                 const response = await api.get('/images/metadata', {
-                    params: { path }
+                    params: {path}
                 });
                 this.currentMetadata = response.data;
                 this.currentRating = response.data.rating || 0;
@@ -391,7 +388,7 @@ export const useBrowserStore = defineStore('browser', {
             if (!this.selectedFile) return;
             try {
                 await api.post('/images/rating', null, {
-                    params: { path: this.selectedFile, rating }
+                    params: {path: this.selectedFile, rating}
                 });
                 this.currentRating = rating;
 
@@ -414,6 +411,14 @@ export const useBrowserStore = defineStore('browser', {
 
         setSidebarOpen(isOpen) {
             this.isSidebarOpen = isOpen;
+        },
+
+        toggleTagger() {
+            this.isTaggerOpen = !this.isTaggerOpen;
+        },
+
+        setTaggerOpen(isOpen) {
+            this.isTaggerOpen = isOpen;
         },
 
         navigate(direction) {

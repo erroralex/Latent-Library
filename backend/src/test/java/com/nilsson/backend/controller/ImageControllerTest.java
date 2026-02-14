@@ -11,6 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,10 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * ImageControllerTest performs integration testing for the ImageController using Spring's MockMvc.
- * It verifies the REST API endpoints for image searching, metadata retrieval, rating updates,
- * and filter generation. The tests ensure that the controller correctly handles HTTP requests,
- * interacts with the service layer, and returns the expected JSON responses or status codes,
- * including error handling for non-existent resources.
  */
 @WebMvcTest(ImageController.class)
 class ImageControllerTest {
@@ -43,6 +40,9 @@ class ImageControllerTest {
 
     @MockBean
     private ThumbnailService thumbnailService;
+
+    @MockBean
+    private DataSource dataSource;
 
     @Test
     void searchImages_ShouldReturnJsonList() throws Exception {
