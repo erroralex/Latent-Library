@@ -8,15 +8,17 @@
  * common race conditions associated with DOM-based load events.
  *
  * Key features:
- * - **Programmatic Loader:** Uses `new Image()` to track loading progress, ensuring the UI remains responsive and the "ready" state is accurate.
+ * - **Programmatic Loader:** Uses {@code new Image()} to track loading progress, ensuring the UI remains responsive and the "ready" state is accurate.
  * - **Advanced Zoom & Pan:** Implements cursor-relative zooming and smooth panning for detailed image inspection.
  * - **Dual-Layer Rendering:** Displays a low-resolution thumbnail as a placeholder while the high-resolution source loads to improve perceived performance.
  * - **Keyboard & Mouse Integration:** Supports mouse wheel zooming, click-to-toggle sidebar, and escape-to-reset zoom.
  * - **Navigation Controls:** Integrated directional arrows and a bottom filmstrip for rapid library traversal.
+ * - **Authenticated Media:** Uses the {@code authenticatedUrl} helper to ensure images are loaded with the required security token.
  */
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
 import FilmstripView from '@/components/FilmstripView.vue';
+import {authenticatedUrl} from '@/services/api';
 
 const store = useBrowserStore();
 const viewerContainer = ref(null);
@@ -34,12 +36,12 @@ const loadRequestId = ref(0);
 
 const mainImageUrl = computed(() => {
   if (!store.selectedFile) return null;
-  return `/api/images/content?path=${encodeURIComponent(store.selectedFile)}`;
+  return authenticatedUrl(`/api/images/content?path=${encodeURIComponent(store.selectedFile)}`);
 });
 
 const thumbnailImageUrl = computed(() => {
   if (!store.selectedFile) return null;
-  return `/api/images/thumbnail?path=${encodeURIComponent(store.selectedFile)}`;
+  return authenticatedUrl(`/api/images/thumbnail?path=${encodeURIComponent(store.selectedFile)}`);
 });
 
 const imageStyle = computed(() => ({
