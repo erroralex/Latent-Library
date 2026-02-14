@@ -77,6 +77,15 @@ function startBackend() {
         cwd: workingDir
     });
 
+    // Pipe backend output to the main process console
+    backendProcess.stdout.on('data', (data) => {
+        console.log(`[Backend]: ${data}`);
+    });
+
+    backendProcess.stderr.on('data', (data) => {
+        console.error(`[Backend Error]: ${data}`);
+    });
+
     const pollInterval = setInterval(() => {
         if (fs.existsSync(portFile)) {
             try {

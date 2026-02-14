@@ -13,7 +13,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -60,7 +59,6 @@ public class IndexingService {
     private Thread watchThread;
 
     private final Map<String, Long> pendingEvents = new ConcurrentHashMap<>();
-    private final ReentrantLock dbLock = new ReentrantLock();
 
     public IndexingService(ImageRepository imageRepo,
                            MetadataService metaService,
@@ -109,7 +107,6 @@ public class IndexingService {
                         String parentPath = parentDir.getAbsolutePath();
                         if (!checkedDirs.contains(parentPath)) {
                             if (!parentDir.exists()) {
-                                logger.debug("[Reconcile] Parent directory missing, marking as missing: {}", parentPath);
                                 imageRepo.setMissing(path, true);
                                 markedMissingCount.incrementAndGet();
                                 checkedDirs.add(parentPath);
@@ -346,12 +343,7 @@ public class IndexingService {
             Map<String, String> meta = metaService.getExtractedData(file);
             long dHash = dHashService.calculateDHash(file);
 
-            dbLock.lock();
-            try {
-                dataManager.cacheMetadata(file, meta, dHash);
-            } finally {
-                dbLock.unlock();
-            }
+            dataManager.cacheMetadata(file, meta, dHash);
 
             thumbnailService.getThumbnail(file);
             logger.debug("Indexed new/modified file: {}", file.getName());
@@ -364,12 +356,7 @@ public class IndexingService {
         try {
             String path = pathService.getNormalizedAbsolutePath(file);
 
-            dbLock.lock();
-            try {
-                imageRepo.deleteByPath(path);
-            } finally {
-                dbLock.unlock();
-            }
+            imageRepo.deleteByPath(path);
             
             File thumbnail = thumbnailService.getThumbnail(file);
             if (thumbnail != null && thumbnail.exists()) {
@@ -398,14 +385,9 @@ public class IndexingService {
                 Map<String, String> meta = metaService.getExtractedData(file);
                 long dHash = dHashService.calculateDHash(file);
 
-                dbLock.lock();
-                try {
-                    dataManager.cacheMetadata(file, meta, dHash);
-                    int rating = dataManager.getRating(file);
-                    ratingMap.put(file, rating);
-                } finally {
-                    dbLock.unlock();
-                }
+                dataManager.cacheMetadata(file, meta, dHash);
+                int rating = dataManager.getRating(file);
+                ratingMap.put(file, rating);
 
                 metadataMap.put(file, meta);
                 thumbnailService.getThumbnail(file);
