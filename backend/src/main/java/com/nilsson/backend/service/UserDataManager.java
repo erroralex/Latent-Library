@@ -267,11 +267,22 @@ public class UserDataManager {
 
             String hash = calculateHash(file);
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
+            
             if (!existingPaths.isEmpty()) {
+                // Check if the original file still exists on disk
                 String oldPath = existingPaths.get(0);
-                log.info("Detected file move: {} -> {}", oldPath, path);
-                imageRepo.updatePath(oldPath, path);
-                return imageRepo.getIdByPath(path);
+                File oldFile = pathService.resolve(oldPath);
+                
+                if (!oldFile.exists()) {
+                    // Original file is gone, this is a MOVE or RENAME
+                    log.info("Detected file move: {} -> {}", oldPath, path);
+                    imageRepo.updatePath(oldPath, path);
+                    return imageRepo.getIdByPath(path);
+                } else {
+                    // Original file still exists, this is a COPY
+                    log.debug("Detected file copy: {} and {} share hash {}", oldPath, path, hash);
+                    // Fall through to create a new record
+                }
             }
 
             return imageRepo.getOrCreateId(path, hash);
@@ -281,7 +292,11 @@ public class UserDataManager {
         }
     }
 
-    private String calculateHash(File file) {
+    /**
+     * Calculates a unique SHA-256 fingerprint for a file.
+     * Publicly accessible for maintenance tasks like duplicate detection repair.
+     */
+    public String calculateHash(File file) {
         try {
             long length = file.length();
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

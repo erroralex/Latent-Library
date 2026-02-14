@@ -7,7 +7,7 @@
 ![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Electron](https://img.shields.io/badge/Electron-30-47848F?style=for-the-badge&logo=electron&logoColor=white)
 
-A robust, high-performance desktop asset manager designed specifically for the AI image generation ecosystem. It unifies metadata parsing across fragmented formats, providing **SQL-backed search**, **Smart Collections**, **live folder monitoring**, and **deep node inspection** in a modern, dark-themed desktop interface.
+A robust, high-performance desktop asset manager designed specifically for the AI image generation ecosystem. It unifies metadata parsing across fragmented formats, providing **SQL-backed search**, **Smart Collections**, **live folder monitoring**, and **AI-powered interrogation** in a modern, multi-themed desktop interface.
 
 ---
 
@@ -42,7 +42,7 @@ A robust, high-performance desktop asset manager designed specifically for the A
 
 Designed for the privacy-conscious artist, this application operates on a strictly "Local-First" philosophy.
 
-* **Desktop Application:** Runs as a standalone desktop app via Electron, managing its own backend lifecycle.
+* **Portable Desktop App:** Runs as a standalone `.exe` with all data (database, thumbnails, settings) stored in a local `data/` folder. No installer required.
 * **100% Offline / No Telemetry:** There are no "cloud sync" features, analytics, or background API calls. Your prompts and generation data never leave your machine.
 * **Privacy Scrubbing:** Integrated **Scrubber View** allows you to sanitize images before sharing. It strips hidden generation metadata (Prompts, ComfyUI Workflows, Seed data) while preserving visual quality.
 
@@ -54,6 +54,7 @@ Designed for the privacy-conscious artist, this application operates on a strict
   * **ComfyUI:** Traverses complex node graphs (recursive inputs) and API formats to identify the true Sampler, Scheduler, and LoRAs used.
   * **Automatic1111 / Forge:** Robust parsing of standard "Steps: XX, Sampler: XX" text blocks.
   * **Others:** Native support for **InvokeAI**, **SwarmUI**, and **NovelAI**.
+* **AI Auto-Tagger:** Integrated **WD14 ONNX** model for local image interrogation. Automatically generate descriptive tags for your library without external API calls.
 * **Library Management:**
   * **Smart Collections:** Create dynamic collections based on metadata filters (e.g., "All images using Flux model with > 4 stars").
   * **Pinned Folders:** Bookmark frequently accessed directories for rapid navigation.
@@ -65,9 +66,10 @@ Designed for the privacy-conscious artist, this application operates on a strict
   * **FTS5 Search:** Powered by SQLite's Full-Text Search for near-instant results across tens of thousands of images.
   * **Virtualization:** Uses virtual scrolling to handle massive folders without UI lag.
   * **Project Loom:** Leverages Java 21 Virtual Threads for non-blocking background indexing.
-* **Modern UX:**
-  * **Dark Theme:** "Deep Neon Cinematic" glassmorphism styling.
+* **Modern UX & Customization:**
+  * **Multi-Theme System:** Choose between **Deep Neon Cinematic**, **Minimalist Light**, and **Dark Gold** themes.
   * **Image Comparator:** Side-by-side comparison tool with a draggable slider.
+  * **Error Boundaries:** Robust system health monitoring with clear "System Requirements" feedback.
 
 ---
 
@@ -78,12 +80,12 @@ The application is built as a hybrid desktop application combining a Spring Boot
 * **Backend (Java 21 + Spring Boot 3.3):**
   * **SQLite + FTS5:** High-performance local indexing and relational storage.
   * **Virtual Threads:** Optimized for heavy I/O tasks (file scanning and metadata extraction).
+  * **ONNX Runtime:** Local execution of AI models for tagging.
   * **Flyway:** Automated database schema migrations.
-  * **Metadata Extractor:** Deep inspection of PNG/JPEG/WebP chunks.
 
 * **Frontend (Vue 3 + PrimeVue):**
   * **Pinia:** Centralized state management for the image library and UI state.
-  * **PrimeVue:** Premium UI component library with custom dark-green theme.
+  * **PrimeVue:** Premium UI component library with custom glassmorphism overrides.
   * **Vite:** Modern build pipeline for the frontend assets.
 
 * **Desktop (Electron):**
