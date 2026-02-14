@@ -8,14 +8,15 @@
  * of the view using CSS transforms.
  *
  * Key functionalities:
- * - Reactive centering: Calculates the exact `translateX` offset needed to center the selected item within the container.
- * - Smooth transitions: Uses CSS transitions for fluid movement when the selection changes.
- * - Responsive design: Utilizes ResizeObserver to adapt centering logic to container size changes.
- * - Interactive thumbnails: Allows users to select images directly from the strip.
- * - Optimized Thumbnails: Uses the dedicated thumbnail API endpoint to reduce bandwidth and memory usage.
+ * - **Reactive Centering:** Calculates the exact {@code translateX} offset needed to center the selected item within the container.
+ * - **Smooth Transitions:** Uses CSS transitions for fluid movement when the selection changes.
+ * - **Responsive Design:** Utilizes {@code ResizeObserver} to adapt centering logic to container size changes.
+ * - **Interactive Thumbnails:** Allows users to select images directly from the strip.
+ * - **Authenticated Media:** Uses the {@code authenticatedUrl} helper to ensure thumbnails are loaded with the required security token.
  */
 import {useBrowserStore} from '@/stores/browser';
 import {ref, computed, onMounted, onUnmounted} from 'vue';
+import {authenticatedUrl} from '@/services/api';
 
 const store = useBrowserStore();
 const containerRef = ref(null);
@@ -74,7 +75,7 @@ onUnmounted(() => {
 
         <div class="relative border-round overflow-hidden flex align-items-center justify-content-center"
              :style="{ width: `${ITEM_WIDTH}px`, height: `${ITEM_WIDTH}px` }">
-          <img :src="`/api/images/thumbnail?path=${encodeURIComponent(file.path)}`"
+          <img :src="authenticatedUrl(`/api/images/thumbnail?path=${encodeURIComponent(file.path)}`)"
                loading="lazy"
                class="w-full h-full"
                style="object-fit: contain;"/>

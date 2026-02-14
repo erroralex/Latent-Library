@@ -8,13 +8,16 @@
  * standard EXIF data to ensure privacy before sharing images publicly.
  *
  * Key functionalities:
- * - Secure Upload: Handles temporary image staging on the backend for processing.
- * - Visual Preview: Displays the uploaded image to confirm selection before scrubbing.
- * - Metadata Stripping: Triggers a backend process that re-encodes the image without metadata chunks.
- * - Automated Download: Facilitates the immediate download of the processed, clean image file.
+ * - **Secure Upload:** Handles temporary image staging on the backend for processing.
+ * - **Visual Preview:** Displays the uploaded image using an authenticated URL to confirm
+ *   selection before scrubbing.
+ * - **Metadata Stripping:** Triggers a backend process that re-encodes the image without
+ *   metadata chunks.
+ * - **Automated Download:** Facilitates the immediate download of the processed, clean
+ *   image file with its original filename preserved.
  */
 import {ref} from 'vue';
-import api from '@/services/api';
+import api, {authenticatedUrl} from '@/services/api';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -33,10 +36,9 @@ const onUpload = async (event) => {
   try {
     const response = await api.post('/scrub/upload', formData);
     uploadedFile.value = response.data;
-    previewUrl.value = `/api/scrub/preview/${uploadedFile.value}`;
+    previewUrl.value = authenticatedUrl(`/api/scrub/preview/${uploadedFile.value}`);
     toast.add({severity: 'success', summary: 'Uploaded', detail: 'Image ready to scrub', life: 3000});
   } catch (error) {
-    // Error handled by api interceptor
   }
 };
 
@@ -58,7 +60,7 @@ const scrubAndDownload = async () => {
     let fileName = 'clean_image.png';
     if (contentDisposition) {
       const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-      if (fileNameMatch.length === 2)
+      if (fileNameMatch && fileNameMatch.length === 2)
         fileName = fileNameMatch[1];
     }
 
@@ -69,7 +71,6 @@ const scrubAndDownload = async () => {
 
     toast.add({severity: 'success', summary: 'Success', detail: 'Metadata scrubbed & downloaded', life: 3000});
   } catch (error) {
-    // Error handled by api interceptor
   } finally {
     isProcessing.value = false;
   }

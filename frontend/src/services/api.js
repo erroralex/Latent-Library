@@ -1,43 +1,66 @@
+/**
+ * @file api.js
+ * @description Centralized Axios service for backend communication with integrated security and error handling.
+ *
+ * This module provides a pre-configured Axios instance for all frontend-to-backend API calls.
+ * It implements a robust security layer by automatically attaching the handshake token
+ * to all requests and provides a global error handling mechanism that translates
+ * backend exceptions into user-friendly toast notifications.
+ *
+ * Key Responsibilities:
+ * - **Security Integration:** Synchronously retrieves the handshake token from the Electron
+ *   bridge and attaches it to the {@code Authorization} header of every outgoing request.
+ * - **Media Authentication:** Provides a helper utility to append the security token to
+ *   URLs used in {@code <img>} tags, ensuring media resources are protected.
+ * - **Global Error Handling:** Implements a response interceptor that categorizes and
+ *   displays errors (401, 404, 500+) using standardized toast notifications.
+ * - **Network Resilience:** Detects and reports connection failures when the backend
+ *   service is unreachable.
+ */
 import axios from 'axios';
-import { toast } from 'vue3-toastify';
+import {toast} from 'vue3-toastify';
 
-// Create instance
+export const handshakeToken = window.electronAPI ? window.electronAPI.getHandshakeToken() : null;
+
+export const authenticatedUrl = (url) => {
+    if (!handshakeToken || !url) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}token=${handshakeToken}`;
+};
+
 const api = axios.create({
-    baseURL: '/api', // Relative path for dynamic port support
+    baseURL: '/api',
     timeout: 10000,
 });
 
-// Response Interceptor
+api.interceptors.request.use((config) => {
+    if (handshakeToken) {
+        config.headers['Authorization'] = `Bearer ${handshakeToken}`;
+    }
+    return config;
+});
+
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     (error) => {
-        // Handle Error Response
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data;
 
-            // Expected Error from Backend (ErrorResponse)
-            if (data && data.message) {
-                if (status === 404) {
-                    toast.warn(data.message);
-                } else if (status >= 500) {
-                    toast.error(`System Error: ${data.message}`);
-                } else {
-                    toast.error(data.message);
-                }
+            if (status === 401) {
+                toast.error("Security Error: Unauthorized access blocked.");
+            } else if (data && data.message) {
+                if (status === 404) toast.warn(data.message);
+                else if (status >= 500) toast.error(`System Error: ${data.message}`);
+                else toast.error(data.message);
             } else {
-                // Fallback for weird errors
                 toast.error(`Error ${status}: An unexpected error occurred.`);
             }
         } else if (error.request) {
-            // No response received (Network Error / Server Down)
             toast.error("Network Error: Backend is unreachable.");
         } else {
             toast.error("Request Error: " + error.message);
         }
-
         return Promise.reject(error);
     }
 );

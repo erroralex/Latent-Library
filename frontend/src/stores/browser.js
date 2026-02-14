@@ -1,26 +1,9 @@
 import {defineStore} from 'pinia';
-import axios from 'axios';
 import api from '../services/api';
 
 /**
  * @file browser.js
  * @description The central state management hub for the Image Browser application using Pinia.
- *
- * This store manages the global state for image browsing, including file lists, selection state,
- * search criteria, and UI configuration. It acts as the primary interface between the frontend
- * views and the backend API, handling complex data orchestration such as paginated searching,
- * metadata retrieval, and theme persistence.
- *
- * Key Responsibilities:
- * - **State Management:** Maintains the current list of images, multi-selection sets,
- *   and active filters (Model, Sampler, LoRA, Rating).
- * - **Data Orchestration:** Handles asynchronous operations for scanning folders,
- *   fetching paginated search results, and loading image-specific metadata.
- * - **UI Configuration:** Manages global UI state such as view modes (Gallery vs. Browser),
- *   sidebar visibility, and application-wide themes.
- * - **Backend Synchronization:** Implements a robust initialization sequence that polls
- *   the backend for readiness and restores the user's last visited folder and theme.
- * - **Error Handling:** Tracks critical backend connection failures to trigger global error views.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -63,9 +46,14 @@ export const useBrowserStore = defineStore('browser', {
         async waitForBackend(retries = 20) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    await axios.get('/api/images/filters', {timeout: 2000});
+                    // Use the 'api' instance so the handshake token is included
+                    await api.get('/images/filters', { timeout: 2000 });
                     return true;
                 } catch (e) {
+                    // If it's a 401, the token is wrong (critical)
+                    if (e.response && e.response.status === 401) {
+                        throw new Error("Security Handshake Failed: Unauthorized.");
+                    }
                     console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
                     await delay(1000);
                 }

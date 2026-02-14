@@ -6,17 +6,18 @@
  * This component is optimized for use within virtualized containers. It renders an image with a blurred
  * background effect to maintain a consistent aspect ratio regardless of the source image's dimensions.
  * It also features an information overlay that displays key metadata (rating, model name, filename)
- * without requiring additional network requests, as it consumes data passed via the `file` prop.
+ * without requiring additional network requests, as it consumes data passed via the {@code file} prop.
  *
  * Key functionalities:
- * - Visual Consistency: Implements a "glass" overlay and blurred background for a premium aesthetic.
- * - Contextual Interaction: Emits a custom `contextmenu` event to allow parent components to handle right-click actions.
- * - Lazy Loading: Utilizes native browser lazy loading for images to optimize initial page load and scroll performance.
- * - Responsive Metadata: Conditionally renders star ratings and model information based on availability.
- * - Optimized Thumbnails: Uses the dedicated thumbnail API endpoint to reduce bandwidth and memory usage.
+ * - **Visual Consistency:** Implements a "glass" overlay and blurred background for a premium aesthetic.
+ * - **Contextual Interaction:** Emits a custom {@code contextmenu} event to allow parent components to handle right-click actions.
+ * - **Lazy Loading:** Utilizes native browser lazy loading for images to optimize initial page load and scroll performance.
+ * - **Authenticated Media:** Uses the {@code authenticatedUrl} helper to ensure thumbnails are loaded with the required security token.
+ * - **Responsive Metadata:** Conditionally renders star ratings and model information based on availability.
  */
 import {computed} from 'vue';
 import Card from 'primevue/card';
+import {authenticatedUrl} from '@/services/api';
 
 const props = defineProps({
   file: {
@@ -25,7 +26,7 @@ const props = defineProps({
   }
 });
 
-const imageUrl = computed(() => `/api/images/thumbnail?path=${encodeURIComponent(props.file.path)}`);
+const imageUrl = computed(() => authenticatedUrl(`/api/images/thumbnail?path=${encodeURIComponent(props.file.path)}`));
 
 const emit = defineEmits(['contextmenu']);
 

@@ -1,27 +1,10 @@
 <script setup>
 /**
  * @file DuplicateDetectiveView.vue
- * @description A specialized view for identifying and resolving visual and exact duplicates using dHash and SHA-256.
- *
- * This view provides a dedicated interface for cleaning up the image library by finding
- * visually identical or near-identical images. It utilizes perceptual hashing (dHash)
- * to detect duplicates regardless of minor differences in resolution or compression,
- * and cryptographic hashing for exact byte-for-byte matches.
- *
- * Key functionalities:
- * - **Visual Comparison:** Displays duplicate pairs side-by-side with a draggable slider
- *   and advanced zoom/pan controls for pixel-perfect verification.
- * - **Metadata Inspection:** Provides detailed metadata panels for both images in a pair,
- *   allowing users to compare generation parameters before deciding which to keep.
- * - **Manual Resolution:** Allows users to selectively keep the left or right image
- *   using keyboard shortcuts (1/2) or UI buttons.
- * - **Automated Cleanup:** Features a "Resolve All" function that automatically keeps
- *   one copy of every duplicate set and moves the rest to the trash.
- * - **Hash Repair:** Includes a manual scan trigger to backfill missing hash data for
- *   images that haven't been fully indexed.
+ * @description A specialized view for identifying and resolving visual duplicates using dHash.
  */
 import {ref, onMounted, computed, onUnmounted} from 'vue';
-import api from '@/services/api';
+import api, { authenticatedUrl } from '@/services/api';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import InputText from 'primevue/inputtext';
@@ -35,9 +18,10 @@ const pairs = ref([]);
 const currentIndex = ref(0);
 const sliderPosition = ref(50);
 const containerRef = ref(null);
-const status = ref({missingHashes: 0, totalImages: 0});
+const status = ref({ missingHashes: 0, totalImages: 0 });
 const isScanning = ref(false);
 
+// Zoom & Pan State
 const zoom = ref(1);
 const panX = ref(0);
 const panY = ref(0);
@@ -46,8 +30,8 @@ const lastMouseX = ref(0);
 const lastMouseY = ref(0);
 
 const currentPair = computed(() => pairs.value[currentIndex.value] || null);
-const leftImage = computed(() => currentPair.value ? `/api/images/content?path=${encodeURIComponent(currentPair.value.left.path)}` : null);
-const rightImage = computed(() => currentPair.value ? `/api/images/content?path=${encodeURIComponent(currentPair.value.right.path)}` : null);
+const leftImage = computed(() => currentPair.value ? authenticatedUrl(`/api/images/content?path=${encodeURIComponent(currentPair.value.left.path)}`) : null);
+const rightImage = computed(() => currentPair.value ? authenticatedUrl(`/api/images/content?path=${encodeURIComponent(currentPair.value.right.path)}`) : null);
 
 const loadStatus = async () => {
   try {
@@ -77,6 +61,7 @@ const scanHashes = async () => {
     toast.add({severity: 'info', summary: 'Scan Complete', detail: 'Finished calculating image hashes', life: 3000});
     await loadPairs();
   } catch (e) {
+    // Handled by interceptor
   } finally {
     isScanning.value = false;
   }
@@ -147,6 +132,7 @@ const deleteFile = async (path) => {
     await api.post('/images/batch/delete', [path]);
     toast.add({severity: 'success', summary: 'Resolved', detail: 'Duplicate removed', life: 1000});
   } catch (e) {
+    // Error handled by api interceptor
   }
 };
 
@@ -179,6 +165,7 @@ const resolveAll = () => {
         toast.add({severity: 'success', summary: 'Resolved', detail: res.data, life: 3000});
         await loadPairs();
       } catch (e) {
+        // Error handled by api interceptor
       }
     }
   });
@@ -213,15 +200,15 @@ onUnmounted(() => {
 
 const getFileName = (path) => path.split(/[\\/]/).pop();
 const getFolderName = (path) => {
-  if (!path) return '-';
-  const parts = path.split(/[\\/]/);
-  parts.pop();
-  return parts.pop() || 'Root';
+    if (!path) return '-';
+    const parts = path.split(/[\\/]/);
+    parts.pop();
+    return parts.pop() || 'Root';
 };
 const getFileFormat = (path) => {
-  if (!path) return '-';
-  const parts = path.split('.');
-  return parts.length > 1 ? parts.pop().toUpperCase() : 'Unknown';
+    if (!path) return '-';
+    const parts = path.split('.');
+    return parts.length > 1 ? parts.pop().toUpperCase() : 'Unknown';
 };
 
 </script>
@@ -232,85 +219,76 @@ const getFileFormat = (path) => {
       <div>
         <h1 class="text-3xl font-bold m-0 mb-1 text-gradient">Duplicate Detective</h1>
         <div class="flex align-items-center gap-3">
-          <p class="text-gray-400 m-0" v-if="pairs.length > 0">
-            Found {{ pairs.length }} potential duplicate pairs.
-          </p>
-          <p class="text-gray-400 m-0" v-else>No duplicates found.</p>
+            <p class="text-gray-400 m-0" v-if="pairs.length > 0">
+              Found {{ pairs.length }} potential duplicate pairs.
+            </p>
+            <p class="text-gray-400 m-0" v-else>No duplicates found.</p>
 
-          <span v-if="status.missingHashes > 0" class="text-xs bg-yellow-900 text-yellow-200 px-2 py-1 border-round">
+            <span v-if="status.missingHashes > 0" class="text-xs bg-yellow-900 text-yellow-200 px-2 py-1 border-round">
                 {{ status.missingHashes }} images missing hashes
             </span>
         </div>
       </div>
       <div class="flex gap-2">
-        <Button label="Scan for Duplicates" icon="pi pi-search"
-                class="p-button-secondary p-button-outlined"
-                @click="scanHashes" :loading="isScanning"/>
-        <Button label="Resolve All (Auto)" icon="pi pi-trash" class="p-button-danger p-button-outlined"
-                @click="resolveAll" :disabled="pairs.length === 0"/>
+          <Button label="Scan for Duplicates" icon="pi pi-search"
+                  class="p-button-secondary p-button-outlined"
+                  @click="scanHashes" :loading="isScanning" />
+          <Button label="Resolve All (Auto)" icon="pi pi-trash" class="p-button-danger p-button-outlined"
+                  @click="resolveAll" :disabled="pairs.length === 0"/>
       </div>
     </div>
 
     <div v-if="currentPair" class="flex-grow-1 flex gap-3 overflow-hidden">
 
+      <!-- Left Metadata Panel -->
       <div class="metadata-panel flex flex-column p-3 border-round shadow-4 overflow-y-auto custom-scrollbar">
-        <div class="text-gradient font-bold mb-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-             :title="currentPair.left.path">
-          {{ getFileName(currentPair.left.path) }}
-        </div>
-        <div class="text-xs text-500 mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-             :title="currentPair.left.path">
-          <i class="pi pi-folder mr-1"></i>{{ getFolderName(currentPair.left.path) }}
-        </div>
+          <div class="text-gradient font-bold mb-1 text-overflow-ellipsis overflow-hidden white-space-nowrap" :title="currentPair.left.path">
+              {{ getFileName(currentPair.left.path) }}
+          </div>
+          <div class="text-xs text-500 mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap" :title="currentPair.left.path">
+              <i class="pi pi-folder mr-1"></i>{{ getFolderName(currentPair.left.path) }}
+          </div>
 
-        <div class="flex gap-1 mb-3">
-          <i v-for="i in 5" :key="i" class="pi text-xs"
-             :class="i <= currentPair.left.rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
-        </div>
+          <div class="flex gap-1 mb-3">
+              <i v-for="i in 5" :key="i" class="pi text-xs" :class="i <= currentPair.left.rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
+          </div>
 
-        <div class="metadata-grid grid grid-nogutter gap-2">
-          <div class="col-12">
-            <label class="text-xs text-500">Model</label>
-            <InputText :value="currentPair.left.metadata.Model || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
+          <div class="metadata-grid grid grid-nogutter gap-2">
+              <div class="col-12">
+                  <label class="text-xs text-500">Model</label>
+                  <InputText :value="currentPair.left.metadata.Model || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Sampler</label>
+                  <InputText :value="currentPair.left.metadata.Sampler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Steps</label>
+                  <InputText :value="currentPair.left.metadata.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Resolution</label>
+                  <InputText :value="currentPair.left.metadata.Resolution || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Size</label>
+                  <InputText :value="currentPair.left.metadata.FileSize || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-12">
+                  <label class="text-xs text-500">Format</label>
+                  <InputText :value="getFileFormat(currentPair.left.path)" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-12">
+                  <label class="text-xs text-500">Prompt</label>
+                  <div class="glass-box p-2 border-round text-xs line-height-2 select-text overflow-y-auto" style="max-height: 120px;">
+                      {{ currentPair.left.metadata.Prompt || 'No prompt' }}
+                  </div>
+              </div>
           </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Sampler</label>
-            <InputText :value="currentPair.left.metadata.Sampler || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Steps</label>
-            <InputText :value="currentPair.left.metadata.Steps || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Resolution</label>
-            <InputText :value="currentPair.left.metadata.Resolution || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Size</label>
-            <InputText :value="currentPair.left.metadata.FileSize || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-12">
-            <label class="text-xs text-500">Format</label>
-            <InputText :value="getFileFormat(currentPair.left.path)" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-12">
-            <label class="text-xs text-500">Prompt</label>
-            <div class="glass-box p-2 border-round text-xs line-height-2 select-text overflow-y-auto"
-                 style="max-height: 120px;">
-              {{ currentPair.left.metadata.Prompt || 'No prompt' }}
-            </div>
-          </div>
-        </div>
-        <Button label="Keep Left (1)" icon="pi pi-check" class="p-button-success p-button-sm mt-auto"
-                @click="keepLeft"/>
+          <Button label="Keep Left (1)" icon="pi pi-check" class="p-button-success p-button-sm mt-auto" @click="keepLeft" />
       </div>
 
+      <!-- Comparison Area -->
       <div class="flex-grow-1 flex flex-column overflow-hidden relative">
         <div
             class="relative flex-grow-1 bg-black-alpha-90 border-round overflow-hidden select-none shadow-8"
@@ -326,16 +304,17 @@ const getFileFormat = (path) => {
           <div class="w-full h-full transition-transform transition-duration-100"
                :style="{ transform: `scale(${zoom}) translate(${panX/zoom}px, ${panY/zoom}px)` }">
 
-            <img :src="rightImage"
-                 class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
-                 style="object-fit: contain;"/>
+              <img :src="rightImage"
+                   class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
+                   style="object-fit: contain;"/>
 
-            <img :src="leftImage"
-                 class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
-                 style="object-fit: contain;"
-                 :style="{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }"/>
+              <img :src="leftImage"
+                   class="absolute top-0 left-0 w-full h-full select-none pointer-events-none"
+                   style="object-fit: contain;"
+                   :style="{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }"/>
           </div>
 
+          <!-- Visible Divider Line -->
           <div class="absolute top-0 bottom-0 w-2px bg-primary shadow-4 z-5"
                :style="{ left: sliderPosition + '%', backgroundColor: 'var(--accent-primary)' }">
             <div
@@ -359,62 +338,52 @@ const getFileFormat = (path) => {
         </div>
       </div>
 
+      <!-- Right Metadata Panel -->
       <div class="metadata-panel flex flex-column p-3 border-round shadow-4 overflow-y-auto custom-scrollbar">
-        <div class="text-gradient font-bold mb-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-             :title="currentPair.right.path">
-          {{ getFileName(currentPair.right.path) }}
-        </div>
-        <div class="text-xs text-500 mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-             :title="currentPair.right.path">
-          <i class="pi pi-folder mr-1"></i>{{ getFolderName(currentPair.right.path) }}
-        </div>
+          <div class="text-gradient font-bold mb-1 text-overflow-ellipsis overflow-hidden white-space-nowrap" :title="currentPair.right.path">
+              {{ getFileName(currentPair.right.path) }}
+          </div>
+          <div class="text-xs text-500 mb-2 text-overflow-ellipsis overflow-hidden white-space-nowrap" :title="currentPair.right.path">
+              <i class="pi pi-folder mr-1"></i>{{ getFolderName(currentPair.right.path) }}
+          </div>
 
-        <div class="flex gap-1 mb-3">
-          <i v-for="i in 5" :key="i" class="pi text-xs"
-             :class="i <= currentPair.right.rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
-        </div>
+          <div class="flex gap-1 mb-3">
+              <i v-for="i in 5" :key="i" class="pi text-xs" :class="i <= currentPair.right.rating ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
+          </div>
 
-        <div class="metadata-grid grid grid-nogutter gap-2">
-          <div class="col-12">
-            <label class="text-xs text-500">Model</label>
-            <InputText :value="currentPair.right.metadata.Model || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
+          <div class="metadata-grid grid grid-nogutter gap-2">
+              <div class="col-12">
+                  <label class="text-xs text-500">Model</label>
+                  <InputText :value="currentPair.right.metadata.Model || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Sampler</label>
+                  <InputText :value="currentPair.right.metadata.Sampler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Steps</label>
+                  <InputText :value="currentPair.right.metadata.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Resolution</label>
+                  <InputText :value="currentPair.right.metadata.Resolution || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-6">
+                  <label class="text-xs text-500">Size</label>
+                  <InputText :value="currentPair.right.metadata.FileSize || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-12">
+                  <label class="text-xs text-500">Format</label>
+                  <InputText :value="getFileFormat(currentPair.right.path)" readonly class="w-full p-inputtext-sm glass-input"/>
+              </div>
+              <div class="col-12">
+                  <label class="text-xs text-500">Prompt</label>
+                  <div class="glass-box p-2 border-round text-xs line-height-2 select-text overflow-y-auto" style="max-height: 120px;">
+                      {{ currentPair.right.metadata.Prompt || 'No prompt' }}
+                  </div>
+              </div>
           </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Sampler</label>
-            <InputText :value="currentPair.right.metadata.Sampler || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Steps</label>
-            <InputText :value="currentPair.right.metadata.Steps || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Resolution</label>
-            <InputText :value="currentPair.right.metadata.Resolution || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-6">
-            <label class="text-xs text-500">Size</label>
-            <InputText :value="currentPair.right.metadata.FileSize || '-'" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-12">
-            <label class="text-xs text-500">Format</label>
-            <InputText :value="getFileFormat(currentPair.right.path)" readonly
-                       class="w-full p-inputtext-sm glass-input"/>
-          </div>
-          <div class="col-12">
-            <label class="text-xs text-500">Prompt</label>
-            <div class="glass-box p-2 border-round text-xs line-height-2 select-text overflow-y-auto"
-                 style="max-height: 120px;">
-              {{ currentPair.right.metadata.Prompt || 'No prompt' }}
-            </div>
-          </div>
-        </div>
-        <Button label="Keep Right (2)" icon="pi pi-check" class="p-button-success p-button-sm mt-auto"
-                @click="keepRight"/>
+          <Button label="Keep Right (2)" icon="pi pi-check" class="p-button-success p-button-sm mt-auto" @click="keepRight" />
       </div>
 
     </div>
@@ -424,7 +393,7 @@ const getFileFormat = (path) => {
         <i class="pi pi-check-circle text-6xl mb-3"></i>
         <div class="text-xl">All clear! No duplicates detected.</div>
         <p v-if="status.missingHashes > 0" class="mt-3">
-          Note: {{ status.missingHashes }} images are missing hashes. Click "Scan for Duplicates" to process them.
+            Note: {{ status.missingHashes }} images are missing hashes. Click "Scan for Duplicates" to process them.
         </p>
       </div>
     </div>
@@ -437,11 +406,11 @@ const getFileFormat = (path) => {
 }
 
 .metadata-panel {
-  width: 300px;
-  min-width: 300px;
-  background: var(--bg-sidebar-right);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-light);
+    width: 300px;
+    min-width: 300px;
+    background: var(--bg-sidebar-right);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-light);
 }
 
 .text-gradient {
@@ -478,10 +447,10 @@ const getFileFormat = (path) => {
 }
 
 .w-2px {
-  width: 2px !important;
+    width: 2px !important;
 }
 
 .cursor-move {
-  cursor: move !important;
+    cursor: move !important;
 }
 </style>
