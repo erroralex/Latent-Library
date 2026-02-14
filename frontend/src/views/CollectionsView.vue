@@ -275,28 +275,28 @@ onMounted(() => {
               <h3 class="text-lg font-semibold mb-3 text-white">Smart Filters</h3>
               <div class="flex flex-column gap-4">
                 <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem">Models</label>
+                  <label class="font-semibold w-6rem text-white">Models</label>
                   <Button icon="pi pi-plus" @click="(e) => modelMenu.toggle(e)"
                           class="p-button-secondary p-button-rounded p-button-sm"/>
-                  <Menu ref="modelMenu" :model="modelItems" :popup="true"/>
+                  <Menu ref="modelMenu" :model="modelItems" :popup="true" class="custom-menu"/>
                 </div>
                 <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem">Samplers</label>
+                  <label class="font-semibold w-6rem text-white">Samplers</label>
                   <Button icon="pi pi-plus" @click="(e) => samplerMenu.toggle(e)"
                           class="p-button-secondary p-button-rounded p-button-sm"/>
-                  <Menu ref="samplerMenu" :model="samplerItems" :popup="true"/>
+                  <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="custom-menu"/>
                 </div>
                 <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem">LoRAs</label>
+                  <label class="font-semibold w-6rem text-white">LoRAs</label>
                   <Button icon="pi pi-plus" @click="(e) => loraMenu.toggle(e)"
                           class="p-button-secondary p-button-rounded p-button-sm"/>
-                  <Menu ref="loraMenu" :model="loraItems" :popup="true"/>
+                  <Menu ref="loraMenu" :model="loraItems" :popup="true" class="custom-menu"/>
                 </div>
                 <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem">Rating</label>
+                  <label class="font-semibold w-6rem text-white">Rating</label>
                   <Button icon="pi pi-plus" @click="(e) => ratingMenu.toggle(e)"
                           class="p-button-secondary p-button-rounded p-button-sm"/>
-                  <Menu ref="ratingMenu" :model="ratingItems" :popup="true"/>
+                  <Menu ref="ratingMenu" :model="ratingItems" :popup="true" class="custom-menu"/>
                 </div>
                 <div class="p-field mt-2">
                   <label for="prompt" class="text-white font-semibold">Prompt contains</label>
@@ -389,5 +389,14 @@ onMounted(() => {
 
 .text-white {
   color: var(--text-primary) !important;
+}
+
+:deep(.custom-menu .p-menuitem-link .p-menuitem-text) {
+  color: var(--text-primary) !important;
+}
+
+:deep(.custom-menu) {
+  background: var(--bg-menu) !important;
+  border: 1px solid var(--border-light) !important;
 }
 </style>

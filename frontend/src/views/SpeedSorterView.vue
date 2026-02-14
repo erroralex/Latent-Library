@@ -15,7 +15,7 @@
  * - Electron Integration: Leverages native folder selection dialogs when running in an Electron environment.
  */
 import {ref, onMounted, onUnmounted, computed} from 'vue';
-import api from '@/services/api';
+import api, {authenticatedUrl} from '@/services/api';
 import Button from 'primevue/button';
 import {useToast} from 'primevue/usetoast';
 
@@ -28,7 +28,7 @@ const currentIndex = ref(0);
 const history = ref([]);
 
 const currentFile = computed(() => files.value[currentIndex.value] || null);
-const currentImageUrl = computed(() => currentFile.value ? `http://localhost:8080/api/images/content?path=${encodeURIComponent(currentFile.value)}` : null);
+const currentImageUrl = computed(() => currentFile.value ? authenticatedUrl(`/api/images/content?path=${encodeURIComponent(currentFile.value)}`) : null);
 const progress = computed(() => `${currentIndex.value + 1} / ${files.value.length}`);
 
 const loadConfig = async () => {
@@ -39,6 +39,7 @@ const loadConfig = async () => {
     if (inputDir.value) loadFiles();
   } catch (e) {
     console.error("Failed to load config", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load configuration', life: 3000});
   }
 };
 
@@ -49,39 +50,50 @@ const loadFiles = async () => {
     currentIndex.value = 0;
   } catch (e) {
     console.error("Failed to load files", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load files', life: 3000});
   }
 };
 
 const selectInput = async () => {
-  if (window.electronAPI) {
-    const path = await window.electronAPI.selectFolder();
-    if (path) {
-      await api.post('/speedsorter/config/input', null, {params: {path}});
-      await loadConfig();
+  try {
+    if (window.electronAPI) {
+      const path = await window.electronAPI.selectFolder();
+      if (path) {
+        await api.post('/speedsorter/config/input', null, {params: {path}});
+        await loadConfig();
+      }
+    } else {
+      const path = prompt("Enter absolute path to Input Folder:", inputDir.value || "");
+      if (path) {
+        await api.post('/speedsorter/config/input', null, {params: {path}});
+        await loadConfig();
+      }
     }
-  } else {
-    const path = prompt("Enter absolute path to Input Folder:", inputDir.value || "");
-    if (path) {
-      await api.post('/speedsorter/config/input', null, {params: {path}});
-      await loadConfig();
-    }
+  } catch (e) {
+    console.error("Failed to select input folder", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to select input folder', life: 3000});
   }
 };
 
 const selectTarget = async (index) => {
-  if (window.electronAPI) {
-    const path = await window.electronAPI.selectFolder();
-    if (path) {
-      await api.post('/speedsorter/config/target', null, {params: {index, path}});
-      await loadConfig();
+  try {
+    if (window.electronAPI) {
+      const path = await window.electronAPI.selectFolder();
+      if (path) {
+        await api.post('/speedsorter/config/target', null, {params: {index, path}});
+        await loadConfig();
+      }
+    } else {
+      const current = targets.value.find(t => t.index == index)?.path || "";
+      const path = prompt(`Enter absolute path for Target ${index + 1}:`, current);
+      if (path) {
+        await api.post('/speedsorter/config/target', null, {params: {index, path}});
+        await loadConfig();
+      }
     }
-  } else {
-    const current = targets.value.find(t => t.index == index)?.path || "";
-    const path = prompt(`Enter absolute path for Target ${index + 1}:`, current);
-    if (path) {
-      await api.post('/speedsorter/config/target', null, {params: {index, path}});
-      await loadConfig();
-    }
+  } catch (e) {
+    console.error("Failed to select target folder", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to select target folder', life: 3000});
   }
 };
 
@@ -116,7 +128,8 @@ const moveFile = async (targetIndex) => {
       life: 1000
     });
   } catch (e) {
-    // Error handled by api interceptor
+    console.error("Failed to move file", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to move file', life: 3000});
   }
 };
 
@@ -132,7 +145,8 @@ const deleteFile = async () => {
 
     toast.add({severity: 'error', summary: 'Deleted', detail: 'Moved to Recycle Bin', life: 1000});
   } catch (e) {
-    // Error handled by api interceptor
+    console.error("Failed to delete file", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to delete file', life: 3000});
   }
 };
 
@@ -153,7 +167,10 @@ const undo = async () => {
     files.value.splice(currentIndex.value, 0, lastAction.source);
     toast.add({severity: 'info', summary: 'Undone', detail: 'File restored', life: 1000});
   } catch (e) {
-    // Error handled by api interceptor
+    console.error("Failed to undo action", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to undo action', life: 3000});
+    // Push it back to history if undo failed
+    history.value.push(lastAction);
   }
 };
 

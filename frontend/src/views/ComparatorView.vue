@@ -19,9 +19,12 @@
  */
 import {ref, onUnmounted} from 'vue';
 import Button from 'primevue/button';
+import {useToast} from 'primevue/usetoast';
 import ImageSplitViewer from '@/components/ImageSplitViewer.vue';
 import ComparisonMetadataPanel from '@/components/ComparisonMetadataPanel.vue';
 import api from '@/services/api';
+
+const toast = useToast();
 
 const imageA = ref(null);
 const imageB = ref(null);
@@ -45,6 +48,10 @@ const fetchMetadata = async (path, target) => {
     if (target === 'A') metaA.value = res.data;
     else metaB.value = res.data;
   } catch (e) {
+    console.error(`Failed to fetch metadata for ${target}`, e);
+    // Metadata fetch failure is non-critical, so we just clear the metadata
+    // and optionally log a warning or show a subtle toast if needed.
+    // For now, we'll just clear it to avoid stale data.
     if (target === 'A') metaA.value = null;
     else metaB.value = null;
   }
@@ -65,17 +72,22 @@ const handleDrop = (event, target) => {
 };
 
 const processFile = (file, target) => {
-  const url = URL.createObjectURL(file);
-  if (target === 'A') {
-    if (imageA.value?.startsWith('blob:')) URL.revokeObjectURL(imageA.value);
-    imageA.value = url;
-    pathA.value = file.path;
-    fetchMetadata(file.path, 'A');
-  } else {
-    if (imageB.value?.startsWith('blob:')) URL.revokeObjectURL(imageB.value);
-    imageB.value = url;
-    pathB.value = file.path;
-    fetchMetadata(file.path, 'B');
+  try {
+    const url = URL.createObjectURL(file);
+    if (target === 'A') {
+      if (imageA.value?.startsWith('blob:')) URL.revokeObjectURL(imageA.value);
+      imageA.value = url;
+      pathA.value = file.path; // Note: file.path is non-standard and might only work in Electron/specific envs
+      fetchMetadata(file.path, 'A');
+    } else {
+      if (imageB.value?.startsWith('blob:')) URL.revokeObjectURL(imageB.value);
+      imageB.value = url;
+      pathB.value = file.path;
+      fetchMetadata(file.path, 'B');
+    }
+  } catch (e) {
+    console.error("Failed to process file", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load image file', life: 3000});
   }
 };
 

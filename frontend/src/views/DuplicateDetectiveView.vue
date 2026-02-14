@@ -49,6 +49,7 @@ const loadStatus = async () => {
     status.value = res.data;
   } catch (e) {
     console.error("Failed to load duplicate status", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load duplicate status', life: 3000});
   }
 };
 
@@ -60,6 +61,7 @@ const loadPairs = async () => {
     await loadStatus();
   } catch (e) {
     console.error("Failed to load duplicate pairs", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load duplicate pairs', life: 3000});
   }
 };
 
@@ -70,6 +72,8 @@ const scanHashes = async () => {
     toast.add({severity: 'info', summary: 'Scan Complete', detail: 'Finished calculating image hashes', life: 3000});
     await loadPairs();
   } catch (e) {
+    console.error("Failed to scan hashes", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to scan hashes', life: 3000});
   } finally {
     isScanning.value = false;
   }
@@ -92,6 +96,8 @@ const deleteFile = async (path) => {
     await api.post('/images/batch/delete', [path]);
     toast.add({severity: 'success', summary: 'Resolved', detail: 'Duplicate removed', life: 1000});
   } catch (e) {
+    console.error("Failed to delete file", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to delete file', life: 3000});
   }
 };
 
@@ -124,6 +130,8 @@ const resolveAll = () => {
         toast.add({severity: 'success', summary: 'Resolved', detail: res.data, life: 3000});
         await loadPairs();
       } catch (e) {
+        console.error("Failed to resolve all duplicates", e);
+        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to resolve all duplicates', life: 3000});
       }
     }
   });

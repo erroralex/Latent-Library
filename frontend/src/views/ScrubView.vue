@@ -15,10 +15,10 @@
  *   metadata chunks.
  * - **Automated Download:** Facilitates the immediate download of the processed, clean
  *   image file with its original filename preserved.
+ * - **Drag-and-Drop:** Supports dragging files directly onto the upload area.
  */
 import {ref} from 'vue';
 import api, {authenticatedUrl} from '@/services/api';
-import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import {useToast} from 'primevue/usetoast';
@@ -27,9 +27,21 @@ const toast = useToast();
 const uploadedFile = ref(null);
 const previewUrl = ref(null);
 const isProcessing = ref(false);
+const isDragging = ref(false);
+const fileInput = ref(null);
 
-const onUpload = async (event) => {
-  const file = event.files[0];
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (file) processUpload(file);
+};
+
+const handleDrop = (event) => {
+  isDragging.value = false;
+  const file = event.dataTransfer.files[0];
+  if (file) processUpload(file);
+};
+
+const processUpload = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -39,6 +51,8 @@ const onUpload = async (event) => {
     previewUrl.value = authenticatedUrl(`/api/scrub/preview/${uploadedFile.value}`);
     toast.add({severity: 'success', summary: 'Uploaded', detail: 'Image ready to scrub', life: 3000});
   } catch (error) {
+    console.error("Upload failed", error);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to upload image', life: 3000});
   }
 };
 
@@ -71,6 +85,8 @@ const scrubAndDownload = async () => {
 
     toast.add({severity: 'success', summary: 'Success', detail: 'Metadata scrubbed & downloaded', life: 3000});
   } catch (error) {
+    console.error("Scrubbing failed", error);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to process image', life: 3000});
   } finally {
     isProcessing.value = false;
   }
@@ -79,6 +95,7 @@ const scrubAndDownload = async () => {
 const clear = () => {
   uploadedFile.value = null;
   previewUrl.value = null;
+  if (fileInput.value) fileInput.value.value = '';
 };
 </script>
 
@@ -91,11 +108,23 @@ const clear = () => {
 
     <Card class="w-full max-w-30rem glass-panel">
       <template #content>
-        <div v-if="!previewUrl" class="flex flex-column align-items-center gap-4 py-5">
-          <i class="pi pi-shield text-6xl text-gradient opacity-80"></i>
-          <FileUpload mode="basic" name="file" :auto="true" customUpload @uploader="onUpload" accept="image/*"
-                      chooseLabel="Select Image" class="p-button-outlined"/>
-          <span class="text-sm text-gray-500">Supports PNG, JPG, WEBP</span>
+        <div v-if="!previewUrl"
+             class="drop-zone flex flex-column align-items-center gap-4 py-5 cursor-pointer transition-all transition-duration-300 relative border-round"
+             :class="{ 'drop-zone-active': isDragging }"
+             @click="fileInput.click()"
+             @dragover.prevent
+             @dragenter="isDragging = true"
+             @dragleave="isDragging = false"
+             @drop.prevent="handleDrop">
+
+          <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect"/>
+
+          <i class="pi pi-shield text-6xl text-gradient opacity-80 pointer-events-none"></i>
+          <div class="text-center pointer-events-none">
+            <div class="font-bold text-xl mb-1 text-white">Drop Image Here</div>
+            <div class="text-gray-400 text-sm">or click to browse</div>
+          </div>
+          <span class="text-xs text-gray-500 mt-2 pointer-events-none">Supports PNG, JPG, WEBP</span>
         </div>
 
         <div v-else class="flex flex-column align-items-center gap-4">
@@ -137,5 +166,24 @@ const clear = () => {
 
 :deep(.p-card-body) {
   padding: 1.5rem;
+}
+
+/* Drop Zone Styling matching ComparatorView */
+.drop-zone {
+  background: var(--bg-input);
+  border: 2px dashed var(--border-input);
+  position: relative;
+  z-index: 1;
+}
+
+.drop-zone:hover, .drop-zone-active {
+  background: var(--bg-card);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.drop-zone-active {
+  box-shadow: 0 0 30px var(--accent-primary);
 }
 </style>
