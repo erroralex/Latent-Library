@@ -267,6 +267,12 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
     color: var(--text-primary) !important;
 }
 
+.p-dropdown-item .p-dropdown-item-label,
+.p-menuitem-link .p-menuitem-text,
+.p-menuitem-link .p-menuitem-icon {
+    color: var(--text-primary) !important;
+}
+
 .p-dropdown-item:hover, .p-menuitem-link:hover {
     background: var(--bg-input) !important;
     color: var(--text-primary) !important;
@@ -274,6 +280,10 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
 
 .p-dropdown-item.p-highlight {
     background: var(--grad-hover) !important;
+    color: #fff !important;
+}
+
+.p-dropdown-item.p-highlight .p-dropdown-item-label {
     color: #fff !important;
 }
 
