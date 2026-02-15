@@ -3,6 +3,37 @@
  * Description: Customizing PrimeVue components to match the application's design system.
  */
 
+/* --- Global Focus & Selection Reset --- */
+*:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.p-focus, .p-highlight {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* --- Tooltip Theming --- */
+.p-tooltip .p-tooltip-text {
+    background: var(--bg-menu) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-input) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 0.75rem !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 6px !important;
+}
+
+.p-tooltip-arrow {
+    border-bottom-color: var(--border-input) !important;
+    border-top-color: var(--border-input) !important;
+    border-left-color: var(--border-input) !important;
+    border-right-color: var(--border-input) !important;
+}
+
 /* --- Buttons --- */
 .p-button {
     background: transparent !important;
@@ -84,7 +115,7 @@
 }
 
 .p-inputtext:enabled:focus {
-    border-image: var(--grad-hover) 1 !important;
+    border-color: var(--accent-primary) !important;
     box-shadow: var(--shadow-glow-primary) !important;
 }
 
@@ -222,6 +253,12 @@
 }
 
 /* --- Sliders --- */
+html body .p-slider {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+    border-radius: 4px !important;
+}
+
 html body .p-slider .p-slider-range {
     background: var(--accent-primary) !important;
     background-image: var(--grad-hover) !important;
@@ -254,6 +291,19 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
     border-color: var(--accent-secondary) !important;
     transform: scale(1.1) !important;
     box-shadow: var(--shadow-glow-primary) !important;
+}
+
+/* --- Progress Bar --- */
+.p-progressbar {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+.p-progressbar .p-progressbar-value {
+    background: var(--grad-hover) !important;
+    border-radius: 10px !important;
 }
 
 /* --- Dropdowns & Selects --- */
@@ -289,6 +339,6 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
 
 .p-dropdown:not(.p-disabled).p-focus {
     box-shadow: var(--shadow-glow-primary) !important;
-    border-image: var(--grad-hover) 1 !important;
+    border-color: var(--accent-primary) !important;
     outline: 0 none !important;
 }

@@ -112,7 +112,7 @@ onUnmounted(() => {
          class="flex-grow-1 flex flex-column align-items-center justify-content-center text-center gap-4">
       <i class="pi pi-cloud-download text-5xl text-primary"></i>
       <h2 class="text-lg font-bold text-white">Model Required</h2>
-      <p class="text-sm text-gray-400">The WD14 ONNX model (~150MB) is needed.</p>
+      <p class="text-sm text-gray-400">The WD14 ONNX model (~300MB) is needed.</p>
 
       <div v-if="modelStatus.downloading" class="w-full px-4">
         <ProgressBar :value="modelStatus.progress" class="h-1rem mb-2"></ProgressBar>
