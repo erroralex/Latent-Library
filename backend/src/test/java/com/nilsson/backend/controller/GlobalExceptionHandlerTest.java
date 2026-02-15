@@ -56,12 +56,12 @@ class GlobalExceptionHandlerTest {
     void handleGenericException_ShouldReturn500() {
         Exception ex = new RuntimeException("Unexpected failure");
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex, request);
+        ResponseEntity<Object> response = exceptionHandler.handleGenericException(ex, request);
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
 
-        ErrorResponse body = response.getBody();
+        ErrorResponse body = (ErrorResponse) response.getBody();
         assertNotNull(body);
         assertEquals("INTERNAL_SERVER_ERROR", body.code());
         assertEquals("An unexpected error occurred. Please check the logs.", body.message());

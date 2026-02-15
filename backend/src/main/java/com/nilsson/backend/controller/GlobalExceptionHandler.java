@@ -16,22 +16,11 @@ import java.time.LocalDateTime;
 /**
  * Global exception handler for the application, providing centralized error mapping and response formatting.
  * <p>
- * This class intercepts exceptions thrown by any controller and transforms them into a standardized
- * {@link ErrorResponse} format. It handles both custom application exceptions (via the
- * {@link ToolboxException} hierarchy) and unexpected generic exceptions, ensuring that the
- * frontend receives consistent and actionable error information.
- * <p>
- * Key Responsibilities:
- * <ul>
- *   <li><b>Standardized Error Responses:</b> Ensures all API errors follow a consistent JSON
- *   structure including error codes, messages, and timestamps.</li>
- *   <li><b>Exception Mapping:</b> Maps specific exception types to appropriate HTTP status
- *   codes (e.g., 404 for ResourceNotFound, 400 for Validation).</li>
- *   <li><b>Logging:</b> Provides centralized logging for all application errors, distinguishing
- *   between expected validation warnings and critical system failures.</li>
- *   <li><b>Security:</b> Prevents internal implementation details from leaking to the client
- *   by sanitizing generic exception messages.</li>
- * </ul>
+ * This class intercepts exceptions thrown by controllers and transforms them into standardized
+ * {@link ErrorResponse} objects. it handles specific application exceptions ({@link ToolboxException})
+ * with custom status codes and messages, while also providing a fallback for generic system errors.
+ * It includes specialized logic to silently ignore common network-related exceptions that occur
+ * during high-frequency client interactions, such as rapid scrolling through image lists.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -53,7 +42,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<Object> handleGenericException(Exception ex, HttpServletRequest request) {
+        String msg = ex.getMessage() != null ? ex.getMessage() : "";
+
+        if (msg.contains("An established connection was aborted") || msg.contains("Broken pipe")) {
+            return null;
+        }
+
         log.error("Unexpected System Error", ex);
 
         ErrorResponse errorResponse = new ErrorResponse(
@@ -63,6 +58,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 LocalDateTime.now(),
                 request.getRequestURI()
         );
+
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -14,36 +14,31 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 /**
  * Service for generating, caching, and retrieving image thumbnails with resource-aware concurrency.
  * <p>
- * This service provides a high-performance mechanism for managing image thumbnails. It utilizes
- * a striped locking mechanism to minimize contention when multiple threads attempt to access or
- * generate thumbnails for different files. To prevent system resource exhaustion during heavy
- * image processing, it employs a semaphore-based throttling mechanism that limits the number of
- * concurrent resizing operations.
+ * This service manages the lifecycle of image thumbnails, providing high-performance generation
+ * through a combination of virtual threads and semaphore-based CPU throttling. It implements
+ * a striped locking mechanism to prevent redundant generation of the same thumbnail and
+ * utilizes an atomic write pattern (temp file + move) to ensure cache integrity.
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Striped Locking:</b> Reduces lock contention by hashing file paths to a fixed set of
- *   locks, allowing parallel generation of thumbnails for different files.</li>
- *   <li><b>Resource Throttling:</b> Uses a {@link Semaphore} to limit CPU-intensive image resizing
- *   tasks, ensuring the system remains responsive during bulk indexing.</li>
- *   <li><b>Virtual Thread Support:</b> Provides a non-blocking preloading mechanism using Java 21+
- *   virtual threads to fire off hundreds of generation tasks efficiently.</li>
- *   <li><b>Persistent Caching:</b> Stores generated thumbnails in a dedicated {@code data/thumbnails}
- *   directory, using SHA-256 hashes of the file path and modification time for cache keys.</li>
- *   <li><b>Cache Invalidation:</b> Automatically detects changes to source images by including the
- *   last modified timestamp in the cache key, ensuring thumbnails are always up-to-date.</li>
+ *   <li><b>On-Demand Generation:</b> Creates thumbnails for images as they are requested by the UI.</li>
+ *   <li><b>Proactive Caching:</b> Pre-generates thumbnails for batches of images during folder indexing.</li>
+ *   <li><b>Concurrency Control:</b> Limits simultaneous CPU-intensive resizing operations to maintain system responsiveness.</li>
+ *   <li><b>Request Deduplication:</b> Ensures that multiple requests for the same thumbnail are handled by a single generation task.</li>
+ *   <li><b>Persistent Storage:</b> Manages a local disk cache for generated thumbnails, using SHA-256 hashes for unique identification.</li>
  * </ul>
  */
 @Service
@@ -58,6 +53,9 @@ public class ThumbnailService {
     private final ReentrantLock[] locks;
     private final Semaphore cpuPermits;
     private final Path thumbnailCacheDir;
+    
+    private final Map<String, CompletableFuture<File>> inFlight = new ConcurrentHashMap<>();
+    private final ExecutorService preloadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     public ThumbnailService(@Value("${app.data.dir:.}") String appDataDir) {
         this.thumbnailCacheDir = Paths.get(appDataDir).resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
@@ -78,58 +76,57 @@ public class ThumbnailService {
     }
 
     public File getThumbnail(File sourceFile) {
-        if (sourceFile == null || !sourceFile.exists()) {
-            return null;
-        }
+        if (sourceFile == null || !sourceFile.exists()) return null;
 
         String uniqueKey = sourceFile.getAbsolutePath() + "_" + sourceFile.lastModified();
         String hash = computeHash(uniqueKey);
         File thumbnailFile = thumbnailCacheDir.resolve(hash + ".jpg").toFile();
 
-        if (thumbnailFile.exists()) {
+        if (thumbnailFile.exists() && thumbnailFile.length() > 0) {
             return thumbnailFile;
         }
 
-        ReentrantLock lock = getLock(hash);
-        lock.lock();
-        try {
-            if (thumbnailFile.exists()) {
-                return thumbnailFile;
-            }
-
+        CompletableFuture<File> future = inFlight.computeIfAbsent(hash, k -> CompletableFuture.supplyAsync(() -> {
+            ReentrantLock lock = getLock(hash);
             try {
-                cpuPermits.acquire();
-                generateThumbnail(sourceFile, thumbnailFile);
-                return thumbnailFile;
+                if (lock.tryLock(30, TimeUnit.SECONDS)) {
+                    try {
+                        if (thumbnailFile.exists() && thumbnailFile.length() > 0) return thumbnailFile;
+
+                        if (cpuPermits.tryAcquire(30, TimeUnit.SECONDS)) {
+                            try {
+                                generateThumbnailAtomic(sourceFile, thumbnailFile, hash);
+                                return thumbnailFile;
+                            } finally {
+                                cpuPermits.release();
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.debug("Thumbnail generation failed for {}: {}", sourceFile.getName(), e.getMessage());
+                    } finally {
+                        lock.unlock();
+                    }
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return null;
-            } catch (IOException e) {
-                logger.warn("Failed to generate thumbnail for: {} ({})", sourceFile.getName(), e.getMessage());
-                return null;
             } finally {
-                cpuPermits.release();
+                inFlight.remove(hash);
             }
-        } finally {
-            lock.unlock();
+            return null;
+        }, preloadExecutor));
+
+        try {
+            return future.get(15, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return null;
         }
     }
 
     public void preloadCache(List<File> files) {
-        if (files == null) {
-            throw new ValidationException("File list for preloading cannot be null.");
+        if (files == null || files.isEmpty()) return;
+        for (File file : files) {
+            preloadExecutor.submit(() -> getThumbnail(file));
         }
-        if (files.isEmpty()) return;
-
-        logger.info("Starting background preload for {} files using Virtual Threads...", files.size());
-
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (File file : files) {
-                executor.submit(() -> getThumbnail(file));
-            }
-        }
-
-        logger.info("Preload completed.");
     }
 
     private ReentrantLock getLock(String key) {
@@ -137,12 +134,20 @@ public class ThumbnailService {
         return locks[index];
     }
 
-    private void generateThumbnail(File source, File destination) throws IOException {
-        Thumbnails.of(source)
-                .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
-                .outputFormat("jpg")
-                .outputQuality(OUTPUT_QUALITY)
-                .toFile(destination);
+    private void generateThumbnailAtomic(File source, File destination, String hash) throws IOException {
+        Path tempFile = thumbnailCacheDir.resolve(hash + ".tmp");
+        try {
+            Thumbnails.of(source)
+                    .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
+                    .outputFormat("jpg")
+                    .outputQuality(OUTPUT_QUALITY)
+                    .toFile(tempFile.toFile());
+
+            Files.move(tempFile, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            Files.deleteIfExists(tempFile);
+            throw e;
+        }
     }
 
     private String computeHash(String input) {

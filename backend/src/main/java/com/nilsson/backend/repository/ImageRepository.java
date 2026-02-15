@@ -67,6 +67,7 @@ public class ImageRepository {
                 .list();
     }
 
+    @Transactional
     public void updatePath(String oldPath, String newPath) {
         if (oldPath == null || oldPath.isBlank() || newPath == null || newPath.isBlank()) {
             throw new ValidationException("Both old and new paths are required for update.");
@@ -96,6 +97,7 @@ public class ImageRepository {
                 .orElseThrow(() -> new ApplicationException("System failed to retrieve ID for registered path: " + path));
     }
 
+    @Transactional
     public void deleteByPath(String path) {
         if (path == null || path.isBlank()) {
             throw new ValidationException("Path is required for deletion.");
@@ -147,6 +149,7 @@ public class ImageRepository {
                 .orElse(0);
     }
 
+    @Transactional
     public void setRating(int id, int rating) {
         if (id <= 0) {
             throw new ValidationException("Invalid image ID provided for rating update.");
@@ -164,6 +167,7 @@ public class ImageRepository {
                 .list();
     }
 
+    @Transactional
     public void setMissing(String path, boolean missing) {
         jdbcClient.sql("UPDATE images SET is_missing = ? WHERE file_path = ?")
                 .param(missing)

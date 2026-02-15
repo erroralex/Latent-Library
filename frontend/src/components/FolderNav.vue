@@ -82,7 +82,7 @@ const loadTree = async () => {
   try {
     const colRes = await api.get('/collections');
     const colChildren = colRes.data.map(c => ({
-      key: `col-${c}`, label: c, data: c, icon: 'pi pi-folder', type: 'collection', leaf: true
+      key: `col-${c.name}`, label: c.name, data: c.name, icon: 'pi pi-folder', type: 'collection', leaf: true
     }));
     rootNodes.push({
       key: 'collections',

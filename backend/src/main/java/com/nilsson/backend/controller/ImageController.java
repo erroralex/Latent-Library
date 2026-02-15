@@ -29,23 +29,21 @@ import java.util.concurrent.TimeUnit;
 /**
  * REST Controller for managing image-specific operations, metadata retrieval, and content serving.
  * <p>
- * This controller acts as the primary interface for all image-related data. It provides endpoints
- * for searching images with complex filters, retrieving technical metadata, managing ratings,
- * and serving both full-resolution image content and optimized thumbnails. It ensures that
- * file system access is correctly resolved and validated via the {@link PathService}.
+ * This controller provides the primary API for interacting with individual images within the library.
+ * It handles complex search queries with multiple filters, retrieves detailed metadata (including
+ * AI-generated tags), manages user ratings, and facilitates file operations like renaming and
+ * batch deletion. Additionally, it serves both full-resolution image content and optimized
+ * thumbnails with appropriate cache control headers.
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Advanced Search:</b> Facilitates multi-criteria searching across models, samplers,
- *   loras, and ratings, with support for pagination.</li>
- *   <li><b>Metadata Management:</b> Provides detailed technical metadata for individual images,
- *   including AI-generated tags and user ratings.</li>
- *   <li><b>Content Serving:</b> Streams physical image files to the frontend with appropriate
- *   caching headers and MIME types.</li>
- *   <li><b>Thumbnail Orchestration:</b> Serves pre-generated thumbnails or falls back to
- *   full-resolution content if a thumbnail is unavailable.</li>
- *   <li><b>File Operations:</b> Handles single-file renames and batch deletions, ensuring
- *   consistency between the file system and the database.</li>
+ *   <li><b>Advanced Search:</b> Executes filtered searches across the image library, supporting
+ *   pagination and multi-criteria filtering (model, sampler, lora, rating, etc.).</li>
+ *   <li><b>Metadata Retrieval:</b> Aggregates cached metadata and AI tags for a specific image path.</li>
+ *   <li><b>User Interactions:</b> Provides endpoints for updating image ratings and renaming files.</li>
+ *   <li><b>Batch Operations:</b> Supports the deletion of multiple images in a single request.</li>
+ *   <li><b>Content Serving:</b> Streams image files and thumbnails to the client, implementing
+ *   aggressive caching for performance.</li>
  * </ul>
  */
 @RestController
@@ -198,15 +196,14 @@ public class ImageController {
             throw new ResourceNotFoundException("Image", path);
         }
 
-        try {
-            File thumbnail = thumbnailService.getThumbnail(file);
+        File thumbnail = thumbnailService.getThumbnail(file);
 
+        try {
             if (thumbnail == null || !thumbnail.exists()) {
                 return getImageContent(path);
             }
 
             Resource resource = new UrlResource(thumbnail.toURI());
-
             return ResponseEntity.ok()
                     .contentLength(thumbnail.length())
                     .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())

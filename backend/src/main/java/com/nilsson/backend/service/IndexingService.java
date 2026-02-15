@@ -19,22 +19,22 @@ import java.util.stream.Stream;
 /**
  * Service responsible for background image indexing, library reconciliation, and real-time file system monitoring.
  * <p>
- * This service acts as the central orchestrator for synchronizing the local file system with the application's
- * database. It manages the lifecycle of image metadata and thumbnails by performing initial directory scans,
- * background indexing of metadata, and maintaining consistency through real-time file system monitoring.
+ * This service manages the discovery and synchronization of image files within the user's library. It
+ * performs deep indexing of folders, extracting metadata and generating thumbnails in parallel using
+ * virtual threads. It also implements a robust file system watcher to detect and react to changes
+ * (creations, deletions, modifications) in the currently active directory.
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Initial Indexing:</b> Scans user-defined folders to populate the database with image metadata
- *   and trigger thumbnail generation, respecting exclusion rules.</li>
- *   <li><b>Library Reconciliation:</b> Periodically verifies the database against the file system to
- *   identify and remove "ghost" records of files that have been deleted or moved externally.</li>
- *   <li><b>Real-time Monitoring:</b> Utilizes the Java {@link WatchService} to detect file creation,
- *   modification, and deletion events, ensuring the application state remains current without manual refreshes.</li>
- *   <li><b>Concurrency Management:</b> Leverages Java 21+ Virtual Threads to handle I/O-bound indexing
- *   tasks efficiently, allowing for high-throughput processing without blocking platform threads.</li>
- *   <li><b>Event Debouncing:</b> Implements a sophisticated debouncing mechanism for file system events
- *   to prevent redundant processing during rapid file operations (e.g., saving a file multiple times).</li>
+ *   <li><b>Folder Indexing:</b> Recursively scans directories to register new images and their metadata.</li>
+ *   <li><b>Library Reconciliation:</b> Periodically verifies the existence of indexed files, removing
+ *   stale records or marking them as missing.</li>
+ *   <li><b>Real-time Monitoring:</b> Utilizes the OS {@link WatchService} to provide instant updates
+ *   to the UI when files are added or removed on disk.</li>
+ *   <li><b>Batch Processing:</b> Orchestrates the extraction of metadata and generation of thumbnails
+ *   for large groups of files efficiently.</li>
+ *   <li><b>Event Debouncing:</b> Implements a delay mechanism to prevent redundant processing of
+ *   rapid-fire file system events.</li>
  * </ul>
  */
 @Service
@@ -86,7 +86,6 @@ public class IndexingService {
     public void reconcileLibrary() {
         File lastFolder = dataManager.getLastFolder();
         if (lastFolder != null && lastFolder.exists() && lastFolder.isDirectory()) {
-            logger.info("[Reconcile] Fast-scanning last folder: {}", lastFolder.getName());
             indexFolder(lastFolder);
         }
 
@@ -117,14 +116,7 @@ public class IndexingService {
                     }
 
                     if (!file.exists()) {
-                        logger.info("[Reconcile] File missing from disk: {}. Deleting record.", path);
                         imageRepo.deleteByPath(path);
-                        
-                        File thumbnail = thumbnailService.getThumbnail(file);
-                        if (thumbnail != null && thumbnail.exists()) {
-                            thumbnail.delete();
-                        }
-                        
                         removedCount.incrementAndGet();
                     } else {
                         if (imageRepo.isMissing(path)) {
@@ -144,21 +136,12 @@ public class IndexingService {
     }
 
     public void indexFolder(File folder) {
-        if (folder == null) {
-            throw new ValidationException("Folder parameter cannot be null.");
-        }
-        if (!folder.isDirectory()) {
-            throw new ValidationException("Provided path is not a directory: " + folder.getAbsolutePath());
-        }
+        if (folder == null || !folder.isDirectory()) return;
 
         String folderPath = pathService.getNormalizedAbsolutePath(folder);
         List<String> excludedPaths = dataManager.getExcludedPaths();
         for (String excluded : excludedPaths) {
-            String normalizedExcluded = excluded.replace("\\", "/");
-            if (folderPath.startsWith(normalizedExcluded)) {
-                logger.info("Skipping excluded folder: {}", folderPath);
-                return;
-            }
+            if (folderPath.startsWith(excluded.replace("\\", "/"))) return;
         }
 
         logger.info("Indexing folder: {}", folder.getName());
@@ -170,30 +153,23 @@ public class IndexingService {
                     .forEach(path -> {
                         batch.add(path.toFile());
                         if (batch.size() >= BATCH_SIZE) {
-                            processAndClearBatch(new ArrayList<>(batch));
+                            startIndexing(new ArrayList<>(batch), null);
                             batch.clear();
                         }
                     });
 
             if (!batch.isEmpty()) {
-                processAndClearBatch(batch);
+                startIndexing(batch, null);
             }
         } catch (IOException e) {
             logger.error("Failed to stream files from folder: {}", folder.getAbsolutePath(), e);
-            throw new ApplicationException("I/O error during folder indexing.", e);
         }
-    }
-
-    private void processAndClearBatch(List<File> files) {
-        if (files.isEmpty()) return;
-
-        Thread.ofVirtual().start(() -> thumbnailService.preloadCache(files));
-
-        startIndexing(files, null);
     }
 
     public void startIndexing(List<File> files, Consumer<BatchResult> onBatchResult) {
         if (files == null || files.isEmpty()) return;
+
+        thumbnailService.preloadCache(files);
 
         Runnable task = () -> {
             int total = files.size();
@@ -206,8 +182,6 @@ public class IndexingService {
                 if (onBatchResult != null) {
                     onBatchResult.accept(result);
                 }
-
-                Thread.yield();
             }
         };
         executor.submit(task);
@@ -215,25 +189,12 @@ public class IndexingService {
 
     public void startWatching(File directory, Consumer<FileChangeEvent> listener) {
         stopWatching();
-
         if (directory == null || !directory.exists() || !directory.isDirectory()) return;
-
-        String folderPath = pathService.getNormalizedAbsolutePath(directory);
-        List<String> excludedPaths = dataManager.getExcludedPaths();
-        for (String excluded : excludedPaths) {
-            String normalizedExcluded = excluded.replace("\\", "/");
-            if (folderPath.startsWith(normalizedExcluded)) {
-                logger.info("Skipping watch for excluded folder: {}", folderPath);
-                return;
-            }
-        }
 
         watchThread = new Thread(() -> watchLoop(directory, listener));
         watchThread.setDaemon(true);
         watchThread.setName("Folder-Watcher-" + directory.getName());
         watchThread.start();
-
-        logger.info("Started watching directory: {}", directory);
     }
 
     public void stopWatching() {
@@ -260,70 +221,41 @@ public class IndexingService {
             try {
                 if (watchService == null) {
                     this.watchService = FileSystems.getDefault().newWatchService();
-                    Path path = directory.toPath();
-                    path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+                    directory.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
                 }
 
-                WatchKey key;
-                try {
-                    key = watchService.take();
-                } catch (InterruptedException x) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (ClosedWatchServiceException e) {
-                    break;
-                }
-
+                WatchKey key = watchService.take();
                 long now = System.currentTimeMillis();
 
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    WatchEvent.Kind<?> kind = event.kind();
-
-                    if (kind == StandardWatchEventKinds.OVERFLOW) continue;
+                    if (event.kind() == StandardWatchEventKinds.OVERFLOW) continue;
 
                     Path fileName = (Path) event.context();
                     File file = directory.toPath().resolve(fileName).toFile();
-
                     if (!isImageFile(file)) continue;
 
-                    String eventKey = file.getAbsolutePath() + "_" + kind.name();
-
-                    if (pendingEvents.containsKey(eventKey)) {
-                        long lastTime = pendingEvents.get(eventKey);
-                        if (now - lastTime < DEBOUNCE_DELAY_MS) {
-                            continue;
-                        }
-                    }
+                    String eventKey = file.getAbsolutePath() + "_" + event.kind().name();
+                    if (pendingEvents.containsKey(eventKey) && (now - pendingEvents.get(eventKey) < DEBOUNCE_DELAY_MS))
+                        continue;
 
                     pendingEvents.put(eventKey, now);
-
                     scheduler.schedule(() -> {
                         if (pendingEvents.getOrDefault(eventKey, 0L) == now) {
                             pendingEvents.remove(eventKey);
-                            processFileSystemEvent(kind, file, listener);
+                            processFileSystemEvent(event.kind(), file, listener);
                         }
                     }, DEBOUNCE_DELAY_MS, TimeUnit.MILLISECONDS);
                 }
-
-                boolean valid = key.reset();
-                if (!valid) {
-                    logger.warn("WatchKey invalid. Directory may have been deleted or inaccessible: {}", directory);
-                    break;
-                }
-
+                if (!key.reset()) break;
             } catch (Exception e) {
-                logger.error("WatchService error for {}: {}. Retrying in {}ms...", directory, e.getMessage(), WATCH_RETRY_DELAY_MS);
                 closeWatchService();
                 try {
                     Thread.sleep(WATCH_RETRY_DELAY_MS);
                 } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
                     break;
                 }
             }
         }
-        closeWatchService();
-        logger.info("Watch loop terminated for {}", directory);
     }
 
     private void processFileSystemEvent(WatchEvent.Kind<?> kind, File file, Consumer<FileChangeEvent> listener) {
@@ -342,11 +274,8 @@ public class IndexingService {
         try {
             Map<String, String> meta = metaService.getExtractedData(file);
             long dHash = dHashService.calculateDHash(file);
-
             dataManager.cacheMetadata(file, meta, dHash);
-
             thumbnailService.getThumbnail(file);
-            logger.debug("Indexed new/modified file: {}", file.getName());
         } catch (Exception e) {
             logger.error("Error processing new file: {}", file.getName(), e);
         }
@@ -354,18 +283,7 @@ public class IndexingService {
 
     private void handleFileDeletion(File file) {
         try {
-            String path = pathService.getNormalizedAbsolutePath(file);
-
-            imageRepo.deleteByPath(path);
-            
-            File thumbnail = thumbnailService.getThumbnail(file);
-            if (thumbnail != null && thumbnail.exists()) {
-                if (thumbnail.delete()) {
-                    logger.debug("Deleted orphaned thumbnail for: {}", file.getName());
-                }
-            }
-
-            logger.debug("Deleted file from disk and DB: {}", file.getName());
+            imageRepo.deleteByPath(pathService.getNormalizedAbsolutePath(file));
         } catch (Exception e) {
             logger.error("Error processing deleted file: {}", file.getName(), e);
         }
@@ -384,27 +302,20 @@ public class IndexingService {
             try {
                 Map<String, String> meta = metaService.getExtractedData(file);
                 long dHash = dHashService.calculateDHash(file);
-
                 dataManager.cacheMetadata(file, meta, dHash);
-                int rating = dataManager.getRating(file);
-                ratingMap.put(file, rating);
-
+                ratingMap.put(file, dataManager.getRating(file));
                 metadataMap.put(file, meta);
-                thumbnailService.getThumbnail(file);
             } catch (Exception e) {
                 logger.error("Failed to index file: {}", file.getAbsolutePath(), e);
             }
         }
-
         return new BatchResult(metadataMap, ratingMap);
     }
 
     public record BatchResult(Map<File, Map<String, String>> metadata, Map<File, Integer> ratings) {
     }
 
-    public enum ChangeType {
-        CREATED, DELETED
-    }
+    public enum ChangeType {CREATED, DELETED}
 
     public record FileChangeEvent(File file, ChangeType type) {
     }
