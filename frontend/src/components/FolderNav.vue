@@ -504,7 +504,7 @@ onMounted(loadTree);
     </div>
 
     <div class="p-2 mt-auto border-top-1 border-white-alpha-10 flex justify-content-center">
-      <img :src="currentLogo" alt="ALX Logo" style="height: 60px; width: auto; object-fit: contain; opacity: 0.9;">
+      <img :src="currentLogo" alt="ALX Logo" class="nav-logo">
     </div>
 
     <CustomContextMenu ref="cm" :model="menuModel"/>
@@ -617,6 +617,13 @@ onMounted(loadTree);
 .glass-box {
   background: var(--bg-input);
   border: 1px solid var(--border-input);
+}
+
+.nav-logo {
+    width: 240px;
+    height: 120px;
+    object-fit: contain;
+    opacity: 0.9;
 }
 
 :deep(.p-tree) {

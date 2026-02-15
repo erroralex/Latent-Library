@@ -13,26 +13,47 @@ A robust, high-performance desktop asset manager designed specifically for the A
 
 ## 📸 Interface
 
-### Core Workflow
-| Library Browser | Speed Sorter ⚡ |
-|:---:|:---:|
-| <img src="frontend/src/assets/screenshots/browser_view.png" width="400" alt="Browser View"> | <img src="frontend/src/assets/screenshots/speedsorter_view.png" width="400" alt="Speed Sorter"> |
-| *Grid Gallery with Live Monitoring* | *Rapid Organization with Keyboard Shortcuts* |
+<p align="center">
+  <img src="frontend/src/assets/screenshots/hero_view.png" width="800" alt="Main Browser and Metadata Sidebar">
+  <br>
+  <i>Unified grid gallery with instant SQLite search and dynamic metadata parsing.</i>
+</p>
 
-### Metadata & Inspection
-| Metadata Sidebar | Deep Inspection |
-|:---:|:---:|
-| <img src="frontend/src/assets/screenshots/sidebar_view.png" width="400" alt="Metadata Sidebar"> | <img src="frontend/src/assets/screenshots/fullscreen_view.png" width="400" alt="Fullscreen Inspection"> |
-| *Unified Parameter Display & Ratings* | *High-Res Zoom & Pan* |
+### Rapid Organization & Inspection
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/speed_sorter.png" width="800" alt="Speed Sorter">
+  <br>
+  <i><b>Speed Sorter:</b> Rapidly categorize massive generation dumps using keyboard hotkeys.</i>
+</p>
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/comparator.png" width="800" alt="Image Comparator Slider">
+  <br>
+  <i><b>Image Comparator:</b> Pixel-peep fine details between two generations with the draggable slider.</i>
+</p>
 
 <details>
-<summary><b>View Advanced Features</b></summary>
+<summary><b>View More Features (Collections & AI Tagging)</b></summary>
 <br>
 
-| Raw Data View | Search & Filtering |
-|:---:|:---:|
-| <img src="frontend/src/assets/screenshots/raw_json.png" width="400" alt="Raw Metadata"> | <img src="frontend/src/assets/screenshots/search_view.png" width="400" alt="Search Interface"> |
-| *Underlying JSON/Parameter Blocks* | *Instant Search* |
+<p align="center">
+  <img src="frontend/src/assets/screenshots/dynamic_folders.png" width="800" alt="Smart Collections">
+  <br>
+  <i><b>Smart Collections:</b> Create dynamic, auto-populating folders based on complex metadata filters.</i>
+</p>
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/duplicate_finder.png" width="800" alt="Duplicate Finder">
+  <br>
+  <i><b>Duplicate Finder:</b> Identify and manage identical or similar generations across your entire library.</i>
+</p>
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/custom_themes.png" width="800" alt="Custom Themes">
+  <br>
+  <i>Choose between Deep Neon, Clean Light, and Dark Premium themes to suit your workspace.</i>
+</p>
 
 </details>
 

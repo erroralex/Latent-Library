@@ -12,7 +12,7 @@
     /* --- Component Backgrounds --- */
     --bg-header: rgba(0, 0, 0, 0.80);
     --bg-sidebar-left: rgba(0, 0, 0, 0.75);
-    --bg-sidebar-right: rgba(0, 0, 0, 0.75);
+    --bg-sidebar-right: rgba(0, 0, 0, 0.45);
     --bg-toolbar: rgba(0, 0, 0, 0.80);
     --bg-filmstrip: rgba(0, 0, 0, 0.75);
 
