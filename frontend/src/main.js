@@ -44,7 +44,13 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(PrimeVue)
+app.use(PrimeVue, {
+    ripple: true,
+    tooltip: {
+        showDelay: 600,
+        hideDelay: 100
+    }
+})
 app.use(ToastService)
 app.use(ConfirmationService)
 

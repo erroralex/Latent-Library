@@ -97,7 +97,7 @@ const toggleAiTags = () => {
                     :class="[ store.isTaggerOpen ? 'text-primary' : 'text-secondary' ]"
                     class="p-button-rounded p-button-text"
                     @click="toggleTagger"
-                    tooltip="Toggle Auto-Tagger"
+                    v-tooltip.bottom="'Toggle Auto-Tagger'"
                     v-if="store.viewMode === 'browser'"/>
         </div>
     </template>
@@ -114,12 +114,12 @@ const toggleAiTags = () => {
                   class="p-button-sm nav-btn"
                   :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"
                   @click="store.setViewMode('gallery')"
-                  tooltip="Gallery View"/>
+                  v-tooltip.bottom="'Gallery View'"/>
           <Button icon="pi pi-image"
                   class="p-button-sm nav-btn"
                   :class="{ 'active-nav-btn': store.viewMode === 'browser' }"
                   @click="store.setViewMode('browser')"
-                  tooltip="Browser View"/>
+                  v-tooltip.bottom="'Browser View'"/>
         </div>
 
         <div class="flex align-items-center gap-2 mr-2">
@@ -136,7 +136,7 @@ const toggleAiTags = () => {
               <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
           </span>
 
-          <div class="flex align-items-center gap-2 ml-2" title="Include AI Tags in Search">
+          <div class="flex align-items-center gap-2 ml-2" v-tooltip.bottom="'Include AI Tags in Search'">
             <InputSwitch v-model="store.includeAiTags" @change="toggleAiTags" class="ai-tags-toggle" />
             <label class="text-xs font-bold uppercase tracking-wider select-none"
                    :class="store.includeAiTags ? 'text-primary' : 'text-gray-500'">AI Tags</label>
@@ -148,6 +148,7 @@ const toggleAiTags = () => {
           <div class="flex align-items-center">
             <Button label="Model" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm"
+                    v-tooltip.bottom="'Filter by Model'"
                     @click="(e) => { refreshFilters(); modelMenu.toggle(e); }"/>
             <Menu ref="modelMenu" :model="modelItems" :popup="true" class="w-15rem"/>
 
@@ -160,6 +161,7 @@ const toggleAiTags = () => {
           <div class="flex align-items-center">
             <Button label="Sampler" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm"
+                    v-tooltip.bottom="'Filter by Sampler'"
                     @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }"/>
             <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="w-15rem"/>
 
@@ -172,6 +174,7 @@ const toggleAiTags = () => {
           <div class="flex align-items-center">
             <Button label="LoRA" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm"
+                    v-tooltip.bottom="'Filter by LoRA'"
                     @click="(e) => { refreshFilters(); loraMenu.toggle(e); }"/>
             <Menu ref="loraMenu" :model="loraItems" :popup="true" class="w-15rem"/>
 
@@ -184,6 +187,7 @@ const toggleAiTags = () => {
           <div class="flex align-items-center">
             <Button label="Stars" icon="pi pi-chevron-down" iconPos="right"
                     class="p-button-text p-button-secondary p-button-sm"
+                    v-tooltip.bottom="'Filter by Rating'"
                     @click="(e) => ratingMenu.toggle(e)"/>
             <Menu ref="ratingMenu" :model="ratingItems" :popup="true">
               <template #item="{ item, props }">
@@ -219,7 +223,7 @@ const toggleAiTags = () => {
                 :class="[ store.isSidebarOpen ? 'text-primary' : 'text-secondary' ]"
                 class="p-button-rounded p-button-text"
                 @click="toggleSidebar"
-                tooltip="Toggle Metadata"
+                v-tooltip.bottom="'Toggle Metadata'"
                 v-if="store.viewMode === 'browser'"/>
       </div>
     </template>

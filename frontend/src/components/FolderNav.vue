@@ -472,7 +472,8 @@ onMounted(loadTree);
       <div class="flex align-items-center gap-2">
         <span class="text-gradient">Library</span>
       </div>
-      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white" @click="openSettings"/>
+      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white"
+              v-tooltip.bottom="'Open Settings'" @click="openSettings"/>
     </div>
 
     <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
@@ -518,22 +519,22 @@ onMounted(loadTree);
           <div class="flex flex-column gap-3">
             <div class="flex flex-wrap gap-2">
               <Button label="Open Data Folder" icon="pi pi-folder-open" class="p-button-outlined"
-                      @click="openDataFolder"/>
+                      v-tooltip.bottom="'Open Application Data Directory'" @click="openDataFolder"/>
               <Button label="Clear Entire Database" icon="pi pi-database" class="p-button-danger p-button-outlined"
-                      @click="clearDatabase"/>
+                      v-tooltip.bottom="'Wipe all indexed data and settings'" @click="clearDatabase"/>
               <Button label="Full Re-index" icon="pi pi-refresh" class="p-button-warning p-button-outlined"
-                      @click="reIndexAll"/>
+                      v-tooltip.bottom="'Clear and re-scan library'" @click="reIndexAll"/>
               <Button label="Delete Tag Models" icon="pi pi-tags" class="p-button-danger p-button-outlined"
-                      @click="clearTagModels"/>
+                      v-tooltip.bottom="'Remove downloaded AI models'" @click="clearTagModels"/>
             </div>
 
             <div class="flex flex-wrap gap-2">
               <Button label="Clear AI Tags" icon="pi pi-tag" class="p-button-danger p-button-outlined"
-                      @click="clearAiTags"/>
+                      v-tooltip.bottom="'Remove all auto-generated tags'" @click="clearAiTags"/>
               <Button label="Clear Unorganized" icon="pi pi-trash" class="p-button-danger p-button-outlined"
-                      @click="clearUnorganized"/>
+                      v-tooltip.bottom="'Remove images not in collections or rated'" @click="clearUnorganized"/>
               <Button label="Clear Thumbnails" icon="pi pi-images" class="p-button-warning p-button-outlined"
-                      @click="clearThumbnails"/>
+                      v-tooltip.bottom="'Delete all cached thumbnails'" @click="clearThumbnails"/>
             </div>
           </div>
         </div>
@@ -545,9 +546,9 @@ onMounted(loadTree);
           <div class="flex gap-2 mb-3">
             <div class="p-inputgroup flex-grow-1">
               <InputText v-model="newExcludedPath" placeholder="Enter path to exclude..." class="glass-input"/>
-              <Button icon="pi pi-folder-open" @click="selectExcludedFolder"/>
+              <Button icon="pi pi-folder-open" v-tooltip.bottom="'Browse for folder'" @click="selectExcludedFolder"/>
             </div>
-            <Button icon="pi pi-plus" @click="addExcludedPath"/>
+            <Button icon="pi pi-plus" v-tooltip.bottom="'Add to exclusion list'" @click="addExcludedPath"/>
           </div>
 
           <div class="glass-box p-2 border-round" style="max-height: 200px; overflow-y: auto;">
@@ -555,7 +556,7 @@ onMounted(loadTree);
                  class="flex justify-content-between align-items-center p-2 hover:surface-white-alpha-10 border-round">
               <span class="text-sm text-white">{{ path }}</span>
               <Button icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                      @click="removeExcludedPath(path)"/>
+                      v-tooltip.left="'Remove exclusion'" @click="removeExcludedPath(path)"/>
             </div>
             <div v-if="excludedPaths.length === 0" class="text-center text-gray-500 text-sm p-2">No excluded paths</div>
           </div>
