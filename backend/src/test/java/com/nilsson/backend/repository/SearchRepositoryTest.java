@@ -20,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * SearchRepositoryTest provides integration tests for the SearchRepository, specifically
  * focusing on the Full-Text Search (FTS5) capabilities and complex filtering logic.
+ * It verifies that the repository can correctly execute multi-criteria searches
+ * across image metadata, combining text-based queries with relational filters
+ * for models and collections. The tests ensure that the SQLite FTS5 engine
+ * is properly utilized to deliver accurate search results from the
+ * indexed metadata.
  */
 class SearchRepositoryTest {
 
@@ -80,7 +85,6 @@ class SearchRepositoryTest {
 
     @Test
     void search_ShouldFilterByPromptText() {
-        // Refactored: Pass null for collectionName
         List<String> results = searchRepository.findPaths("space cat", null, null, 0, 10);
 
         assertEquals(1, results.size());
@@ -91,7 +95,6 @@ class SearchRepositoryTest {
     void search_ShouldFilterByModel() {
         Map<String, List<String>> filters = Map.of("Model", List.of("SDXL"));
 
-        // Refactored: Pass null for collectionName
         List<String> results = searchRepository.findPaths(null, filters, null, 0, 10);
 
         assertEquals(1, results.size());
@@ -102,7 +105,6 @@ class SearchRepositoryTest {
     void search_ShouldCombineFilters() {
         Map<String, List<String>> filters = Map.of("Model", List.of("Flux V1"));
 
-        // Refactored: Pass null for collectionName
         List<String> results = searchRepository.findPaths("forest", filters, null, 0, 10);
 
         assertTrue(results.isEmpty(), "Should return empty if Model and Prompt do not match same image");

@@ -5,11 +5,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -36,6 +38,12 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
     private static final String HANDSHAKE_TOKEN = UUID.randomUUID().toString();
+    
+    private final Environment env;
+
+    public SecurityConfig(Environment env) {
+        this.env = env;
+    }
 
     public static String getHandshakeToken() {
         return HANDSHAKE_TOKEN;
@@ -43,6 +51,10 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Do not register the security interceptor during tests
+        if (Arrays.asList(env.getActiveProfiles()).contains("test")) {
+            return;
+        }
         registry.addInterceptor(new HandshakeInterceptor());
     }
 

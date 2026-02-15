@@ -7,6 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -43,10 +44,13 @@ public class DatabaseConfig {
     @Value("${app.data.dir:.}")
     private String appDataDir;
 
+    @Value("${spring.datasource.url:#{null}}")
+    private String overrideUrl;
+
     @Bean(destroyMethod = "close")
     @Primary
     public DataSource dataSource() {
-        String jdbcUrl = resolvePortableDbUrl();
+        String jdbcUrl = (overrideUrl != null && !overrideUrl.isBlank()) ? overrideUrl : resolvePortableDbUrl();
         logger.info("Initializing HikariDataSource with URL: {}", jdbcUrl);
 
         HikariConfig config = new HikariConfig();
@@ -64,6 +68,7 @@ public class DatabaseConfig {
     }
 
     @Bean(initMethod = "migrate")
+    @ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "true", matchIfMissing = true)
     public Flyway flyway(DataSource dataSource) {
         logger.info("Configuring Flyway migrations...");
         return Flyway.configure()
