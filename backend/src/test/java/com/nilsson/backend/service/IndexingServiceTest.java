@@ -73,12 +73,12 @@ class IndexingServiceTest {
         assertTrue(completed, "Indexing task did not complete in time");
 
         verify(dataManager, atLeastOnce()).cacheMetadata(eq(imageFile), any(), anyLong());
-        verify(thumbnailService, atLeastOnce()).getThumbnail(eq(imageFile));
+        // Updated verification: startIndexing now calls preloadCache instead of getThumbnail directly
+        verify(thumbnailService, atLeastOnce()).preloadCache(anyList());
     }
 
     @Test
     void reconcileLibrary_ShouldRemoveGhostRecords(@TempDir Path tempDir) {
-        // Create a real directory but a non-existent file inside it
         File existingDir = tempDir.toFile();
         String ghostPath = new File(existingDir, "ghost.png").getAbsolutePath().replace("\\", "/");
         
@@ -122,7 +122,6 @@ class IndexingServiceTest {
         } catch (InterruptedException e) {
         }
 
-        // Should mark as missing, NOT delete
         verify(imageRepo).setMissing(missingFolderPath, true);
         verify(imageRepo, never()).deleteByPath(anyString());
     }

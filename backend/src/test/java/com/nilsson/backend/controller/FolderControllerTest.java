@@ -5,10 +5,13 @@ import com.nilsson.backend.service.UserDataManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.util.List;
 
@@ -19,21 +22,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * FolderControllerTest is an integration test suite for the FolderController, utilizing Spring's MockMvc
- * to verify the directory navigation and pinning API endpoints. It ensures that the controller correctly
- * interfaces with the file system to list root drives and child directories, while also validating the
- * logic for pinning and unpinning folders. The tests confirm that the API handles path resolution,
- * existence checks, and directory validation, returning the expected JSON structures and HTTP status codes.
+ * FolderControllerTest provides integration tests for the FolderController, verifying the
+ * REST API endpoints for file system navigation and folder pinning. It ensures that
+ * the application can correctly list system root drives, retrieve subdirectories
+ * for a given path, and manage user-pinned folders. The tests use MockMvc to
+ * simulate HTTP requests and verify the controller's response status and
+ * JSON payload structure.
  */
-@WebMvcTest(FolderController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class FolderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
     @MockBean
     private UserDataManager dataManager;
+
     @MockBean
     private PathService pathService;
+
+    @MockBean
+    private DataSource dataSource;
 
     @Test
     @DisplayName("GET /api/folders/roots should return system root drives")

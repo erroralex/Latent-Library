@@ -53,6 +53,7 @@ const menuModel = ref([]);
 const showSettings = ref(false);
 const excludedPaths = ref([]);
 const newExcludedPath = ref('');
+const appVersion = ref('0.0.1-SNAPSHOT');
 
 const currentTheme = ref('neon');
 const themeOptions = ref([
@@ -311,8 +312,13 @@ const openSettings = async () => {
   try {
     const res = await api.get('/system/excluded-paths');
     excludedPaths.value = res.data;
+
+    const verRes = await api.get('/system/version');
+    if (verRes.data && verRes.data.version) {
+        appVersion.value = verRes.data.version;
+    }
   } catch (e) {
-    console.error("Failed to load excluded paths", e);
+    console.error("Failed to load settings data", e);
   }
 };
 
@@ -560,6 +566,11 @@ onMounted(loadTree);
             </div>
             <div v-if="excludedPaths.length === 0" class="text-center text-gray-500 text-sm p-2">No excluded paths</div>
           </div>
+        </div>
+
+        <div class="mt-2 pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center">
+            <span class="text-xs text-gray-500 font-mono uppercase tracking-widest">AI Toolbox Desktop</span>
+            <span class="text-xs text-gray-500 font-mono">v{{ appVersion }}</span>
         </div>
       </div>
     </Dialog>

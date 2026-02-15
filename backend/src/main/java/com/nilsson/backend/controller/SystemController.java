@@ -57,6 +57,7 @@ public class SystemController {
     private final IndexingService indexingService;
     private final DatabaseService databaseService;
     private final String appDataDir;
+    private final String version;
 
     public SystemController(ConfigurableApplicationContext context,
                             FtsService ftsService,
@@ -64,7 +65,8 @@ public class SystemController {
                             UserDataManager userDataManager,
                             IndexingService indexingService,
                             DatabaseService databaseService,
-                            @Value("${app.data.dir:.}") String appDataDir) {
+                            @Value("${app.data.dir:.}") String appDataDir,
+                            @Value("${project.version:0.0.1-SNAPSHOT}") String version) {
         this.context = context;
         this.ftsService = ftsService;
         this.pathService = pathService;
@@ -72,6 +74,7 @@ public class SystemController {
         this.indexingService = indexingService;
         this.databaseService = databaseService;
         this.appDataDir = appDataDir;
+        this.version = version;
     }
 
     @PostMapping("/shutdown")
@@ -90,6 +93,11 @@ public class SystemController {
         }).start();
 
         return ResponseEntity.ok("Shutting down");
+    }
+
+    @GetMapping("/version")
+    public ResponseEntity<Map<String, String>> getVersion() {
+        return ResponseEntity.ok(Map.of("version", version));
     }
 
     @PostMapping("/open-folder")

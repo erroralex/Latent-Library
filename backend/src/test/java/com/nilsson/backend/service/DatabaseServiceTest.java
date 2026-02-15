@@ -20,6 +20,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * DatabaseServiceTest verifies the core database infrastructure and maintenance operations.
+ * It ensures that the application's SQLite database is correctly initialized with the
+ * required schema via Flyway migrations and that maintenance tasks like clearing
+ * all application data are performed accurately across all tables. The tests
+ * also verify the reliability of the connection pooling mechanism provided
+ * by HikariCP, ensuring that valid database connections are consistently
+ * available for application use.
  */
 class DatabaseServiceTest {
 
@@ -39,7 +45,6 @@ class DatabaseServiceTest {
         config.setPoolName("TestPool");
         this.dataSource = new HikariDataSource(config);
 
-        // Run migrations manually for test
         Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
