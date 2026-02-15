@@ -48,8 +48,8 @@ function createWindow() {
     if (!backendPort) return;
 
     mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 800,
+        width: 1600,
+        height: 900,
         title: "AI Toolbox",
         icon: path.join(__dirname, '../frontend/src/assets/icon.png'),
         frame: false,
