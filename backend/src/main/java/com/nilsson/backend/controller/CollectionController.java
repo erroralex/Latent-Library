@@ -2,6 +2,7 @@ package com.nilsson.backend.controller;
 
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
+import com.nilsson.backend.model.CollectionDTO;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.PathService;
@@ -50,8 +51,18 @@ public class CollectionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<String>> getAllCollections() {
-        return ResponseEntity.ok(dataManager.getCollections());
+    public ResponseEntity<List<CollectionDTO>> getAllCollections() {
+        List<String> names = dataManager.getCollections();
+        List<CollectionDTO> dtos = names.stream().map(name -> {
+            CreateCollectionRequest details = dataManager.getCollectionDetails(name).orElseThrow();
+            List<String> previews = dataManager.getFilesFromCollection(name).stream()
+                    .limit(4)
+                    .map(pathService::getNormalizedAbsolutePath)
+                    .collect(Collectors.toList());
+            return new CollectionDTO(name, details.isSmart(), previews);
+        }).collect(Collectors.toList());
+        
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{name}")

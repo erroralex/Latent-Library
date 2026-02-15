@@ -1,3 +1,12 @@
+/**
+ * @file main.js
+ * @description The main entry point for the Electron application, responsible for lifecycle management and backend orchestration.
+ *
+ * This script manages the creation of the main browser window and the lifecycle of the Spring Boot
+ * backend process. It handles the secure handshake between Electron and the backend, provides
+ * IPC handlers for system-level operations (like folder selection), and ensures a clean
+ * shutdown of all processes when the application is closed.
+ */
 const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
 const {spawn} = require('child_process');
@@ -12,25 +21,27 @@ let handshakeToken = null;
 const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
 
 function getBackendPaths() {
-    let jarPath, workingDir, portFile, appDataDir;
+    let javaExe, jarPath, workingDir, appDataDir;
 
     if (app.isPackaged) {
-        jarPath = path.join(process.resourcesPath, 'backend', JAR_NAME);
-        workingDir = path.join(process.resourcesPath, 'backend');
+        javaExe = path.join(process.resourcesPath, 'runtime', 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+        jarPath = path.join(process.resourcesPath, 'runtime', 'app', JAR_NAME);
+        workingDir = path.join(process.resourcesPath, 'runtime', 'app');
         appDataDir = path.dirname(app.getPath('exe'));
     } else {
+        javaExe = 'java';
         jarPath = path.join(__dirname, '../backend/target', JAR_NAME);
         workingDir = path.join(__dirname, '../backend');
         appDataDir = workingDir;
     }
-    
+
     const dataDir = path.join(appDataDir, 'data');
     if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+        fs.mkdirSync(dataDir, {recursive: true});
     }
-    
-    portFile = path.join(dataDir, 'port.txt');
-    return { jarPath, workingDir, portFile, appDataDir };
+
+    const portFile = path.join(dataDir, 'port.txt');
+    return {javaExe, jarPath, workingDir, portFile, appDataDir};
 }
 
 function createWindow() {
@@ -46,7 +57,6 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
-            // Pass token synchronously via arguments
             additionalArguments: [`--handshake-token=${handshakeToken}`]
         },
         autoHideMenuBar: true,
@@ -57,27 +67,31 @@ function createWindow() {
     mainWindow.show();
 
     mainWindow.loadURL(`http://localhost:${backendPort}`);
-    
+
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
 }
 
 function startBackend() {
-    const { jarPath, workingDir, portFile, appDataDir } = getBackendPaths();
+    const {javaExe, jarPath, workingDir, portFile, appDataDir} = getBackendPaths();
 
     if (fs.existsSync(portFile)) {
-        try { fs.unlinkSync(portFile); } catch (e) {}
+        try {
+            fs.unlinkSync(portFile);
+        } catch (e) {
+        }
     }
 
-    backendProcess = spawn('java', [
+    console.log(`Starting backend with: ${javaExe} -jar ${jarPath}`);
+
+    backendProcess = spawn(javaExe, [
         '-jar', jarPath,
         `--app.data.dir=${appDataDir}`
     ], {
         cwd: workingDir
     });
 
-    // Pipe backend output to the main process console
     backendProcess.stdout.on('data', (data) => {
         console.log(`[Backend]: ${data}`);
     });
@@ -94,7 +108,7 @@ function startBackend() {
                 if (parts.length === 2) {
                     backendPort = parseInt(parts[0]);
                     handshakeToken = parts[1];
-                    console.log(`Backend detected on port: ${backendPort} with token.`);
+                    console.log(`Backend detected on port: ${backendPort}`);
                     clearInterval(pollInterval);
                     createWindow();
                 }
@@ -106,7 +120,7 @@ function startBackend() {
 
     setTimeout(() => {
         if (!backendPort) {
-            console.error("Backend failed to start or write port file within 30s");
+            console.error("Backend failed to start within 30s");
             clearInterval(pollInterval);
         }
     }, 30000);
@@ -167,7 +181,8 @@ function killBackendProcess() {
             try {
                 const {execSync} = require('child_process');
                 execSync(`taskkill /pid ${backendProcess.pid} /f /t`);
-            } catch (e) {}
+            } catch (e) {
+            }
         } else {
             backendProcess.kill();
         }

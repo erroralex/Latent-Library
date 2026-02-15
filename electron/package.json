@@ -18,9 +18,18 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
+      "target": "portable",
       "icon": "build/icon.ico"
     },
+    "extraResources": [
+      {
+        "from": "../backend/target/dist/AIToolbox",
+        "to": "runtime",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "files": [
       "**/*",
       "!dist/*"

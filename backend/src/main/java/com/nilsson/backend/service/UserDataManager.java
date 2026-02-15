@@ -13,6 +13,7 @@ import com.nilsson.backend.repository.SearchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
 public class UserDataManager {
 
     private static final Logger log = LoggerFactory.getLogger(UserDataManager.class);
-    private static final int HASH_CHUNK_SIZE = 64 * 1024; // 64KB
+    private static final int HASH_CHUNK_SIZE = 64 * 1024;
 
     private final DatabaseService db;
     private final JsonSettingsService settingsService;
@@ -230,29 +231,36 @@ public class UserDataManager {
         }
     }
 
+    /**
+     * Renames a file on disk and updates the database atomically.
+     * Uses a DB-First Intent pattern: The database is updated first within a transaction.
+     * If the physical file move fails, the transaction is rolled back, keeping the DB in sync.
+     */
+    @Transactional
     public void renameFile(File file, String newName) {
         String oldPath = pathService.getNormalizedAbsolutePath(file);
-        String oldName = file.getName();
-
-        File newFile = fileSystemService.renameFile(file, newName);
+        
+        File parent = file.getParentFile();
+        File newFile = new File(parent, newName);
         String newPath = pathService.getNormalizedAbsolutePath(newFile);
+
+        if (newFile.exists()) {
+            throw new ValidationException("A file with that name already exists in the destination.");
+        }
 
         try {
             imageRepo.updatePath(oldPath, newPath);
-            log.info("Successfully renamed file and updated DB: {} -> {}", oldPath, newPath);
+            log.debug("Database intent updated: {} -> {}", oldPath, newPath);
         } catch (Exception e) {
-            log.error("Database update failed after file rename. Attempting rollback on disk...", e);
+            throw new ApplicationException("Failed to update database record for rename.", e);
+        }
 
-            try {
-                fileSystemService.renameFile(newFile, oldName);
-                log.info("Rollback successful: File renamed back to {}", oldName);
-            } catch (Exception rollbackEx) {
-                log.error("CRITICAL DESYNC ERROR: Failed to rollback file rename on disk. " +
-                        "File is now at {} but DB still points to {}.", newPath, oldPath, rollbackEx);
-            }
-
-            throw new ApplicationException("Failed to update database after renaming file. " +
-                    "The operation was rolled back if possible.", e);
+        try {
+            fileSystemService.renameFile(file, newName);
+            log.info("Successfully renamed file on disk and DB: {} -> {}", oldPath, newPath);
+        } catch (Exception e) {
+            log.error("Physical file rename failed. Rolling back database transaction...", e);
+            throw new ApplicationException("Failed to rename file on disk. Database changes have been rolled back.", e);
         }
     }
 
@@ -269,19 +277,15 @@ public class UserDataManager {
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
             
             if (!existingPaths.isEmpty()) {
-                // Check if the original file still exists on disk
                 String oldPath = existingPaths.get(0);
                 File oldFile = pathService.resolve(oldPath);
                 
                 if (!oldFile.exists()) {
-                    // Original file is gone, this is a MOVE or RENAME
                     log.info("Detected file move: {} -> {}", oldPath, path);
                     imageRepo.updatePath(oldPath, path);
                     return imageRepo.getIdByPath(path);
                 } else {
-                    // Original file still exists, this is a COPY
                     log.debug("Detected file copy: {} and {} share hash {}", oldPath, path, hash);
-                    // Fall through to create a new record
                 }
             }
 
