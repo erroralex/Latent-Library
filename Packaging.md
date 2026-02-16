@@ -79,7 +79,7 @@ Package everything (Frontend + Backend JAR + Custom JRE) into a single `.exe`.
 1.  **Right-click** your Terminal/PowerShell icon and select **"Run as Administrator"**.
 2.  Navigate to the **`electron`** directory:
     ```powershell
-    cd C:\Path\To\AIToolbox-Web\electron
+    cd C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\electron
     ```
 3.  Install dependencies and build:
     ```powershell
