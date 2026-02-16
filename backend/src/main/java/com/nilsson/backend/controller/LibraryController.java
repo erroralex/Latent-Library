@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
@@ -14,10 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * REST Controller for library-wide management, folder scanning, and indexing orchestration.
@@ -55,7 +61,10 @@ public class LibraryController {
     }
 
     @PostMapping("/scan")
-    public ResponseEntity<List<ImageDTO>> scanFolder(@RequestParam String path) {
+    public ResponseEntity<List<ImageDTO>> scanFolder(
+            @RequestParam String path,
+            @RequestParam(defaultValue = "false") boolean recursive) {
+        
         File folder = pathService.resolve(path);
         if (!folder.exists() || !folder.isDirectory()) {
             throw new ResourceNotFoundException("Folder", path);
@@ -76,17 +85,35 @@ public class LibraryController {
         }
 
         if (!isExcluded) {
-            indexingService.indexFolder(folder);
+            indexingService.indexFolder(folder, recursive);
         }
 
-        File[] files = folder.listFiles((dir, name) -> {
-            String lower = name.toLowerCase();
-            return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp");
-        });
+        List<File> files = new ArrayList<>();
+        if (recursive) {
+            try (Stream<Path> stream = Files.walk(folder.toPath())) {
+                stream.filter(p -> !Files.isDirectory(p))
+                      .filter(p -> {
+                          String pStr = pathService.getNormalizedAbsolutePath(p.toFile());
+                          for (String excluded : excludedPaths) {
+                              if (pStr.startsWith(excluded.replace("\\", "/"))) return false;
+                          }
+                          return true;
+                      })
+                      .map(Path::toFile)
+                      .filter(this::isImageFile)
+                      .forEach(files::add);
+            } catch (IOException e) {
+                logger.error("Failed to walk directory recursively: {}", folderPath, e);
+                throw new ApplicationException("Failed to scan subfolders. Please check file permissions.", e);
+            }
+        } else {
+            File[] directFiles = folder.listFiles((dir, name) -> isImageFile(new File(dir, name)));
+            if (directFiles != null) {
+                files.addAll(Arrays.asList(directFiles));
+            }
+        }
 
-        if (files == null) return ResponseEntity.ok(List.of());
-
-        List<ImageDTO> imageDTOs = Arrays.stream(files)
+        List<ImageDTO> imageDTOs = files.stream()
                 .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()))
                 .map(file -> {
                     int rating = userDataManager.getRating(file);
@@ -95,10 +122,15 @@ public class LibraryController {
                         Map<String, String> meta = userDataManager.getCachedMetadata(file);
                         model = meta.getOrDefault("Model", "");
                     }
-                    return new ImageDTO(file.getAbsolutePath(), rating, model);
+                    return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
                 })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(imageDTOs);
+    }
+
+    private boolean isImageFile(File file) {
+        String lower = file.getName().toLowerCase();
+        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp");
     }
 }

@@ -27,7 +27,6 @@ import CustomContextMenu from './CustomContextMenu.vue';
 import {useToast} from 'primevue/usetoast';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import ConfirmDialog from 'primevue/confirmdialog';
 import {useConfirm} from 'primevue/useconfirm';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
@@ -478,7 +477,6 @@ onMounted(loadTree);
 <template>
   <div class="folder-nav-glass h-full flex flex-column"
        style="width: 290px; min-width: 300px;">
-    <ConfirmDialog></ConfirmDialog>
 
     <div
         class="p-3 font-bold text-lg border-bottom-1 border-white-alpha-10 flex align-items-center justify-content-between"

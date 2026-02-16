@@ -46,6 +46,7 @@ export const useBrowserStore = defineStore('browser', {
         navRefreshKey: 0,
         collectionToEdit: null,
         includeAiTags: true,
+        recursiveView: false,
         page: 0,
         pageSize: 50,
         hasMore: true,
@@ -144,7 +145,10 @@ export const useBrowserStore = defineStore('browser', {
 
             try {
                 const response = await api.post('/library/scan', null, {
-                    params: {path}
+                    params: {
+                        path,
+                        recursive: this.recursiveView
+                    }
                 });
                 this.files = response.data;
                 this.searchQuery = '';
@@ -161,6 +165,13 @@ export const useBrowserStore = defineStore('browser', {
                 console.error('Failed to load folder:', error);
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async toggleRecursiveView() {
+            this.recursiveView = !this.recursiveView;
+            if (this.lastFolderPath) {
+                await this.loadFolder(this.lastFolderPath);
             }
         },
 
