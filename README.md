@@ -34,7 +34,7 @@ A robust, high-performance desktop asset manager designed specifically for the A
 </p>
 
 <details>
-<summary><b>View More Features (Collections & AI Tagging)</b></summary>
+<summary><b>View More Features (Collections, Duplicate Detective & Custom Themes)</b></summary>
 <br>
 
 <p align="center">
@@ -46,7 +46,7 @@ A robust, high-performance desktop asset manager designed specifically for the A
 <p align="center">
   <img src="frontend/src/assets/screenshots/duplicate_finder.png" width="800" alt="Duplicate Finder">
   <br>
-  <i><b>Duplicate Finder:</b> Identify and manage identical or similar generations across your entire library.</i>
+  <i><b>Duplicate Detective:</b> Identify and manage identical or similar generations across your entire library.</i>
 </p>
 
 <p align="center">
