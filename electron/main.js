@@ -27,7 +27,13 @@ function getBackendPaths() {
         javaExe = path.join(process.resourcesPath, 'runtime', 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
         jarPath = path.join(process.resourcesPath, 'runtime', 'app', JAR_NAME);
         workingDir = path.join(process.resourcesPath, 'runtime', 'app');
-        appDataDir = path.dirname(app.getPath('exe'));
+        
+        // CRITICAL FIX: Use PORTABLE_EXECUTABLE_DIR if available (Portable Apps), otherwise fallback to exe dir
+        if (process.env.PORTABLE_EXECUTABLE_DIR) {
+            appDataDir = process.env.PORTABLE_EXECUTABLE_DIR;
+        } else {
+            appDataDir = path.dirname(app.getPath('exe'));
+        }
     } else {
         javaExe = 'java';
         jarPath = path.join(__dirname, '../backend/target', JAR_NAME);

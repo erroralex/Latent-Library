@@ -1,38 +1,44 @@
 {
-  "name": "aitoolbox-electron",
+  "name": "ai-toolbox",
   "version": "1.0.0",
+  "description": "AI Toolbox Desktop",
   "main": "main.js",
+  "author": "Alexander Nilsson",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --dir",
     "dist": "electron-builder"
-  },
-  "devDependencies": {
-    "electron": "^31.3.1",
-    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.nilsson.aitoolbox",
-    "productName": "AIToolbox",
+    "productName": "AI Toolbox",
     "directories": {
       "output": "dist"
     },
     "win": {
       "target": "portable",
-      "icon": "build/icon.ico"
+      "icon": "../frontend/src/assets/icon.png"
     },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
     "extraResources": [
       {
-        "from": "../backend/target/dist/AIToolbox",
+        "from": "runtime",
         "to": "runtime",
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "../backend/target/backend-0.0.1-SNAPSHOT.jar",
+        "to": "runtime/app/backend-0.0.1-SNAPSHOT.jar"
       }
-    ],
-    "files": [
-      "**/*",
-      "!dist/*"
     ]
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
   }
 }
