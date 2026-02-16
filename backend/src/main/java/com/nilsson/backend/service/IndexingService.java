@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,7 +87,7 @@ public class IndexingService {
     public void reconcileLibrary() {
         File lastFolder = dataManager.getLastFolder();
         if (lastFolder != null && lastFolder.exists() && lastFolder.isDirectory()) {
-            indexFolder(lastFolder);
+            indexFolder(lastFolder, false);
         }
 
         Runnable lazyReconcileTask = () -> {
@@ -136,6 +137,10 @@ public class IndexingService {
     }
 
     public void indexFolder(File folder) {
+        indexFolder(folder, false);
+    }
+
+    public void indexFolder(File folder, boolean recursive) {
         if (folder == null || !folder.isDirectory()) return;
 
         String folderPath = pathService.getNormalizedAbsolutePath(folder);
@@ -144,26 +149,59 @@ public class IndexingService {
             if (folderPath.startsWith(excluded.replace("\\", "/"))) return;
         }
 
-        logger.info("Indexing folder: {}", folder.getName());
+        logger.info("Indexing folder: {} (Recursive: {})", folder.getName(), recursive);
 
-        try (Stream<Path> stream = Files.list(folder.toPath())) {
-            List<File> batch = new ArrayList<>(BATCH_SIZE);
+        Runnable scanTask = () -> {
+            try {
+                List<File> batch = new ArrayList<>(BATCH_SIZE);
 
-            stream.filter(path -> isImageFile(path.toFile()))
-                    .forEach(path -> {
-                        batch.add(path.toFile());
-                        if (batch.size() >= BATCH_SIZE) {
-                            startIndexing(new ArrayList<>(batch), null);
-                            batch.clear();
+                if (recursive) {
+                    Files.walkFileTree(folder.toPath(), new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                            if (isImageFile(file.toFile())) {
+                                batch.add(file.toFile());
+                                if (batch.size() >= BATCH_SIZE) {
+                                    startIndexing(new ArrayList<>(batch), null);
+                                    batch.clear();
+                                }
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                            String dirPath = pathService.getNormalizedAbsolutePath(dir.toFile());
+                            for (String excluded : excludedPaths) {
+                                if (dirPath.startsWith(excluded.replace("\\", "/"))) {
+                                    return FileVisitResult.SKIP_SUBTREE;
+                                }
+                            }
+                            return FileVisitResult.CONTINUE;
                         }
                     });
+                } else {
+                    try (Stream<Path> stream = Files.list(folder.toPath())) {
+                        stream.filter(path -> isImageFile(path.toFile()))
+                                .forEach(path -> {
+                                    batch.add(path.toFile());
+                                    if (batch.size() >= BATCH_SIZE) {
+                                        startIndexing(new ArrayList<>(batch), null);
+                                        batch.clear();
+                                    }
+                                });
+                    }
+                }
 
-            if (!batch.isEmpty()) {
-                startIndexing(batch, null);
+                if (!batch.isEmpty()) {
+                    startIndexing(batch, null);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to scan folder: {}", folder.getAbsolutePath(), e);
             }
-        } catch (IOException e) {
-            logger.error("Failed to stream files from folder: {}", folder.getAbsolutePath(), e);
-        }
+        };
+
+        executor.submit(scanTask);
     }
 
     public void startIndexing(List<File> files, Consumer<BatchResult> onBatchResult) {

@@ -20,6 +20,7 @@
 import {RouterView, useRouter, useRoute} from 'vue-router'
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 import {ref, onMounted} from "vue";
 import FolderNav from '@/components/FolderNav.vue';
 import SystemError from '@/components/SystemError.vue';
@@ -96,6 +97,7 @@ const closeWindow = () => {
 
   <div v-else class="layout-wrapper h-screen flex flex-column overflow-hidden">
     <Toast position="bottom-right"/>
+    <ConfirmDialog></ConfirmDialog>
 
     <div v-if="store.isLoading && !store.files.length"
          class="loading-overlay flex align-items-center justify-content-center">

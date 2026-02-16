@@ -48,6 +48,11 @@ public class TextParamsParser {
         if (trimmedText.startsWith("{")) {
             try {
                 JsonNode root = mapper.readTree(trimmedText);
+
+                if (root.has("sui_image_params")) {
+                    return new SwarmUIStrategy().parse(trimmedText);
+                }
+
                 Map<String, String> results = new HashMap<>();
                 ComfyUIStrategy strategy = new ComfyUIStrategy();
 

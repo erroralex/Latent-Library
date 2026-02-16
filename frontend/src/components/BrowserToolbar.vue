@@ -27,9 +27,11 @@ import Slider from 'primevue/slider';
 import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
 import InputSwitch from 'primevue/inputswitch';
+import {useConfirm} from 'primevue/useconfirm';
 import {ref, computed} from 'vue';
 
 const store = useBrowserStore();
+const confirm = useConfirm();
 
 const modelMenu = ref();
 const samplerMenu = ref();
@@ -87,6 +89,22 @@ const toggleAiTags = () => {
     store.toggleIncludeAiTags();
 };
 
+const toggleRecursive = () => {
+    if (!store.recursiveView) {
+        confirm.require({
+            message: 'Enabling recursive view will index and display all images in all subfolders. For large directories, this may take some time. Continue?',
+            header: 'Include Subfolders',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClass: 'p-button-warning',
+            accept: () => {
+                store.toggleRecursiveView();
+            }
+        });
+    } else {
+        store.toggleRecursiveView();
+    }
+};
+
 </script>
 
 <template>
@@ -109,7 +127,15 @@ const toggleAiTags = () => {
           <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem"/>
         </div>
 
-        <div class="flex gap-1 mr-2">
+        <div class="flex gap-1 mr-2 align-items-center">
+          <div class="flex align-items-center gap-1 mr-2 border-right-1 border-white-alpha-10 pr-2" v-if="store.lastFolderPath">
+              <Button icon="pi pi-sitemap"
+                      class="p-button-sm nav-btn"
+                      :class="{ 'active-nav-btn': store.recursiveView }"
+                      v-tooltip.bottom="'Include Subfolders'"
+                      @click="toggleRecursive"/>
+          </div>
+
           <Button icon="pi pi-th-large"
                   class="p-button-sm nav-btn"
                   :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"

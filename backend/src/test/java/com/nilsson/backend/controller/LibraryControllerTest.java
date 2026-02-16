@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 import java.io.File;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,6 +55,6 @@ class LibraryControllerTest {
                         .param("path", path))
                 .andExpect(status().isOk());
 
-        verify(indexingService).indexFolder(any(File.class));
+        verify(indexingService).indexFolder(any(File.class), eq(false));
     }
 }
