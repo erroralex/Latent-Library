@@ -13,6 +13,7 @@
  * - **Native Dialogs:** Provides a wrapper for the system folder selection dialog.
  * - **Window Controls:** Exposes methods for the custom title bar to minimize,
  *   maximize, and close the application window.
+ * - **External Links:** Allows opening URLs in the user's default browser via IPC.
  */
 const {contextBridge, ipcRenderer} = require('electron');
 
@@ -21,6 +22,7 @@ const handshakeToken = tokenArg ? tokenArg.split('=')[1] : null;
 
 contextBridge.exposeInMainWorld('electronAPI', {
     selectFolder: () => ipcRenderer.invoke('dialog:openDirectory'),
+    openExternal: (url) => ipcRenderer.send('open-external-link', url),
     getHandshakeToken: () => handshakeToken
 });
 

@@ -464,6 +464,14 @@ const removeExcludedPath = async (path) => {
   }
 };
 
+const openLink = (url) => {
+  if (window.electronAPI) {
+    window.electronAPI.openExternal(url);
+  } else {
+    window.open(url, '_blank');
+  }
+};
+
 onMounted(loadTree);
 </script>
 
@@ -569,8 +577,18 @@ onMounted(loadTree);
         </div>
 
         <div class="mt-2 pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center">
-            <span class="text-xs text-gray-500 font-mono uppercase tracking-widest">AI Toolbox Desktop</span>
-            <span class="text-xs text-gray-500 font-mono">v{{ appVersion }}</span>
+            <div class="flex flex-column">
+                <span class="text-xs text-gray-500 font-mono uppercase tracking-widest">AI Toolbox Desktop</span>
+                <span class="text-xs text-gray-500 font-mono">v{{ appVersion }}</span>
+            </div>
+            <div class="flex gap-2">
+                <img src="https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github-sponsors"
+                     alt="GitHub Sponsors" class="cursor-pointer h-2rem"
+                     @click="openLink('https://github.com/sponsors/erroralex')"/>
+                <img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white"
+                     alt="Ko-fi" class="cursor-pointer h-2rem"
+                     @click="openLink('https://ko-fi.com/error_alex')"/>
+            </div>
         </div>
       </div>
     </Dialog>

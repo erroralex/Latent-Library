@@ -7,7 +7,7 @@
  * IPC handlers for system-level operations (like folder selection), and ensures a clean
  * shutdown of all processes when the application is closed.
  */
-const {app, BrowserWindow, ipcMain, dialog} = require('electron');
+const {app, BrowserWindow, ipcMain, dialog, shell} = require('electron');
 const path = require('path');
 const {spawn} = require('child_process');
 const http = require('http');
@@ -67,6 +67,12 @@ function createWindow() {
         },
         autoHideMenuBar: true,
         show: false
+    });
+
+    // Handle new window requests (e.g., target="_blank") by opening in default browser
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
     });
 
     mainWindow.maximize();
@@ -138,6 +144,11 @@ app.on('ready', () => {
             properties: ['openDirectory']
         });
         return canceled ? null : filePaths[0];
+    });
+
+    // Handle external link requests from renderer
+    ipcMain.on('open-external-link', (event, url) => {
+        shell.openExternal(url);
     });
 
     ipcMain.on('window-minimize', () => mainWindow?.minimize());
