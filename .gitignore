@@ -10,8 +10,11 @@ dist/
 build/
 out/
 target/
+
+# Electron Build Artifacts
 electron/dist/
 electron/node_modules/
+electron/runtime/
 
 # Application Data
 data/
