@@ -86,7 +86,8 @@ public class DatabaseConfig {
                 Files.createDirectories(appDir);
             }
             Path dbPath = appDir.resolve(DB_FILE_NAME);
-            return "jdbc:sqlite:" + dbPath.toString();
+            // Ensure cross-platform compatibility for JDBC URL by forcing forward slashes
+            return "jdbc:sqlite:" + dbPath.toString().replace("\\", "/");
         } catch (IOException e) {
             throw new ApplicationException("Fatal Error: Could not create data directory.", e);
         }

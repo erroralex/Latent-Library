@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class MetadataServiceTest {
 
-    private final MetadataService service = new MetadataService(List.of(new ComfyUIStrategy()));
+    private final TextParamsParser textParamsParser = new TextParamsParser(null);
+    private final MetadataService service = new MetadataService(List.of(new ComfyUIStrategy()), textParamsParser);
 
     @Test
     void testParseComfyUIJson() {

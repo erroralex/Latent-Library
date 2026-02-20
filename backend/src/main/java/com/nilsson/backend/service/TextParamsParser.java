@@ -6,6 +6,7 @@ import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.strategy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -38,7 +39,13 @@ public class TextParamsParser {
     private static final Logger logger = LoggerFactory.getLogger(TextParamsParser.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static Map<String, String> parse(String text) {
+    private final UserDataManager userDataManager;
+
+    public TextParamsParser(@Lazy UserDataManager userDataManager) {
+        this.userDataManager = userDataManager;
+    }
+
+    public Map<String, String> parse(String text) {
         if (text == null || text.trim().isEmpty()) {
             return new HashMap<>();
         }
@@ -54,7 +61,7 @@ public class TextParamsParser {
                 }
 
                 Map<String, String> results = new HashMap<>();
-                ComfyUIStrategy strategy = new ComfyUIStrategy();
+                ComfyUIStrategy strategy = new ComfyUIStrategy(userDataManager);
 
                 if (root.has("nodes")) {
                     for (JsonNode node : root.get("nodes")) {
@@ -112,7 +119,7 @@ public class TextParamsParser {
         return new HashMap<>();
     }
 
-    private static void processComfyNode(
+    private void processComfyNode(
             JsonNode node,
             ComfyUIStrategy strategy,
             Map<String, String> results

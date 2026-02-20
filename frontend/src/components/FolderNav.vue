@@ -54,6 +54,11 @@ const excludedPaths = ref([]);
 const newExcludedPath = ref('');
 const appVersion = ref('0.0.1-SNAPSHOT');
 
+const customPromptNodes = ref([]);
+const newPromptNode = ref('');
+const customLoraNodes = ref([]);
+const newLoraNode = ref('');
+
 const currentTheme = ref('neon');
 const themeOptions = ref([
   {label: 'Deep Neon', value: 'neon'},
@@ -316,6 +321,13 @@ const openSettings = async () => {
     if (verRes.data && verRes.data.version) {
         appVersion.value = verRes.data.version;
     }
+
+    const promptRes = await api.get('/system/custom-nodes/prompt');
+    customPromptNodes.value = promptRes.data;
+
+    const loraRes = await api.get('/system/custom-nodes/lora');
+    customLoraNodes.value = loraRes.data;
+
   } catch (e) {
     console.error("Failed to load settings data", e);
   }
@@ -463,6 +475,42 @@ const removeExcludedPath = async (path) => {
   }
 };
 
+const addCustomPromptNode = async () => {
+  if (!newPromptNode.value) return;
+  try {
+    await api.post('/system/custom-nodes/prompt', null, {params: {node: newPromptNode.value}});
+    customPromptNodes.value.push(newPromptNode.value);
+    newPromptNode.value = '';
+  } catch (e) {
+  }
+};
+
+const removeCustomPromptNode = async (node) => {
+  try {
+    await api.delete('/system/custom-nodes/prompt', {params: {node}});
+    customPromptNodes.value = customPromptNodes.value.filter(n => n !== node);
+  } catch (e) {
+  }
+};
+
+const addCustomLoraNode = async () => {
+  if (!newLoraNode.value) return;
+  try {
+    await api.post('/system/custom-nodes/lora', null, {params: {node: newLoraNode.value}});
+    customLoraNodes.value.push(newLoraNode.value);
+    newLoraNode.value = '';
+  } catch (e) {
+  }
+};
+
+const removeCustomLoraNode = async (node) => {
+  try {
+    await api.delete('/system/custom-nodes/lora', {params: {node}});
+    customLoraNodes.value = customLoraNodes.value.filter(n => n !== node);
+  } catch (e) {
+  }
+};
+
 const openLink = (url) => {
   if (window.electronAPI) {
     window.electronAPI.openExternal(url);
@@ -547,6 +595,45 @@ onMounted(loadTree);
                       v-tooltip.bottom="'Remove images not in collections or rated'" @click="clearUnorganized"/>
               <Button label="Clear Thumbnails" icon="pi pi-images" class="p-button-warning p-button-outlined"
                       v-tooltip.bottom="'Delete all cached thumbnails'" @click="clearThumbnails"/>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold mb-2 text-white">Custom Nodes</h3>
+          <p class="text-sm text-gray-400 mb-2">Define custom ComfyUI nodes to extract metadata from.</p>
+
+          <div class="grid">
+            <div class="col-6">
+              <label class="block text-xs font-bold text-gray-300 mb-2">Prompt Nodes (Text Input)</label>
+              <div class="flex gap-2 mb-2">
+                <InputText v-model="newPromptNode" placeholder="e.g. VNCCS_MultilineText" class="glass-input w-full p-inputtext-sm"/>
+                <Button icon="pi pi-plus" class="p-button-sm" @click="addCustomPromptNode"/>
+              </div>
+              <div class="glass-box p-2 border-round" style="height: 120px; overflow-y: auto;">
+                <div v-for="node in customPromptNodes" :key="node"
+                     class="flex justify-content-between align-items-center p-1 hover:surface-white-alpha-10 border-round">
+                  <span class="text-xs text-white">{{ node }}</span>
+                  <Button icon="pi pi-times" class="p-button-text p-button-danger p-button-sm w-2rem h-2rem"
+                          @click="removeCustomPromptNode(node)"/>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <label class="block text-xs font-bold text-gray-300 mb-2">LoRA Nodes (Stack Input)</label>
+              <div class="flex gap-2 mb-2">
+                <InputText v-model="newLoraNode" placeholder="e.g. VVVLoRAStackLoader" class="glass-input w-full p-inputtext-sm"/>
+                <Button icon="pi pi-plus" class="p-button-sm" @click="addCustomLoraNode"/>
+              </div>
+              <div class="glass-box p-2 border-round" style="height: 120px; overflow-y: auto;">
+                <div v-for="node in customLoraNodes" :key="node"
+                     class="flex justify-content-between align-items-center p-1 hover:surface-white-alpha-10 border-round">
+                  <span class="text-xs text-white">{{ node }}</span>
+                  <Button icon="pi pi-times" class="p-button-text p-button-danger p-button-sm w-2rem h-2rem"
+                          @click="removeCustomLoraNode(node)"/>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -505,4 +505,54 @@ public class UserDataManager {
             }
         });
     }
+
+    public List<String> getCustomPromptNodes() {
+        return settingsService.get().getCustomPromptNodes();
+    }
+
+    public void addCustomPromptNode(String nodeName) {
+        if (nodeName == null || nodeName.isBlank()) return;
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getCustomPromptNodes());
+            if (!current.contains(nodeName)) {
+                current.add(nodeName);
+                s.setCustomPromptNodes(current);
+            }
+        });
+    }
+
+    public void removeCustomPromptNode(String nodeName) {
+        if (nodeName == null || nodeName.isBlank()) return;
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getCustomPromptNodes());
+            if (current.remove(nodeName)) {
+                s.setCustomPromptNodes(current);
+            }
+        });
+    }
+
+    public List<String> getCustomLoraNodes() {
+        return settingsService.get().getCustomLoraNodes();
+    }
+
+    public void addCustomLoraNode(String nodeName) {
+        if (nodeName == null || nodeName.isBlank()) return;
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getCustomLoraNodes());
+            if (!current.contains(nodeName)) {
+                current.add(nodeName);
+                s.setCustomLoraNodes(current);
+            }
+        });
+    }
+
+    public void removeCustomLoraNode(String nodeName) {
+        if (nodeName == null || nodeName.isBlank()) return;
+        settingsService.update(s -> {
+            List<String> current = new ArrayList<>(s.getCustomLoraNodes());
+            if (current.remove(nodeName)) {
+                s.setCustomLoraNodes(current);
+            }
+        });
+    }
 }

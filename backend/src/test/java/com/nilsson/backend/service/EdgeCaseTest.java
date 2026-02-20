@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class EdgeCaseTest {
 
-    private final MetadataService metadataService = new MetadataService(List.of(new ComfyUIStrategy()));
+    private final TextParamsParser textParamsParser = new TextParamsParser(null);
+    private final MetadataService metadataService = new MetadataService(List.of(new ComfyUIStrategy()), textParamsParser);
 
     @Test
     @DisplayName("MetadataService should handle extremely large prompt strings")

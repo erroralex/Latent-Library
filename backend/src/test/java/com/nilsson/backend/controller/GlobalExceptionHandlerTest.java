@@ -1,6 +1,7 @@
 package com.nilsson.backend.controller;
 
 import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.exception.GlobalExceptionHandler;
 import com.nilsson.backend.exception.ToolboxException;
 import com.nilsson.backend.model.ErrorResponse;
 import org.junit.jupiter.api.BeforeEach;

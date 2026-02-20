@@ -17,11 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class TextParamsParserTest {
 
+    private final TextParamsParser parser = new TextParamsParser(null);
+
     @Test
     @DisplayName("Should detect and parse Common (A1111) format")
     void parse_ShouldDetectCommonFormat() {
         String text = "A beautiful sunset\nSteps: 20, Sampler: Euler a, CFG scale: 7, Seed: 123";
-        Map<String, String> result = TextParamsParser.parse(text);
+        Map<String, String> result = parser.parse(text);
 
         assertFalse(result.isEmpty());
         assertEquals("20", result.get("Steps"));
@@ -32,7 +34,7 @@ class TextParamsParserTest {
     @DisplayName("Should detect and parse ComfyUI JSON format")
     void parse_ShouldDetectComfyUI() {
         String json = "{\"3\": {\"inputs\": {\"seed\": 123}, \"class_type\": \"KSampler\"}}";
-        Map<String, String> result = TextParamsParser.parse(json);
+        Map<String, String> result = parser.parse(json);
 
         assertFalse(result.isEmpty());
         assertEquals("123", result.get("Seed"));
@@ -42,7 +44,7 @@ class TextParamsParserTest {
     @DisplayName("Should detect and parse InvokeAI format")
     void parse_ShouldDetectInvokeAI() {
         String json = "{\"app_version\": \"3.0\", \"invokeai\": {}, \"positive_prompt\": \"wizard\"}";
-        Map<String, String> result = TextParamsParser.parse(json);
+        Map<String, String> result = parser.parse(json);
 
         assertFalse(result.isEmpty());
         assertEquals("wizard", result.get("Prompt"));
@@ -51,14 +53,14 @@ class TextParamsParserTest {
     @Test
     @DisplayName("Should return empty map for unrecognized format")
     void parse_ShouldHandleUnknown() {
-        Map<String, String> result = TextParamsParser.parse("Just some random text without markers");
+        Map<String, String> result = parser.parse("Just some random text without markers");
         assertTrue(result.isEmpty());
     }
 
     @Test
     @DisplayName("Should handle null or empty input")
     void parse_ShouldHandleNullEmpty() {
-        assertTrue(TextParamsParser.parse(null).isEmpty());
-        assertTrue(TextParamsParser.parse("   ").isEmpty());
+        assertTrue(parser.parse(null).isEmpty());
+        assertTrue(parser.parse("   ").isEmpty());
     }
 }

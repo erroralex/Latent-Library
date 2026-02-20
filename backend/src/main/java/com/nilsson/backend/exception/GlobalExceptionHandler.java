@@ -1,6 +1,5 @@
-package com.nilsson.backend.controller;
+package com.nilsson.backend.exception;
 
-import com.nilsson.backend.exception.ToolboxException;
 import com.nilsson.backend.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
