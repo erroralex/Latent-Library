@@ -28,6 +28,8 @@ public class AppSettings {
     private String theme = "neon";
     private List<String> excludedPaths = new ArrayList<>();
     private SpeedSorterSettings speedSorter = new SpeedSorterSettings();
+    private List<String> customPromptNodes = new ArrayList<>();
+    private List<String> customLoraNodes = new ArrayList<>();
 
     public String getLastFolder() {
         return lastFolder;
@@ -59,6 +61,22 @@ public class AppSettings {
 
     public void setSpeedSorter(SpeedSorterSettings speedSorter) {
         this.speedSorter = speedSorter;
+    }
+
+    public List<String> getCustomPromptNodes() {
+        return customPromptNodes;
+    }
+
+    public void setCustomPromptNodes(List<String> customPromptNodes) {
+        this.customPromptNodes = customPromptNodes;
+    }
+
+    public List<String> getCustomLoraNodes() {
+        return customLoraNodes;
+    }
+
+    public void setCustomLoraNodes(List<String> customLoraNodes) {
+        this.customLoraNodes = customLoraNodes;
     }
 
     /**

@@ -228,6 +228,40 @@ public class SystemController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/custom-nodes/prompt")
+    public ResponseEntity<List<String>> getCustomPromptNodes() {
+        return ResponseEntity.ok(userDataManager.getCustomPromptNodes());
+    }
+
+    @PostMapping("/custom-nodes/prompt")
+    public ResponseEntity<Void> addCustomPromptNode(@RequestParam String node) {
+        userDataManager.addCustomPromptNode(node);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/custom-nodes/prompt")
+    public ResponseEntity<Void> removeCustomPromptNode(@RequestParam String node) {
+        userDataManager.removeCustomPromptNode(node);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/custom-nodes/lora")
+    public ResponseEntity<List<String>> getCustomLoraNodes() {
+        return ResponseEntity.ok(userDataManager.getCustomLoraNodes());
+    }
+
+    @PostMapping("/custom-nodes/lora")
+    public ResponseEntity<Void> addCustomLoraNode(@RequestParam String node) {
+        userDataManager.addCustomLoraNode(node);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/custom-nodes/lora")
+    public ResponseEntity<Void> removeCustomLoraNode(@RequestParam String node) {
+        userDataManager.removeCustomLoraNode(node);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/last-folder")
     public ResponseEntity<Map<String, String>> getLastFolder() {
         File folder = userDataManager.getLastFolder();

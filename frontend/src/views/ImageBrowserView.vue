@@ -359,10 +359,7 @@ watch(() => store.imageFocusRequested, (requested) => {
 
       <Transition name="sidebar-slide">
         <div v-if="store.isSidebarOpen"
-             class="h-full shadow-8 z-5"
-             :class="[
-               store.viewMode === 'gallery' ? 'relative flex-shrink-0' : 'absolute top-0 right-0'
-             ]">
+             class="h-full shadow-8 z-5 relative flex-shrink-0">
           <MetadataSidebar/>
         </div>
       </Transition>

@@ -56,9 +56,11 @@ public class MetadataService {
             .configure(JsonParser.Feature.ALLOW_COMMENTS, true);
 
     private final List<MetadataStrategy> jsonStrategies;
+    private final TextParamsParser textParamsParser;
 
-    public MetadataService(List<MetadataStrategy> jsonStrategies) {
+    public MetadataService(List<MetadataStrategy> jsonStrategies, TextParamsParser textParamsParser) {
         this.jsonStrategies = jsonStrategies;
+        this.textParamsParser = textParamsParser;
     }
 
     public String getRawMetadata(File file) {
@@ -96,7 +98,7 @@ public class MetadataService {
             parseJsonMetadata(trimmed, results);
         } else if (rawData.contains("Steps:") &&
                 (rawData.contains("Sampler:") || rawData.contains("Schedule type:"))) {
-            results.putAll(TextParamsParser.parse(rawData));
+            results.putAll(textParamsParser.parse(rawData));
             results.put("Software", "A1111 / Forge");
         } else {
             results.put("Prompt", rawData);

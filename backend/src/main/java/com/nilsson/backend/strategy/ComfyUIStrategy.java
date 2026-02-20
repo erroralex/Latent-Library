@@ -2,8 +2,10 @@ package com.nilsson.backend.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nilsson.backend.exception.ApplicationException;
+import com.nilsson.backend.service.UserDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
@@ -33,6 +35,17 @@ import java.util.regex.Pattern;
 public class ComfyUIStrategy implements MetadataStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(ComfyUIStrategy.class);
+
+    private final UserDataManager userDataManager;
+
+    public ComfyUIStrategy(@Lazy UserDataManager userDataManager) {
+        this.userDataManager = userDataManager;
+    }
+
+    // Default constructor for manual instantiation if needed, though Spring injection is preferred
+    public ComfyUIStrategy() {
+        this.userDataManager = null;
+    }
 
     private static final Set<String> VALID_EXTENSIONS = Set.of(
             ".safetensors", ".ckpt", ".gguf", ".pt", ".pth", ".bin"
@@ -528,6 +541,33 @@ public class ComfyUIStrategy implements MetadataStrategy {
                     String targetKey = (title.contains("negative") || isNegativeNode(node)) ? "Negative" : "Prompt";
                     appendResult(results, targetKey, txt);
                     extractLorasFromPrompt(txt, results);
+                }
+            }
+        }
+
+        // Custom Node Handling
+        if (userDataManager != null) {
+            List<String> customPromptNodes = userDataManager.getCustomPromptNodes();
+            List<String> customLoraNodes = userDataManager.getCustomLoraNodes();
+
+            if (customPromptNodes != null && customPromptNodes.stream().anyMatch(type::contains)) {
+                if (inputs.has("value") && inputs.get("value").isTextual()) {
+                    String txt = inputs.get("value").asText();
+                    String targetKey = (title.contains("negative") || isNegativeNode(node)) ? "Negative" : "Prompt";
+                    appendResult(results, targetKey, txt);
+                }
+            }
+
+            if (customLoraNodes != null && customLoraNodes.stream().anyMatch(type::contains)) {
+                if (inputs.has("lora_stack") && inputs.get("lora_stack").isTextual()) {
+                    String stack = inputs.get("lora_stack").asText();
+                    String[] loras = stack.split(",");
+                    for (String lora : loras) {
+                        String clean = lora.trim();
+                        if (!clean.isEmpty()) {
+                            appendResult(results, "Loras", formatLoraString(clean, 1.0));
+                        }
+                    }
                 }
             }
         }
