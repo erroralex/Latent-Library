@@ -1,7 +1,7 @@
 {
-  "name": "ai-toolbox",
-  "version": "1.0.0",
-  "description": "AI Toolbox Desktop",
+  "name": "latent-library",
+  "version": "1.0.2",
+  "description": "Latent Library Desktop",
   "main": "main.js",
   "author": "Alexander Nilsson",
   "scripts": {
@@ -9,8 +9,8 @@
     "dist": "electron-builder"
   },
   "build": {
-    "appId": "com.nilsson.aitoolbox",
-    "productName": "AI Toolbox",
+    "appId": "com.nilsson.latentlibrary",
+    "productName": "Latent Library",
     "directories": {
       "output": "dist"
     },
@@ -32,8 +32,8 @@
         ]
       },
       {
-        "from": "../backend/target/backend-0.0.1-SNAPSHOT.jar",
-        "to": "runtime/app/backend-0.0.1-SNAPSHOT.jar"
+        "from": "../backend/target/backend-1.0.2.jar",
+        "to": "runtime/app/backend-1.0.2.jar"
       }
     ]
   },

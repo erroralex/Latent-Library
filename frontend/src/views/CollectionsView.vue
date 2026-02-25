@@ -15,7 +15,8 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import InputSwitch from 'primevue/inputswitch';
-import Menu from 'primevue/menu';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
 import Chip from 'primevue/chip';
 import {useToast} from 'primevue/usetoast';
 import {useRouter} from 'vue-router';
@@ -42,10 +43,15 @@ const selectedLoras = ref([]);
 const selectedSamplers = ref([]);
 const selectedRating = ref(null);
 
-const modelMenu = ref();
-const samplerMenu = ref();
-const loraMenu = ref();
-const ratingMenu = ref();
+const ratingOptions = [
+  {label: 'None (Unrated)', value: 0},
+  {label: 'Any Star (> 0)', value: 'Any Star Count'},
+  {label: '1 Star', value: 1},
+  {label: '2 Stars', value: 2},
+  {label: '3 Stars', value: 3},
+  {label: '4 Stars', value: 4},
+  {label: '5 Stars', value: 5}
+];
 
 watch(() => store.navRefreshKey, () => {
   fetchCollections();
@@ -58,42 +64,9 @@ watch(() => store.collectionToEdit, (newName) => {
   }
 });
 
-const addFilter = (type, value) => {
-  if (value === 'All') return;
-  const target = {model: selectedModels, lora: selectedLoras, sampler: selectedSamplers}[type];
-  if (target && !target.value.includes(value)) {
-    target.value.push(value);
-  }
-};
-
-const removeFilter = (type, value) => {
-  const target = {model: selectedModels, lora: selectedLoras, sampler: selectedSamplers}[type];
-  if (target) {
-    target.value = target.value.filter(item => item !== value);
-  }
-};
-
 const refreshFilters = async () => {
   await store.loadFilters();
 };
-
-const modelItems = computed(() => store.availableModels.map(item => ({
-  label: item,
-  command: () => addFilter('model', item)
-})));
-const samplerItems = computed(() => store.availableSamplers.map(item => ({
-  label: item,
-  command: () => addFilter('sampler', item)
-})));
-const loraItems = computed(() => store.availableLoras.map(item => ({
-  label: item,
-  command: () => addFilter('lora', item)
-})));
-const ratingItems = [
-  {label: 'None (Unrated)', command: () => selectedRating.value = 0},
-  {label: 'Any Star (> 0)', command: () => selectedRating.value = 'Any Star Count'},
-  ...[1, 2, 3, 4, 5].map(i => ({label: `${i} Star${i > 1 ? 's' : ''}`, command: () => selectedRating.value = i}))
-];
 
 const resetForm = () => {
   newCollectionName.value = '';
@@ -312,61 +285,37 @@ onMounted(() => {
           </p>
 
           <div v-if="isSmartCollection" class="mt-4 grid animation-fade-in">
-            <div class="col-7">
+            <div class="col-12">
               <h3 class="text-lg font-semibold mb-3 text-white">Smart Filters</h3>
-              <div class="flex flex-column gap-4">
-                <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem text-white">Models</label>
-                  <Button icon="pi pi-plus" @click="(e) => { refreshFilters(); modelMenu.toggle(e); }"
-                          class="p-button-secondary p-button-rounded p-button-sm" v-tooltip.right="'Add Model Filter'"/>
-                  <Menu ref="modelMenu" :model="modelItems" :popup="true" class="custom-menu"/>
+              <div class="grid formgrid">
+                <div class="field col-12 md:col-6">
+                  <label class="font-semibold text-white">Models</label>
+                  <MultiSelect v-model="selectedModels" :options="store.availableModels"
+                               placeholder="Select Models" class="w-full mt-2"
+                               :scrollHeight="'40vh'" @before-show="refreshFilters"/>
                 </div>
-                <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem text-white">Samplers</label>
-                  <Button icon="pi pi-plus" @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }"
-                          class="p-button-secondary p-button-rounded p-button-sm"
-                          v-tooltip.right="'Add Sampler Filter'"/>
-                  <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="custom-menu"/>
+                <div class="field col-12 md:col-6">
+                  <label class="font-semibold text-white">Samplers</label>
+                  <MultiSelect v-model="selectedSamplers" :options="store.availableSamplers"
+                               placeholder="Select Samplers" class="w-full mt-2"
+                               :scrollHeight="'40vh'" @before-show="refreshFilters"/>
                 </div>
-                <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem text-white">LoRAs</label>
-                  <Button icon="pi pi-plus" @click="(e) => { refreshFilters(); loraMenu.toggle(e); }"
-                          class="p-button-secondary p-button-rounded p-button-sm" v-tooltip.right="'Add LoRA Filter'"/>
-                  <Menu ref="loraMenu" :model="loraItems" :popup="true" class="custom-menu"/>
+                <div class="field col-12 md:col-6">
+                  <label class="font-semibold text-white">LoRAs</label>
+                  <MultiSelect v-model="selectedLoras" :options="store.availableLoras"
+                               placeholder="Select LoRAs" class="w-full mt-2"
+                               :scrollHeight="'40vh'" @before-show="refreshFilters"/>
                 </div>
-                <div class="flex align-items-center gap-3">
-                  <label class="font-semibold w-6rem text-white">Rating</label>
-                  <Button icon="pi pi-plus" @click="(e) => ratingMenu.toggle(e)"
-                          class="p-button-secondary p-button-rounded p-button-sm"
-                          v-tooltip.right="'Add Rating Filter'"/>
-                  <Menu ref="ratingMenu" :model="ratingItems" :popup="true" class="custom-menu"/>
+                <div class="field col-12 md:col-6">
+                  <label class="font-semibold text-white">Rating</label>
+                  <Dropdown v-model="selectedRating" :options="ratingOptions" optionLabel="label" optionValue="value"
+                            placeholder="Select Rating" class="w-full mt-2"
+                            :scrollHeight="'40vh'"/>
                 </div>
-                <div class="p-field mt-2">
+                <div class="field col-12">
                   <label for="prompt" class="text-white font-semibold">Prompt contains</label>
                   <InputText id="prompt" v-model="prompt" class="glass-input mt-2"
                              placeholder="e.g. portrait, 8k, masterpiece"/>
-                </div>
-              </div>
-            </div>
-            <div class="col-5">
-              <div class="selected-chips-container p-3 border-round h-full">
-                <h4 class="mt-0 mb-3 text-white font-semibold">Active Filters</h4>
-                <div class="flex flex-wrap gap-2">
-                  <Chip v-for="model in selectedModels" :key="model" :label="model" removable
-                        @remove="removeFilter('model', model)" class="text-xs"/>
-                  <Chip v-for="lora in selectedLoras" :key="lora" :label="lora" removable
-                        @remove="removeFilter('lora', lora)" class="text-xs"/>
-                  <Chip v-for="sampler in selectedSamplers" :key="sampler" :label="sampler" removable
-                        @remove="removeFilter('sampler', sampler)" class="text-xs"/>
-                  <Chip v-if="selectedRating !== null"
-                        :label="selectedRating === 0 ? 'Unrated' : (selectedRating === 'Any Star Count' ? 'Any Star' : `${selectedRating} Stars`)"
-                        removable
-                        @remove="selectedRating = null" class="text-xs"/>
-                </div>
-                <div
-                    v-if="selectedModels.length === 0 && selectedLoras.length === 0 && selectedSamplers.length === 0 && selectedRating === null && !prompt"
-                    class="text-center text-gray-500 text-sm mt-5 italic">
-                  No filters active.<br/>(Will include all images)
                 </div>
               </div>
             </div>
@@ -472,11 +421,6 @@ onMounted(() => {
   color: var(--text-primary) !important;
 }
 
-.selected-chips-container {
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-}
-
 .text-white {
   color: var(--text-primary) !important;
 }
@@ -500,13 +444,9 @@ onMounted(() => {
   }
 }
 
-:deep(.custom-menu .p-menuitem-link .p-menuitem-text) {
-  color: var(--text-primary) !important;
-}
-
-:deep(.custom-menu) {
-  background: var(--bg-menu) !important;
-  border: 1px solid var(--border-light) !important;
+:deep(.p-multiselect), :deep(.p-dropdown) {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
 }
 
 :deep(.dynamic-toggle.p-inputswitch) {

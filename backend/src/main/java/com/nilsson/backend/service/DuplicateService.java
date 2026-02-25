@@ -4,12 +4,16 @@ import com.nilsson.backend.model.DuplicateImageInfo;
 import com.nilsson.backend.model.DuplicatePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -17,8 +21,8 @@ import java.util.stream.Collectors;
 public class DuplicateService {
 
     private static final Logger log = LoggerFactory.getLogger(DuplicateService.class);
-    private static final int HAMMING_THRESHOLD = 2;
 
+    private final int hammingThreshold;
     private final JdbcClient jdbcClient;
     private final PathService pathService;
     private final UserDataManager userDataManager;
@@ -27,11 +31,13 @@ public class DuplicateService {
     public DuplicateService(DataSource dataSource,
                             PathService pathService,
                             UserDataManager userDataManager,
-                            DHashService dHashService) {
+                            DHashService dHashService,
+                            @Value("${app.duplicates.dhash-threshold:2}") int hammingThreshold) {
         this.jdbcClient = JdbcClient.create(dataSource);
         this.pathService = pathService;
         this.userDataManager = userDataManager;
         this.dHashService = dHashService;
+        this.hammingThreshold = hammingThreshold;
     }
 
     public Map<String, Object> getStatus() {
@@ -150,7 +156,7 @@ public class DuplicateService {
         for (ImageRecord img : allImages) {
             if (img.dhash() == null) continue;
             
-            List<ImageRecord> matches = bkTree.search(img, HAMMING_THRESHOLD);
+            List<ImageRecord> matches = bkTree.search(img, hammingThreshold);
             for (ImageRecord match : matches) {
                 if (img.id() < match.id()) { // Enforce order to avoid duplicates
                     // Check if we already have this pair from exact duplicates
@@ -252,7 +258,7 @@ public class DuplicateService {
     /**
      * Burkhard-Keller Tree implementation for efficient Hamming distance searches.
      */
-    private static class BKTree {
+    private class BKTree {
         private Node root;
 
         public void add(ImageRecord record) {
@@ -301,7 +307,7 @@ public class DuplicateService {
             }
         }
 
-        private static class Node {
+        private class Node {
             final ImageRecord record;
             final Map<Integer, Node> children = new HashMap<>();
 

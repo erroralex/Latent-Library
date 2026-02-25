@@ -1,0 +1,69 @@
+/* Fan Friction Light Theme - Airy, creamy, and elegant */
+body.theme-fanfriction-light {
+    /* Backgrounds */
+    --bg-app: #f5f0e6;
+    --bg-sidebar-left: rgba(245, 240, 230, 0.95);
+    --bg-sidebar-right: rgba(245, 240, 230, 0.95);
+    --bg-header: rgba(245, 240, 230, 0.85);
+    --bg-panel: rgba(255, 255, 255, 0.7);
+    --bg-panel-opaque: #ffffff;
+    --bg-input: rgba(255, 255, 255, 0.8);
+    --bg-toolbar: rgba(245, 240, 230, 0.8);
+    --bg-btn-inner: #ffffff;
+    --bg-filmstrip: rgba(245, 240, 230, 0.9);
+    --bg-menu: #ffffff;
+    --bg-overlay: rgba(60, 50, 40, 0.1);
+
+    /* Borders */
+    --border-light: rgba(160, 82, 45, 0.15);
+    --border-input: rgba(160, 82, 45, 0.25);
+
+    /* Text */
+    --text-primary: #3e3228;
+    --text-secondary: #6b5a4e;
+    --text-muted: #9c8c74;
+
+    /* Accents */
+    --accent-primary: #a0522d;
+    --accent-secondary: #d2b48c;
+    --accent-hover: #8b4513;
+
+    /* Gradients */
+    --grad-text: linear-gradient(45deg, #a0522d, #8b4513);
+    --grad-hover: linear-gradient(45deg, #d2b48c, #f5deb3);
+    --glass-blur: blur(12px);
+
+    /* Shadows */
+    --shadow-panel: 0 8px 32px 0 rgba(60, 50, 40, 0.15);
+
+    /* Status Colors */
+    --status-success: #556b2f;
+    --status-warning: #b8860b;
+    --status-danger: #a52a2a;
+}
+
+/* PrimeVue Overrides for Fan Friction Light */
+body.theme-fanfriction-light .p-component {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+}
+
+body.theme-fanfriction-light .p-button.p-button-text {
+    color: var(--text-secondary);
+}
+
+body.theme-fanfriction-light .p-button.p-button-text:hover {
+    color: var(--text-primary);
+    background: rgba(160, 82, 45, 0.1);
+}
+
+body.theme-fanfriction-light .p-inputtext {
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    color: var(--text-primary);
+}
+
+body.theme-fanfriction-light .p-inputtext:enabled:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary);
+}

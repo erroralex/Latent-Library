@@ -27,16 +27,12 @@ import Slider from 'primevue/slider';
 import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
 import InputSwitch from 'primevue/inputswitch';
+import Dropdown from 'primevue/dropdown';
 import {useConfirm} from 'primevue/useconfirm';
 import {ref, computed} from 'vue';
 
 const store = useBrowserStore();
 const confirm = useConfirm();
-
-const modelMenu = ref();
-const samplerMenu = ref();
-const loraMenu = ref();
-const ratingMenu = ref();
 
 const onSearch = (event) => {
   store.search(store.searchQuery, true);
@@ -50,26 +46,6 @@ const toggleSidebar = () => {
 const toggleTagger = () => {
     store.toggleTagger();
 };
-
-const createMenuItems = (items, type) => {
-  return items.map(item => ({
-    label: item,
-    command: () => store.setFilter(type, item)
-  }));
-};
-
-const modelItems = computed(() => createMenuItems(store.availableModels, 'model'));
-const samplerItems = computed(() => createMenuItems(store.availableSamplers, 'sampler'));
-const loraItems = computed(() => createMenuItems(store.availableLoras, 'lora'));
-
-const ratingItems = [
-  {label: 'Any Star Count', command: () => store.setFilter('rating', 'Any Star Count')},
-  {label: '1', value: '1', command: () => store.setFilter('rating', '1')},
-  {label: '2', value: '2', command: () => store.setFilter('rating', '2')},
-  {label: '3', value: '3', command: () => store.setFilter('rating', '3')},
-  {label: '4', value: '4', command: () => store.setFilter('rating', '4')},
-  {label: '5', value: '5', command: () => store.setFilter('rating', '5')}
-];
 
 const clearFilter = (type) => {
   store.setFilter(type, null);
@@ -172,72 +148,66 @@ const toggleRecursive = () => {
         <div class="flex gap-2 align-items-center">
 
           <div class="flex align-items-center">
-            <Button label="Model" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm"
-                    v-tooltip.bottom="'Filter by Model'"
-                    @click="(e) => { refreshFilters(); modelMenu.toggle(e); }"/>
-            <Menu ref="modelMenu" :model="modelItems" :popup="true" class="w-15rem"/>
-
-            <Chip v-if="isFilterActive(store.selectedModel)"
-                  :label="store.selectedModel"
-                  removable @remove="clearFilter('model')"
-                  class="ml-1 text-xs"/>
+            <Dropdown :options="store.availableModels" v-model="store.selectedModel"
+                      placeholder="Model" class="p-button-sm"
+                      :showClear="isFilterActive(store.selectedModel)"
+                      @change="store.setFilter('model', $event.value)"
+                      :scrollHeight="'40vh'"
+                      @before-show="refreshFilters"
+                      v-tooltip.bottom="'Filter by Model'"/>
           </div>
 
           <div class="flex align-items-center">
-            <Button label="Sampler" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm"
-                    v-tooltip.bottom="'Filter by Sampler'"
-                    @click="(e) => { refreshFilters(); samplerMenu.toggle(e); }"/>
-            <Menu ref="samplerMenu" :model="samplerItems" :popup="true" class="w-15rem"/>
-
-            <Chip v-if="isFilterActive(store.selectedSampler)"
-                  :label="store.selectedSampler"
-                  removable @remove="clearFilter('sampler')"
-                  class="ml-1 text-xs"/>
+            <Dropdown :options="store.availableSamplers" v-model="store.selectedSampler"
+                      placeholder="Sampler" class="p-button-sm"
+                      :showClear="isFilterActive(store.selectedSampler)"
+                      @change="store.setFilter('sampler', $event.value)"
+                      :scrollHeight="'40vh'"
+                      @before-show="refreshFilters"
+                      v-tooltip.bottom="'Filter by Sampler'"/>
           </div>
 
           <div class="flex align-items-center">
-            <Button label="LoRA" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm"
-                    v-tooltip.bottom="'Filter by LoRA'"
-                    @click="(e) => { refreshFilters(); loraMenu.toggle(e); }"/>
-            <Menu ref="loraMenu" :model="loraItems" :popup="true" class="w-15rem"/>
-
-            <Chip v-if="isFilterActive(store.selectedLora)"
-                  :label="store.selectedLora"
-                  removable @remove="clearFilter('lora')"
-                  class="ml-1 text-xs"/>
+            <Dropdown :options="store.availableLoras" v-model="store.selectedLora"
+                      placeholder="LoRA" class="p-button-sm"
+                      :showClear="isFilterActive(store.selectedLora)"
+                      @change="store.setFilter('lora', $event.value)"
+                      :scrollHeight="'40vh'"
+                      @before-show="refreshFilters"
+                      v-tooltip.bottom="'Filter by LoRA'"/>
           </div>
 
           <div class="flex align-items-center">
-            <Button label="Stars" icon="pi pi-chevron-down" iconPos="right"
-                    class="p-button-text p-button-secondary p-button-sm"
-                    v-tooltip.bottom="'Filter by Rating'"
-                    @click="(e) => ratingMenu.toggle(e)"/>
-            <Menu ref="ratingMenu" :model="ratingItems" :popup="true">
-              <template #item="{ item, props }">
-                <a v-if="item.label === 'Any Star Count'" v-bind="props.action" class="flex align-items-center">
-                  <span class="ml-2">Any Star Count</span>
-                </a>
-                <a v-else v-bind="props.action" class="flex align-items-center">
-                  <div class="flex ml-2">
-                    <i v-for="i in 5" :key="i"
-                       class="pi text-sm mr-1"
-                       :class="i <= parseInt(item.value) ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
-                  </div>
-                </a>
+            <Dropdown v-model="store.selectedRating"
+                      :options="['Any Star Count', '1', '2', '3', '4', '5']"
+                      placeholder="Stars" class="p-button-sm"
+                      :showClear="isFilterActive(store.selectedRating)"
+                      @change="store.setFilter('rating', $event.value)"
+                      :scrollHeight="'40vh'"
+                      v-tooltip.bottom="'Filter by Rating'">
+              <template #option="slotProps">
+                <div v-if="slotProps.option === 'Any Star Count'" class="flex align-items-center">
+                  <span>Any Star Count</span>
+                </div>
+                <div v-else class="flex">
+                  <i v-for="i in 5" :key="i"
+                     class="pi text-sm mr-1"
+                     :class="i <= parseInt(slotProps.option) ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
+                </div>
               </template>
-            </Menu>
-
-            <Chip v-if="isFilterActive(store.selectedRating)"
-                  removable @remove="clearFilter('rating')"
-                  class="ml-1 text-xs px-2">
-              <span v-if="store.selectedRating === 'Any Star Count'">Starred</span>
-              <span v-else class="flex align-items-center gap-1">
-                                {{ store.selectedRating }} <i class="pi pi-star-fill text-yellow-500 text-xs"></i>
-                             </span>
-            </Chip>
+              <template #value="slotProps">
+                <div v-if="slotProps.value === 'Any Star Count'" class="flex align-items-center">
+                  <span>Starred</span>
+                </div>
+                <div v-else-if="slotProps.value" class="flex align-items-center gap-1">
+                  <span>{{ slotProps.value }}</span>
+                  <i class="pi pi-star-fill text-yellow-500 text-xs"></i>
+                </div>
+                <span v-else>
+                  {{ slotProps.placeholder }}
+                </span>
+              </template>
+            </Dropdown>
           </div>
         </div>
       </div>
@@ -324,5 +294,10 @@ const toggleRecursive = () => {
 
 .text-primary {
     color: var(--accent-primary) !important;
+}
+
+:deep(.p-dropdown) {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-input) !important;
 }
 </style>

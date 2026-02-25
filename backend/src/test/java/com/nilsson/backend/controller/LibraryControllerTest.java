@@ -1,5 +1,6 @@
 package com.nilsson.backend.controller;
 
+import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,14 +49,16 @@ class LibraryControllerTest {
     private DataSource dataSource;
 
     @Test
-    void scanFolder_ShouldTriggerIndexing() throws Exception {
+    void scanFolder_ShouldTriggerIndexingAndReturnDTOs() throws Exception {
         String path = System.getProperty("java.io.tmpdir");
         when(pathService.resolve(any())).thenReturn(new File(path));
+        when(userDataManager.getBulkImageDTOs(any())).thenReturn(Collections.singletonList(new ImageDTO("test.png", 0, "")));
 
         mockMvc.perform(post("/api/library/scan")
                         .param("path", path))
                 .andExpect(status().isOk());
 
         verify(indexingService).indexFolder(any(File.class), eq(false));
+        verify(userDataManager).getBulkImageDTOs(any());
     }
 }

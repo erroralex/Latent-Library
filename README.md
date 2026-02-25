@@ -1,4 +1,4 @@
-# AI Toolbox
+# Latent Library
 
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
@@ -142,7 +142,7 @@ Distributed under the **MIT License**. Free for personal and commercial use.
 
 ## 💖 Support the Project
 
-If **AI Toolbox** has streamlined your workflow, consider supporting its ongoing development.
+If **Latent Library** has streamlined your workflow, consider supporting its ongoing development.
 
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/erroralex)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/error_alex)

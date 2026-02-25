@@ -2,6 +2,7 @@ package com.nilsson.backend.repository;
 
 import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ValidationException;
+import com.nilsson.backend.model.ImageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +31,8 @@ import java.util.stream.Stream;
  *   uses file hashes to detect moved or renamed files, preserving metadata across path changes.</li>
  *   <li><b>State Management:</b> Persists and retrieves image ratings, starred status, and
  *   perceptual hashes (dHash) used for similarity detection.</li>
+ *   <li><b>Bulk Data Retrieval:</b> Provides an optimized method to fetch essential image information
+ *   for a large list of file paths in a single query.</li>
  *   <li><b>Batch Operations:</b> Provides efficient batch deletion mechanisms to handle
  *   large-scale library reconciliation or folder removals.</li>
  *   <li><b>Library Traversal:</b> Offers streaming access to all indexed file paths for
@@ -44,6 +49,31 @@ public class ImageRepository {
 
     public ImageRepository(DataSource dataSource) {
         this.jdbcClient = JdbcClient.create(dataSource);
+    }
+
+    public Map<String, ImageInfo> getBulkImageInfo(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(paths.size(), "?"));
+        String sql = """
+            SELECT
+                i.file_path,
+                i.rating,
+                (SELECT value FROM image_metadata WHERE image_id = i.id AND key = 'Model' LIMIT 1) as model
+            FROM images i
+            WHERE i.file_path IN (""" + placeholders + ")";
+
+        return jdbcClient.sql(sql)
+                .params(paths)
+                .query((rs, rowNum) -> new ImageInfo(
+                        rs.getString("file_path"),
+                        rs.getInt("rating"),
+                        rs.getString("model")
+                ))
+                .stream()
+                .collect(Collectors.toMap(ImageInfo::path, info -> info));
     }
 
     public int getIdByPath(String path) {

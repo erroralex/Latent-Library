@@ -9,6 +9,7 @@ import com.nilsson.backend.exception.ImageProcessingException;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -19,8 +20,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *   <li><b>Model Inference:</b> Manages the {@link OrtSession} and executes the WD14 model
  *   to predict descriptive tags for given images.</li>
  *   <li><b>Resource Management:</b> Implements idle-eviction to release native memory
- *   when the model is not in use, and ensures clean shutdown via {@link PreDestroy}.</li>
+ *   when the model is not in use, with a configurable idle time.</li>
  *   <li><b>Image Preprocessing:</b> Normalizes input images to the required 448x448 BGR
  *   format with letterboxing to maintain aspect ratio.</li>
  *   <li><b>Tag Mapping:</b> Loads and parses the associated CSV mapping to translate
@@ -51,8 +52,8 @@ public class ImageTaggerService {
 
     private static final Logger logger = LoggerFactory.getLogger(ImageTaggerService.class);
     private static final int MODEL_SIZE = 448;
-    private static final long IDLE_EVICTION_TIME_MS = TimeUnit.MINUTES.toMillis(5);
 
+    private final long idleEvictionTimeMs;
     private final TaggerModelService modelService;
     private final ReentrantLock lock = new ReentrantLock();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -62,8 +63,10 @@ public class ImageTaggerService {
     private List<String> tags;
     private long lastAccessTime = 0;
 
-    public ImageTaggerService(TaggerModelService modelService) {
+    public ImageTaggerService(TaggerModelService modelService,
+                              @Value("${app.tagger.idle-eviction-minutes:5}") long idleEvictionMinutes) {
         this.modelService = modelService;
+        this.idleEvictionTimeMs = TimeUnit.MINUTES.toMillis(idleEvictionMinutes);
         this.scheduler.scheduleAtFixedRate(this::evictIfIdle, 1, 1, TimeUnit.MINUTES);
     }
 
@@ -81,7 +84,7 @@ public class ImageTaggerService {
 
             try {
                 if (env == null) env = OrtEnvironment.getEnvironment();
-                
+
                 OrtSession.SessionOptions options = new OrtSession.SessionOptions();
                 options.setInterOpNumThreads(1);
                 options.setIntraOpNumThreads(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
@@ -106,7 +109,7 @@ public class ImageTaggerService {
 
         lock.lock();
         try {
-            if (session != null && (System.currentTimeMillis() - lastAccessTime) > IDLE_EVICTION_TIME_MS) {
+            if (session != null && (System.currentTimeMillis() - lastAccessTime) > idleEvictionTimeMs) {
                 logger.info("Evicting idle ONNX session to reclaim native memory...");
                 closeSession();
             }

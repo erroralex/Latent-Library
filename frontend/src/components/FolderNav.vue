@@ -34,6 +34,8 @@ import Dropdown from 'primevue/dropdown';
 import logoNeon from '@/assets/alx_logo_neon.png';
 import logoGold from '@/assets/alx_logo_gold.png';
 import logoLight from '@/assets/alx_logo_light.png';
+import logoFan from '@/assets/alx_logo_fan.png';
+import logoFanLight from '@/assets/alx_logo_fan_light.png';
 
 const store = useBrowserStore();
 const router = useRouter();
@@ -52,7 +54,7 @@ const menuModel = ref([]);
 const showSettings = ref(false);
 const excludedPaths = ref([]);
 const newExcludedPath = ref('');
-const appVersion = ref('0.0.1-SNAPSHOT');
+const appVersion = ref('1.0.2-SNAPSHOT');
 
 const customPromptNodes = ref([]);
 const newPromptNode = ref('');
@@ -63,7 +65,9 @@ const currentTheme = ref('neon');
 const themeOptions = ref([
   {label: 'Deep Neon', value: 'neon'},
   {label: 'Clean Light', value: 'light'},
-  {label: 'Dark Premium', value: 'gold'}
+  {label: 'Dark Premium', value: 'gold'},
+  {label: 'Fan Friction', value: 'fanfriction'},
+  {label: 'Fan Friction Light', value: 'fanfriction-light'}
 ]);
 
 const currentLogo = computed(() => {
@@ -72,6 +76,10 @@ const currentLogo = computed(() => {
       return logoGold;
     case 'light':
       return logoLight;
+    case 'fanfriction':
+      return logoFan;
+    case 'fanfriction-light':
+      return logoFanLight;
     default:
       return logoNeon;
   }
@@ -663,7 +671,7 @@ onMounted(loadTree);
 
         <div class="mt-2 pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center">
             <div class="flex flex-column">
-                <span class="text-xs text-gray-500 font-mono uppercase tracking-widest">AI Toolbox Desktop</span>
+                <span class="text-xs text-gray-500 font-mono uppercase tracking-widest">Latent Library Desktop</span>
                 <span class="text-xs text-gray-500 font-mono">v{{ appVersion }}</span>
             </div>
             <div class="flex gap-2">

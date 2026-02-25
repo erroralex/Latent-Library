@@ -168,14 +168,12 @@
     transition: background-color 0.2s, border-color 0.2s !important;
 }
 
-/* Checked state - Target the slider directly when the parent has the checked class */
 .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
     background-color: var(--accent-primary) !important;
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
 }
 
-/* Handle */
 .p-inputswitch .p-inputswitch-slider:before {
     background-color: var(--text-secondary) !important;
     width: 1.1rem !important;
@@ -307,23 +305,24 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
 }
 
 /* --- Dropdowns & Selects --- */
-.p-dropdown-panel, .p-menu {
+.p-dropdown-panel, .p-menu, .p-multiselect-panel {
     background: var(--bg-menu) !important;
     border: 1px solid var(--border-input) !important;
     color: var(--text-primary) !important;
 }
 
-.p-dropdown-item, .p-menuitem-link {
+.p-dropdown-item, .p-menuitem-link, .p-multiselect-item {
     color: var(--text-primary) !important;
 }
 
 .p-dropdown-item .p-dropdown-item-label,
 .p-menuitem-link .p-menuitem-text,
-.p-menuitem-link .p-menuitem-icon {
+.p-menuitem-link .p-menuitem-icon,
+.p-multiselect-item .p-multiselect-item-label {
     color: var(--text-primary) !important;
 }
 
-.p-dropdown-item:hover, .p-menuitem-link:hover {
+.p-dropdown-item:hover, .p-menuitem-link:hover, .p-multiselect-item:hover {
     background: var(--bg-input) !important;
     color: var(--text-primary) !important;
 }
@@ -341,4 +340,44 @@ html body .p-slider:not(.p-disabled) .p-slider-handle:hover {
     box-shadow: var(--shadow-glow-primary) !important;
     border-color: var(--accent-primary) !important;
     outline: 0 none !important;
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper,
+.p-multiselect-panel .p-multiselect-items-wrapper {
+    max-height: 40vh !important;
+    overflow-y: auto !important;
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper::-webkit-scrollbar,
+.p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper::-webkit-scrollbar-track,
+.p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, var(--bg-input));
+    border-radius: 4px;
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper::-webkit-scrollbar-thumb,
+.p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, var(--border-input));
+    border-radius: 4px;
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper::-webkit-scrollbar-thumb:hover,
+.p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, var(--accent-primary));
+}
+
+/* --- MultiSelect Specific Fix --- */
+.p-multiselect-item.p-highlight,
+.p-multiselect-item[aria-selected="true"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box,
+.p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
 }

@@ -14,11 +14,12 @@ const http = require('http');
 const fs = require('fs');
 
 let mainWindow;
+let splashWindow;
 let backendProcess;
 let backendPort = null;
 let handshakeToken = null;
 
-const JAR_NAME = 'backend-0.0.1-SNAPSHOT.jar';
+const JAR_NAME = 'backend-1.0.2.jar';
 
 function getBackendPaths() {
     let javaExe, jarPath, workingDir, appDataDir;
@@ -50,13 +51,30 @@ function getBackendPaths() {
     return {javaExe, jarPath, workingDir, portFile, appDataDir};
 }
 
+function createSplashWindow() {
+    splashWindow = new BrowserWindow({
+        width: 400,
+        height: 300,
+        transparent: true,
+        frame: false,
+        alwaysOnTop: true,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+
+    splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+    splashWindow.center();
+}
+
 function createWindow() {
     if (!backendPort) return;
 
     mainWindow = new BrowserWindow({
         width: 1600,
         height: 900,
-        title: "AI Toolbox",
+        title: "Latent Library",
         icon: path.join(__dirname, '../frontend/src/assets/icon.png'),
         frame: false,
         webPreferences: {
@@ -76,7 +94,15 @@ function createWindow() {
     });
 
     mainWindow.maximize();
-    mainWindow.show();
+    
+    // Wait for the content to be ready before showing
+    mainWindow.once('ready-to-show', () => {
+        if (splashWindow) {
+            splashWindow.close();
+            splashWindow = null;
+        }
+        mainWindow.show();
+    });
 
     mainWindow.loadURL(`http://localhost:${backendPort}`);
 
@@ -101,7 +127,8 @@ function startBackend() {
         '-jar', jarPath,
         `--app.data.dir=${appDataDir}`
     ], {
-        cwd: workingDir
+        cwd: workingDir,
+        detached: process.platform !== 'win32'
     });
 
     backendProcess.stdout.on('data', (data) => {
@@ -134,11 +161,14 @@ function startBackend() {
         if (!backendPort) {
             console.error("Backend failed to start within 30s");
             clearInterval(pollInterval);
+            if (splashWindow) splashWindow.close();
         }
     }, 30000);
 }
 
 app.on('ready', () => {
+    createSplashWindow();
+
     ipcMain.handle('dialog:openDirectory', async () => {
         const {canceled, filePaths} = await dialog.showOpenDialog(mainWindow, {
             properties: ['openDirectory']
@@ -199,9 +229,14 @@ function killBackendProcess() {
                 const {execSync} = require('child_process');
                 execSync(`taskkill /pid ${backendProcess.pid} /f /t`);
             } catch (e) {
+                console.error("Failed to kill backend process on Windows:", e);
             }
         } else {
-            backendProcess.kill();
+            try {
+                process.kill(-backendProcess.pid, 'SIGTERM');
+            } catch (e) {
+                backendProcess.kill('SIGKILL');
+            }
         }
         backendProcess = null;
     }
