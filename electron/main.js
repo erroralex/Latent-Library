@@ -18,6 +18,7 @@ let splashWindow;
 let backendProcess;
 let backendPort = null;
 let handshakeToken = null;
+let logStream = null;
 
 const JAR_NAME = 'backend-1.0.2.jar';
 
@@ -48,7 +49,9 @@ function getBackendPaths() {
     }
 
     const portFile = path.join(dataDir, 'port.txt');
-    return {javaExe, jarPath, workingDir, portFile, appDataDir};
+    const logFile = path.join(dataDir, 'backend.log');
+    
+    return {javaExe, jarPath, workingDir, portFile, appDataDir, logFile};
 }
 
 function createSplashWindow() {
@@ -112,7 +115,14 @@ function createWindow() {
 }
 
 function startBackend() {
-    const {javaExe, jarPath, workingDir, portFile, appDataDir} = getBackendPaths();
+    const {javaExe, jarPath, workingDir, portFile, appDataDir, logFile} = getBackendPaths();
+
+    // Initialize log stream
+    logStream = fs.createWriteStream(logFile, {flags: 'w'});
+    const log = (msg) => {
+        console.log(msg);
+        if (logStream) logStream.write(msg + '\n');
+    };
 
     if (fs.existsSync(portFile)) {
         try {
@@ -121,7 +131,15 @@ function startBackend() {
         }
     }
 
-    console.log(`Starting backend with: ${javaExe} -jar ${jarPath}`);
+    log(`Starting backend with: ${javaExe} -jar ${jarPath}`);
+    log(`App Data Dir: ${appDataDir}`);
+
+    if (!fs.existsSync(javaExe)) {
+        log(`CRITICAL ERROR: Java executable not found at ${javaExe}`);
+        if (splashWindow) splashWindow.close();
+        dialog.showErrorBox("Startup Error", `Java runtime not found.\nExpected at: ${javaExe}`);
+        return;
+    }
 
     backendProcess = spawn(javaExe, [
         '-jar', jarPath,
@@ -132,11 +150,29 @@ function startBackend() {
     });
 
     backendProcess.stdout.on('data', (data) => {
-        console.log(`[Backend]: ${data}`);
+        const msg = data.toString();
+        // Don't console.log everything to avoid noise, but write to file
+        if (logStream) logStream.write(`[Backend]: ${msg}`);
     });
 
     backendProcess.stderr.on('data', (data) => {
-        console.error(`[Backend Error]: ${data}`);
+        const msg = data.toString();
+        console.error(`[Backend Error]: ${msg}`);
+        if (logStream) logStream.write(`[Backend Error]: ${msg}`);
+    });
+
+    backendProcess.on('error', (err) => {
+        log(`Failed to start backend process: ${err.message}`);
+        dialog.showErrorBox("Backend Error", `Failed to start backend process:\n${err.message}`);
+    });
+
+    backendProcess.on('close', (code) => {
+        log(`Backend process exited with code ${code}`);
+        if (code !== 0 && !mainWindow) {
+             // If backend crashes early, show error
+             if (splashWindow) splashWindow.close();
+             dialog.showErrorBox("Startup Error", `Backend exited unexpectedly with code ${code}.\nCheck ${logFile} for details.`);
+        }
     });
 
     const pollInterval = setInterval(() => {
@@ -147,7 +183,7 @@ function startBackend() {
                 if (parts.length === 2) {
                     backendPort = parseInt(parts[0]);
                     handshakeToken = parts[1];
-                    console.log(`Backend detected on port: ${backendPort}`);
+                    log(`Backend detected on port: ${backendPort}`);
                     clearInterval(pollInterval);
                     createWindow();
                 }
@@ -159,9 +195,10 @@ function startBackend() {
 
     setTimeout(() => {
         if (!backendPort) {
-            console.error("Backend failed to start within 30s");
+            log("Backend failed to start within 30s");
             clearInterval(pollInterval);
             if (splashWindow) splashWindow.close();
+            dialog.showErrorBox("Timeout", "Backend failed to start within 30 seconds.\nCheck logs for details.");
         }
     }, 30000);
 }
@@ -196,6 +233,8 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', async (event) => {
+    if (logStream) logStream.end();
+
     if (backendProcess && backendPort) {
         event.preventDefault();
         const req = http.request({
