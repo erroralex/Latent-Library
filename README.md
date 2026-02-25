@@ -63,8 +63,9 @@ A robust, high-performance desktop asset manager designed specifically for the A
 
 Designed for the privacy-conscious artist, this application operates on a strictly "Local-First" philosophy.
 
-* **Portable Desktop App:** Runs as a standalone `.exe` with all data (database, thumbnails, settings) stored in a local `data/` folder. No installer required.
+* **Standalone Desktop App:** Runs as a single `.exe` (Windows), `.AppImage` (Linux), or `.dmg` (macOS). No installer required.
 * **Bundled Runtime:** Includes a self-contained Java 21 environment. No system-wide Java installation is required.
+* **Portable Data:** All data (database, thumbnails, settings) is stored in a local `data/` folder next to the executable (or in a standard user data location on macOS), making it easy to backup or move.
 * **100% Offline / No Telemetry:** There are no "cloud sync" features, analytics, or background API calls. Your prompts and generation data never leave your machine.
 * **Privacy Scrubbing:** Integrated **Scrubber View** allows you to sanitize images before sharing. It strips hidden generation metadata (Prompts, ComfyUI Workflows, Seed data) while preserving visual quality.
 
@@ -98,11 +99,11 @@ Designed for the privacy-conscious artist, this application operates on a strict
 
 ## 💻 System Requirements
 
-* **OS:** Windows 10/11 (64-bit).
+* **OS:** Windows 10/11 (64-bit), Linux (AppImage), or macOS (11+).
 * **Memory:** 
   * **Minimum:** 4GB RAM.
   * **Recommended:** 8GB+ RAM (especially when using the AI Auto-Tagger).
-* **Storage:** ~500MB for the application + additional space for the WD14 AI model (~300MB) and thumbnail cache.
+* **Storage:** ~300MB for the application + additional space for the WD14 AI model (~300MB) and thumbnail cache.
 * **GPU:** Not required. AI interrogation runs efficiently on the CPU via ONNX Runtime.
 
 ---
@@ -125,12 +126,20 @@ The application is built as a hybrid desktop application combining a Spring Boot
 * **Desktop (Electron):**
   * **Process Management:** Automatically spawns and terminates the Spring Boot backend.
   * **Native Integration:** Provides access to native folder selection dialogs and OS file explorer.
+  * **Cross-Platform:** Builds for Windows, Linux, and macOS using GitHub Actions.
 
 ---
 
 ## 🚀 Getting Started
 
-[![Download Portable Zip](https://img.shields.io/badge/Download-Portable_Zip-2ea44f?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/erroralex/ai-toolbox/releases/latest)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest_Release-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/erroralex/Latent-Library/releases/latest)
+
+1.  **Download** the appropriate file for your OS:
+    *   **Windows:** `Latent Library Setup X.X.X.exe`
+    *   **Linux:** `Latent Library-X.X.X.AppImage`
+    *   **macOS:** `Latent Library-X.X.X.dmg`
+2.  **Run** the application. No installation is required.
+3.  **Select a Folder** containing your AI-generated images to start indexing.
 
 ---
 
