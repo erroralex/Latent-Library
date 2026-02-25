@@ -62,12 +62,13 @@ jobs:
       # This ensures the user doesn't need Java installed.
       - name: Download JRE (Windows)
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           # You would typically download a JRE here or use jlink.
           # For simplicity in this example, we assume the system java is sufficient or
           # you use jlink to create a custom runtime image in electron/runtime.
           # A robust solution uses jlink:
-          $JAVA_HOME/bin/jlink --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
+          "$JAVA_HOME/bin/jlink" --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
           cp -r electron/runtime/jre/* electron/runtime/
 
       - name: Download JRE (Linux/macOS)
