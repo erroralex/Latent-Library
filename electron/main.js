@@ -116,7 +116,7 @@ function createWindow() {
         mainWindow.show();
     });
 
-    mainWindow.loadURL(`http://localhost:${backendPort}`);
+    mainWindow.loadURL(`http://127.0.0.1:${backendPort}`);
 
     mainWindow.on('closed', function () {
         mainWindow = null;
@@ -254,7 +254,7 @@ app.on('will-quit', async (event) => {
     if (backendProcess && backendPort) {
         event.preventDefault();
         const req = http.request({
-            hostname: 'localhost',
+            hostname: '127.0.0.1', // Use 127.0.0.1 for shutdown request too
             port: backendPort,
             path: '/api/system/shutdown',
             method: 'POST',
