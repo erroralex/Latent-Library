@@ -4,6 +4,10 @@
   "description": "Latent Library Desktop",
   "main": "main.js",
   "author": "Alexander Nilsson",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erroralex/Latent-Library.git"
+  },
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder"
@@ -13,6 +17,11 @@
     "productName": "Latent Library",
     "directories": {
       "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "erroralex",
+      "repo": "Latent-Library"
     },
     "win": {
       "target": "portable",
