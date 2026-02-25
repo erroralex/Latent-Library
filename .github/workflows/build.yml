@@ -1,0 +1,89 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger only when a tag starting with 'v' is pushed (e.g., v1.0.2)
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build Backend (Spring Boot)
+        working-directory: ./backend
+        run: mvn clean package -DskipTests
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Frontend (Vue)
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Install Electron Dependencies
+        working-directory: ./electron
+        run: npm ci
+
+      # Prepare the runtime folder structure expected by electron-builder
+      - name: Prepare Runtime Directory
+        shell: bash
+        run: |
+          mkdir -p electron/runtime/app
+          mkdir -p electron/runtime/bin
+          cp backend/target/backend-1.0.2.jar electron/runtime/app/
+
+      # Copy the JRE (Java Runtime Environment) for the specific OS
+      # This ensures the user doesn't need Java installed.
+      - name: Download JRE (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # You would typically download a JRE here or use jlink.
+          # For simplicity in this example, we assume the system java is sufficient or
+          # you use jlink to create a custom runtime image in electron/runtime.
+          # A robust solution uses jlink:
+          $JAVA_HOME/bin/jlink --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
+          cp -r electron/runtime/jre/* electron/runtime/
+
+      - name: Download JRE (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          $JAVA_HOME/bin/jlink --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
+          cp -r electron/runtime/jre/* electron/runtime/
+
+      - name: Build Electron App
+        working-directory: ./electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist
+
+      - name: Upload Artifacts
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            electron/dist/*.exe
+            electron/dist/*.AppImage
+            electron/dist/*.dmg
