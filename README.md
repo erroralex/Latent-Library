@@ -136,10 +136,22 @@ The application is built as a hybrid desktop application combining a Spring Boot
 
 1.  **Download** the appropriate file for your OS:
     *   **Windows:** `Latent Library Setup X.X.X.exe`
-    *   **Linux:** `Latent Library-X.X.X.AppImage`
+    *   **Linux:** `Latent Library-X.X.X.AppImage` (mark as executable with `chmod +x`)
     *   **macOS:** `Latent Library-X.X.X.dmg`
 2.  **Run** the application. No installation is required.
 3.  **Select a Folder** containing your AI-generated images to start indexing.
+
+> **🍎 macOS Users:**
+> Because this app is not yet signed with an Apple Developer Certificate, you may see an error saying the app is **"damaged and can't be opened."** This is a standard macOS security message for unsigned apps.
+>
+> **To fix this:**
+> 1. Move the app to your **Applications** folder.
+> 2. Open **Terminal**.
+> 3. Run the following command to clear the quarantine attribute:
+>    ```bash
+>    sudo xattr -cr "/Applications/Latent Library.app"
+>    ```
+> 4. You can now open the app normally.
 
 ---
 
