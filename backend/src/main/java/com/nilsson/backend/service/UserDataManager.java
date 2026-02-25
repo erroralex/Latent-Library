@@ -6,24 +6,21 @@ import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.model.ImageDTO;
+import com.nilsson.backend.model.ImageInfo;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.PinnedFolderRepository;
 import com.nilsson.backend.repository.SearchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -41,6 +38,8 @@ import java.util.stream.Collectors;
  *   collections, tags, and application settings.</li>
  *   <li><b>Advanced Search Orchestration:</b> Combines SQLite FTS5 search with relational filtering
  *   and DTO mapping to deliver responsive search results.</li>
+ *   <li><b>Bulk Data Retrieval:</b> Offers an optimized method to fetch DTOs for a large list of files
+ *   by performing a single bulk database query.</li>
  *   <li><b>File Integrity & Tracking:</b> Implements a fast fingerprinting mechanism to detect when files have been
  *   moved or renamed, maintaining database consistency without re-indexing.</li>
  *   <li><b>Metadata Normalization:</b> Cleans and formats raw metadata values (e.g., LoRAs, Samplers)
@@ -55,7 +54,8 @@ import java.util.stream.Collectors;
 public class UserDataManager {
 
     private static final Logger log = LoggerFactory.getLogger(UserDataManager.class);
-    private static final int HASH_CHUNK_SIZE = 64 * 1024;
+
+    private final int hashChunkSize;
 
     private final DatabaseService db;
     private final JsonSettingsService settingsService;
@@ -67,7 +67,6 @@ public class UserDataManager {
     private final TagService tagService;
     private final PathService pathService;
     private final SearchRepository searchRepository;
-    private final FtsService ftsService;
     private final FileSystemService fileSystemService;
     private final DHashService dHashService;
 
@@ -80,9 +79,9 @@ public class UserDataManager {
                            TagService tagService,
                            PathService pathService,
                            SearchRepository searchRepository,
-                           FtsService ftsService,
                            FileSystemService fileSystemService,
-                           DHashService dHashService) {
+                           DHashService dHashService,
+                           @Value("${app.files.hash-chunk-size-kb:64}") int hashChunkSizeKb) {
         this.db = db;
         this.settingsService = settingsService;
         this.imageRepo = imageRepo;
@@ -93,9 +92,31 @@ public class UserDataManager {
         this.tagService = tagService;
         this.pathService = pathService;
         this.searchRepository = searchRepository;
-        this.ftsService = ftsService;
         this.fileSystemService = fileSystemService;
         this.dHashService = dHashService;
+        this.hashChunkSize = hashChunkSizeKb * 1024;
+    }
+
+    public List<ImageDTO> getBulkImageDTOs(List<File> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> paths = files.stream()
+                .map(pathService::getNormalizedAbsolutePath)
+                .collect(Collectors.toList());
+
+        Map<String, ImageInfo> infoMap = imageRepo.getBulkImageInfo(paths);
+
+        return paths.stream()
+                .map(path -> {
+                    ImageInfo info = infoMap.get(path);
+                    if (info != null) {
+                        return new ImageDTO(info.path(), info.rating(), info.model());
+                    }
+                    // Fallback for files not yet in the database
+                    return new ImageDTO(path, 0, "");
+                })
+                .collect(Collectors.toList());
     }
 
     public void shutdown() {
@@ -308,15 +329,15 @@ public class UserDataManager {
             digest.update(String.valueOf(length).getBytes());
 
             try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
-                byte[] buffer = new byte[HASH_CHUNK_SIZE];
+                byte[] buffer = new byte[hashChunkSize];
 
                 int bytesRead = raf.read(buffer);
                 if (bytesRead > 0) {
                     digest.update(buffer, 0, bytesRead);
                 }
 
-                if (length > HASH_CHUNK_SIZE) {
-                    raf.seek(length - HASH_CHUNK_SIZE);
+                if (length > hashChunkSize) {
+                    raf.seek(length - hashChunkSize);
                     bytesRead = raf.read(buffer);
                     if (bytesRead > 0) {
                         digest.update(buffer, 0, bytesRead);

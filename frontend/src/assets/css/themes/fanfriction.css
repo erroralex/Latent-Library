@@ -1,0 +1,68 @@
+/* Fan Friction Theme - Warm, earthy, and inviting */
+body.theme-fanfriction {
+    /* Backgrounds */
+    --bg-app: #2b2420;
+    --bg-sidebar-left: rgba(43, 36, 32, 0.95);
+    --bg-sidebar-right: rgba(43, 36, 32, 0.95);
+    --bg-header: rgba(43, 36, 32, 0.85);
+    --bg-panel: rgba(60, 50, 45, 0.6);
+    --bg-panel-opaque: #3c322d;
+    --bg-input: rgba(20, 15, 12, 0.6);
+    --bg-toolbar: rgba(43, 36, 32, 0.8);
+    --bg-btn-inner: #2b2420;
+    --bg-filmstrip: rgba(43, 36, 32, 0.9);
+    --bg-menu: #3c322d;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+
+    /* Borders */
+    --border-light: rgba(210, 180, 140, 0.15);
+    --border-input: rgba(210, 180, 140, 0.25);
+
+    /* Text */
+    --text-primary: #e8dcc5;
+    --text-secondary: #b0a090;
+    --text-muted: #8a7a6a;
+
+    /* Accents */
+    --accent-primary: #d2b48c;
+    --accent-secondary: #a0522d;
+    --accent-hover: #e6cdb3;
+
+    /* Gradients */
+    --grad-text: linear-gradient(45deg, #d2b48c, #e6cdb3);
+    --grad-hover: linear-gradient(45deg, #a0522d, #d2b48c);
+    --glass-blur: blur(12px);
+
+    /* Shadows */
+    --shadow-panel: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+
+    /* Status Colors */
+    --status-success: #6b8e23;
+    --status-warning: #daa520;
+    --status-danger: #cd5c5c;
+}
+
+/* PrimeVue Overrides for Fan Friction */
+body.theme-fanfriction .p-component {
+    font-family: 'Inter', sans-serif;
+}
+
+body.theme-fanfriction .p-button.p-button-text {
+    color: var(--text-secondary);
+}
+
+body.theme-fanfriction .p-button.p-button-text:hover {
+    color: var(--text-primary);
+    background: rgba(210, 180, 140, 0.1);
+}
+
+body.theme-fanfriction .p-inputtext {
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    color: var(--text-primary);
+}
+
+body.theme-fanfriction .p-inputtext:enabled:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary);
+}

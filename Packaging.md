@@ -1,6 +1,6 @@
 # 📦 Packaging Guide: Portable Desktop App
 
-This guide details how to build **AI Toolbox** as a standalone, portable Windows executable (`.exe`) that requires **no installation** and has **no external dependencies** (Java and Node.js are bundled).
+This guide details how to build **Latent Library** as a standalone, portable Windows executable (`.exe`) that requires **no installation** and has **no external dependencies** (Java and Node.js are bundled).
 
 ---
 
@@ -93,12 +93,12 @@ Package everything (Frontend + Backend JAR + Custom JRE) into a single `.exe`.
 
 1.  **Locate the Output:**
     Go to `electron/dist/`. You will find:
-    *   `AI Toolbox 1.0.0.exe` (Portable Executable)
+    *   `Latent Library 1.0.0.exe` (Portable Executable)
     *   `win-unpacked/` (Unpacked folder version)
 
 2.  **Zip & Share:**
-    *   Right-click `AI Toolbox 1.0.0.exe` -> **Compress to ZIP file**.
-    *   Name it `AI-Toolbox-Portable-v1.0.0.zip`.
+    *   Right-click `Latent Library 1.0.0.exe` -> **Compress to ZIP file**.
+    *   Name it `Latent-Library-Portable-v1.0.0.zip`.
     *   Upload this ZIP to GitHub Releases.
 
 ---

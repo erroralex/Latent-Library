@@ -1,7 +1,6 @@
 package com.nilsson.backend.service;
 
 import com.nilsson.backend.exception.ApplicationException;
-import com.nilsson.backend.exception.ValidationException;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
@@ -36,7 +36,8 @@ import java.util.stream.IntStream;
  * <ul>
  *   <li><b>On-Demand Generation:</b> Creates thumbnails for images as they are requested by the UI.</li>
  *   <li><b>Proactive Caching:</b> Pre-generates thumbnails for batches of images during folder indexing.</li>
- *   <li><b>Concurrency Control:</b> Limits simultaneous CPU-intensive resizing operations to maintain system responsiveness.</li>
+ *   <li><b>Concurrency Control:</b> Limits simultaneous CPU-intensive resizing operations to maintain system responsiveness.
+ *   The number of permits is configurable via {@code app.thumbnails.cpu-permits}.</li>
  *   <li><b>Request Deduplication:</b> Ensures that multiple requests for the same thumbnail are handled by a single generation task.</li>
  *   <li><b>Persistent Storage:</b> Manages a local disk cache for generated thumbnails, using SHA-256 hashes for unique identification.</li>
  * </ul>
@@ -46,19 +47,26 @@ public class ThumbnailService {
 
     private static final Logger logger = LoggerFactory.getLogger(ThumbnailService.class);
     private static final String THUMBNAIL_DIR = "data/thumbnails";
-    private static final int THUMBNAIL_SIZE = 300;
-    private static final double OUTPUT_QUALITY = 0.85;
 
-    private static final int STRIPE_COUNT = 128;
+    private final int thumbnailSize;
+    private final double outputQuality;
     private final ReentrantLock[] locks;
     private final Semaphore cpuPermits;
     private final Path thumbnailCacheDir;
-    
+
     private final Map<String, CompletableFuture<File>> inFlight = new ConcurrentHashMap<>();
     private final ExecutorService preloadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
-    public ThumbnailService(@Value("${app.data.dir:.}") String appDataDir) {
+    public ThumbnailService(@Value("${app.data.dir:.}") String appDataDir,
+                            @Value("${app.thumbnails.size:300}") int thumbnailSize,
+                            @Value("${app.thumbnails.quality:0.85}") double outputQuality,
+                            @Value("${app.thumbnails.stripe-count:128}") int stripeCount,
+                            @Value("${app.thumbnails.cpu-permits:#{null}}") Optional<Integer> cpuPermitsOpt) {
+
+        this.thumbnailSize = thumbnailSize;
+        this.outputQuality = outputQuality;
         this.thumbnailCacheDir = Paths.get(appDataDir).resolve(THUMBNAIL_DIR).toAbsolutePath().normalize();
+
         try {
             if (!Files.exists(thumbnailCacheDir)) {
                 Files.createDirectories(thumbnailCacheDir);
@@ -67,12 +75,12 @@ public class ThumbnailService {
             throw new ApplicationException("Failed to initialize thumbnail cache directory", e);
         }
 
-        this.locks = IntStream.range(0, STRIPE_COUNT)
+        this.locks = IntStream.range(0, stripeCount)
                 .mapToObj(i -> new ReentrantLock())
                 .toArray(ReentrantLock[]::new);
 
-        int cores = Runtime.getRuntime().availableProcessors();
-        this.cpuPermits = new Semaphore(Math.max(2, cores - 2));
+        int defaultPermits = Math.max(2, Runtime.getRuntime().availableProcessors() - 2);
+        this.cpuPermits = new Semaphore(cpuPermitsOpt.orElse(defaultPermits));
     }
 
     public File getThumbnail(File sourceFile) {
@@ -130,7 +138,7 @@ public class ThumbnailService {
     }
 
     private ReentrantLock getLock(String key) {
-        int index = (key.hashCode() & 0x7FFFFFFF) % STRIPE_COUNT;
+        int index = (key.hashCode() & 0x7FFFFFFF) % locks.length;
         return locks[index];
     }
 
@@ -138,9 +146,9 @@ public class ThumbnailService {
         Path tempFile = thumbnailCacheDir.resolve(hash + ".tmp");
         try {
             Thumbnails.of(source)
-                    .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
+                    .size(thumbnailSize, thumbnailSize)
                     .outputFormat("jpg")
-                    .outputQuality(OUTPUT_QUALITY)
+                    .outputQuality(outputQuality)
                     .toFile(tempFile.toFile());
 
             Files.move(tempFile, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);

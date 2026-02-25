@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,7 +54,7 @@ class EdgeCaseTest {
     @Test
     @DisplayName("ThumbnailService should handle non-existent or corrupted files gracefully")
     void testCorruptFile(@TempDir Path tempDir) throws IOException {
-        ThumbnailService thumbnailService = new ThumbnailService(tempDir.toString());
+        ThumbnailService thumbnailService = new ThumbnailService(tempDir.toString(), 300, 0.85, 128, Optional.empty());
         File corruptFile = tempDir.resolve("corrupt.jpg").toFile();
         Files.writeString(corruptFile.toPath(), "not an image");
 

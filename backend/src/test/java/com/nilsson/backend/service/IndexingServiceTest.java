@@ -42,8 +42,6 @@ class IndexingServiceTest {
     @Mock
     private ThumbnailService thumbnailService;
     @Mock
-    private FtsService ftsService;
-    @Mock
     private DHashService dHashService;
 
     private IndexingService indexingService;
@@ -51,7 +49,8 @@ class IndexingServiceTest {
     @BeforeEach
     void setUp() {
         indexingService = new IndexingService(
-                imageRepo, metaService, dataManager, pathService, thumbnailService, ftsService, dHashService
+                imageRepo, metaService, dataManager, pathService, thumbnailService, dHashService,
+                20, 500, 5000
         );
     }
 

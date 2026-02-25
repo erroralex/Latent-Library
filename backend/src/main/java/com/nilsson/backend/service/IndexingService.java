@@ -1,10 +1,9 @@
 package com.nilsson.backend.service;
 
-import com.nilsson.backend.exception.ApplicationException;
-import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.repository.ImageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -33,8 +32,8 @@ import java.util.stream.Stream;
  *   <li><b>Real-time Monitoring:</b> Utilizes the OS {@link WatchService} to provide instant updates
  *   to the UI when files are added or removed on disk.</li>
  *   <li><b>Batch Processing:</b> Orchestrates the extraction of metadata and generation of thumbnails
- *   for large groups of files efficiently.</li>
- *   <li><b>Event Debouncing:</b> Implements a delay mechanism to prevent redundant processing of
+ *   for large groups of files efficiently, with a configurable batch size.</li>
+ *   <li><b>Event Debouncing:</b> Implements a configurable delay mechanism to prevent redundant processing of
  *   rapid-fire file system events.</li>
  * </ul>
  */
@@ -42,9 +41,10 @@ import java.util.stream.Stream;
 public class IndexingService {
 
     private static final Logger logger = LoggerFactory.getLogger(IndexingService.class);
-    private static final int BATCH_SIZE = 20;
-    private static final long DEBOUNCE_DELAY_MS = 500;
-    private static final long WATCH_RETRY_DELAY_MS = 5000;
+
+    private final int batchSize;
+    private final long debounceDelayMs;
+    private final long watchRetryDelayMs;
 
     private final ImageRepository imageRepo;
     private final MetadataService metaService;
@@ -53,7 +53,6 @@ public class IndexingService {
     private final ThumbnailService thumbnailService;
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
-    private final FtsService ftsService;
     private final DHashService dHashService;
 
     private WatchService watchService;
@@ -66,15 +65,19 @@ public class IndexingService {
                            UserDataManager dataManager,
                            PathService pathService,
                            ThumbnailService thumbnailService,
-                           FtsService ftsService,
-                           DHashService dHashService) {
+                           DHashService dHashService,
+                           @Value("${app.indexing.batch-size:20}") int batchSize,
+                           @Value("${app.indexing.debounce-ms:500}") long debounceDelayMs,
+                           @Value("${app.indexing.watch-retry-ms:5000}") long watchRetryDelayMs) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
         this.pathService = pathService;
         this.thumbnailService = thumbnailService;
-        this.ftsService = ftsService;
         this.dHashService = dHashService;
+        this.batchSize = batchSize;
+        this.debounceDelayMs = debounceDelayMs;
+        this.watchRetryDelayMs = watchRetryDelayMs;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
     }
@@ -153,7 +156,7 @@ public class IndexingService {
 
         Runnable scanTask = () -> {
             try {
-                List<File> batch = new ArrayList<>(BATCH_SIZE);
+                List<File> batch = new ArrayList<>(batchSize);
 
                 if (recursive) {
                     Files.walkFileTree(folder.toPath(), new SimpleFileVisitor<Path>() {
@@ -161,7 +164,7 @@ public class IndexingService {
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                             if (isImageFile(file.toFile())) {
                                 batch.add(file.toFile());
-                                if (batch.size() >= BATCH_SIZE) {
+                                if (batch.size() >= batchSize) {
                                     startIndexing(new ArrayList<>(batch), null);
                                     batch.clear();
                                 }
@@ -185,7 +188,7 @@ public class IndexingService {
                         stream.filter(path -> isImageFile(path.toFile()))
                                 .forEach(path -> {
                                     batch.add(path.toFile());
-                                    if (batch.size() >= BATCH_SIZE) {
+                                    if (batch.size() >= batchSize) {
                                         startIndexing(new ArrayList<>(batch), null);
                                         batch.clear();
                                     }
@@ -211,8 +214,8 @@ public class IndexingService {
 
         Runnable task = () -> {
             int total = files.size();
-            for (int i = 0; i < total; i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, total);
+            for (int i = 0; i < total; i += batchSize) {
+                int end = Math.min(i + batchSize, total);
                 List<File> batch = files.subList(i, end);
 
                 BatchResult result = processBatch(batch);
@@ -273,7 +276,7 @@ public class IndexingService {
                     if (!isImageFile(file)) continue;
 
                     String eventKey = file.getAbsolutePath() + "_" + event.kind().name();
-                    if (pendingEvents.containsKey(eventKey) && (now - pendingEvents.get(eventKey) < DEBOUNCE_DELAY_MS))
+                    if (pendingEvents.containsKey(eventKey) && (now - pendingEvents.get(eventKey) < debounceDelayMs))
                         continue;
 
                     pendingEvents.put(eventKey, now);
@@ -282,13 +285,13 @@ public class IndexingService {
                             pendingEvents.remove(eventKey);
                             processFileSystemEvent(event.kind(), file, listener);
                         }
-                    }, DEBOUNCE_DELAY_MS, TimeUnit.MILLISECONDS);
+                    }, debounceDelayMs, TimeUnit.MILLISECONDS);
                 }
                 if (!key.reset()) break;
             } catch (Exception e) {
                 closeWatchService();
                 try {
-                    Thread.sleep(WATCH_RETRY_DELAY_MS);
+                    Thread.sleep(watchRetryDelayMs);
                 } catch (InterruptedException ie) {
                     break;
                 }

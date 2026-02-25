@@ -27,6 +27,8 @@ import java.nio.file.StandardCopyOption;
  * <ul>
  *   <li><b>System Trash Integration:</b> Utilizes the AWT {@link Desktop} API to move files
  *   to the OS-native trash bin, providing a safe deletion mechanism.</li>
+ *   <li><b>Linux Support:</b> Implements specific support for {@code gio trash} and {@code trash-cli}
+ *   to ensure reliable deletion on Linux environments where AWT might fail.</li>
  *   <li><b>Fallback Deletion:</b> Implements a custom trash directory ({@code data/trash})
  *   to handle deletions on systems where native trash integration is unsupported or fails.</li>
  *   <li><b>Physical Renaming:</b> Manages the atomic renaming of files on disk while
@@ -53,7 +55,13 @@ public class FileSystemService {
         }
 
         boolean success = false;
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
+        String os = System.getProperty("os.name").toLowerCase();
+
+        if (os.contains("linux")) {
+            success = tryLinuxTrash(file);
+        }
+
+        if (!success && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH)) {
             try {
                 success = Desktop.getDesktop().moveToTrash(file);
             } catch (Exception e) {
@@ -61,6 +69,7 @@ public class FileSystemService {
             }
         }
 
+        // Application-level fallback
         if (!success) {
             success = moveFileToAppTrash(file);
         }
@@ -70,6 +79,34 @@ public class FileSystemService {
         }
 
         return true;
+    }
+
+    private boolean tryLinuxTrash(File file) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("gio", "trash", file.getAbsolutePath());
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                logger.info("Moved file to trash using 'gio trash': {}", file.getAbsolutePath());
+                return true;
+            }
+        } catch (Exception e) {
+            logger.debug("'gio trash' failed or not available: {}", e.getMessage());
+        }
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder("trash-put", file.getAbsolutePath());
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                logger.info("Moved file to trash using 'trash-put': {}", file.getAbsolutePath());
+                return true;
+            }
+        } catch (Exception e) {
+            logger.debug("'trash-put' failed or not available: {}", e.getMessage());
+        }
+        
+        return false;
     }
 
     private boolean moveFileToAppTrash(File file) {

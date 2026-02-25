@@ -20,9 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -41,8 +40,8 @@ import java.util.stream.Stream;
  *   excluded directories before proceeding with indexing.</li>
  *   <li><b>State Persistence:</b> Updates the application's "last visited folder" setting
  *   upon successful scan.</li>
- *   <li><b>DTO Mapping:</b> Returns a sorted list of {@link ImageDTO} objects for the scanned
- *   folder, enriched with ratings and model information for immediate UI display.</li>
+ *   <li><b>Optimized DTO Mapping:</b> Returns a sorted list of {@link ImageDTO} objects for the scanned
+ *   folder, using a high-performance bulk fetch to retrieve ratings and model information.</li>
  * </ul>
  */
 @RestController
@@ -113,18 +112,9 @@ public class LibraryController {
             }
         }
 
-        List<ImageDTO> imageDTOs = files.stream()
-                .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()))
-                .map(file -> {
-                    int rating = userDataManager.getRating(file);
-                    String model = "";
-                    if (userDataManager.hasCachedMetadata(file)) {
-                        Map<String, String> meta = userDataManager.getCachedMetadata(file);
-                        model = meta.getOrDefault("Model", "");
-                    }
-                    return new ImageDTO(pathService.getNormalizedAbsolutePath(file), rating, model);
-                })
-                .collect(Collectors.toList());
+        files.sort(Comparator.comparingLong(File::lastModified).reversed());
+
+        List<ImageDTO> imageDTOs = userDataManager.getBulkImageDTOs(files);
 
         return ResponseEntity.ok(imageDTOs);
     }

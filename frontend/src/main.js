@@ -32,6 +32,8 @@ import 'primeflex/primeflex.css'
 import './assets/css/themes/neon.css';
 import './assets/css/themes/light.css';
 import './assets/css/themes/gold.css';
+import './assets/css/themes/fanfriction.css';
+import './assets/css/themes/fanfriction-light.css';
 import './assets/css/components/base.css';
 import './assets/css/components/primevue-overrides.css';
 import './assets/css/components/layout.css';

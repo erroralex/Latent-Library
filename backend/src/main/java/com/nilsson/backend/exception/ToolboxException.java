@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import java.io.Serial;
 
 /**
- * Base abstract exception for the AI Toolbox application.
+ * Base abstract exception for the Latent Library application.
  * <p>
  * This class serves as the root of the application's custom exception hierarchy. It integrates
  * with Spring's {@code GlobalExceptionHandler} to provide standardized error responses

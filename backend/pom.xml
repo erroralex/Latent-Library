@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.nilsson</groupId>
     <artifactId>backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.2</version>
     <name>backend</name>
     <description>backend</description>
     <url/>
@@ -204,7 +204,7 @@
                                 <argument>--input</argument>
                                 <argument>${project.build.directory}/jpackage-input</argument>
                                 <argument>--name</argument>
-                                <argument>AIToolbox</argument>
+                                <argument>LatentLibrary</argument>
                                 <argument>--main-jar</argument>
                                 <argument>${project.build.finalName}.jar</argument>
                                 <argument>--type</argument>

@@ -1,18 +1,20 @@
 package com.nilsson.backend.service;
 
-import com.nilsson.backend.exception.ApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,14 +32,8 @@ class ThumbnailServiceTest {
     Path tempDir;
 
     @BeforeEach
-    void setUp() throws Exception {
-        thumbnailService = new ThumbnailService(tempDir.toString());
-
-        Field cacheDirField = ThumbnailService.class.getDeclaredField("thumbnailCacheDir");
-        cacheDirField.setAccessible(true);
-        // The constructor now correctly initializes this based on the passed path,
-        // but we can verify or override if needed.
-        // For this test, the constructor logic is sufficient as we pass tempDir.toString()
+    void setUp() {
+        thumbnailService = new ThumbnailService(tempDir.toString(), 300, 0.85, 128, Optional.empty());
     }
 
     @Test

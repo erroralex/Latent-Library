@@ -1,7 +1,7 @@
 <script setup>
 /**
  * @file App.vue
- * @description The root component of the AI Toolbox application, defining the global layout and navigation structure.
+ * @description The root component of the Latent Library application, defining the global layout and navigation structure.
  *
  * This component serves as the primary layout shell for the entire application. It manages the
  * global navigation bar, window controls for the Electron environment, and the integration
@@ -110,7 +110,7 @@ const closeWindow = () => {
     <header class="menubar-glass flex align-items-center pl-5 pr-1 py-2 gap-5 draggable-header">
       <div class="flex align-items-center gap-3 mr-5 no-drag">
         <img src="@/assets/icon.png" alt="Logo" style="height: 42px;"/>
-        <span class="text-2xl font-bold text-gradient text-primary">AI Toolbox</span>
+        <span class="text-2xl font-bold text-gradient text-primary">Latent Library</span>
       </div>
 
       <div class="flex gap-2 flex-grow-1 no-drag overflow-x-auto custom-scrollbar pb-1">
