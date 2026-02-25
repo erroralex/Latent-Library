@@ -18,9 +18,19 @@
       "target": "portable",
       "icon": "../frontend/src/assets/icon.png"
     },
+    "linux": {
+      "target": "AppImage",
+      "icon": "../frontend/src/assets/icon.png",
+      "category": "Graphics"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "../frontend/src/assets/icon.png"
+    },
     "files": [
       "main.js",
       "preload.js",
+      "splash.html",
       "package.json"
     ],
     "extraResources": [
