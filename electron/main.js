@@ -13,6 +13,18 @@ const {spawn} = require('child_process');
 const http = require('http');
 const fs = require('fs');
 
+process.on('uncaughtException', (error) => {
+    const errorLogPath = path.join(path.dirname(app.getPath('exe')), 'startup_error.log');
+    const message = `[Uncaught Exception]: ${error.name}: ${error.message}\n${error.stack}\n`;
+    try {
+        fs.appendFileSync(errorLogPath, message);
+    } catch (e) {
+        console.error(message);
+    }
+    dialog.showErrorBox("Critical Startup Error", `An unexpected error occurred:\n${error.message}\n\nCheck 'startup_error.log' for details.`);
+    app.quit();
+});
+
 let mainWindow;
 let splashWindow;
 let backendProcess;
@@ -29,8 +41,7 @@ function getBackendPaths() {
         javaExe = path.join(process.resourcesPath, 'runtime', 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
         jarPath = path.join(process.resourcesPath, 'runtime', 'app', JAR_NAME);
         workingDir = path.join(process.resourcesPath, 'runtime', 'app');
-        
-        // CRITICAL FIX: Use PORTABLE_EXECUTABLE_DIR if available (Portable Apps), otherwise fallback to exe dir
+
         if (process.env.PORTABLE_EXECUTABLE_DIR) {
             appDataDir = process.env.PORTABLE_EXECUTABLE_DIR;
         } else {
@@ -90,15 +101,13 @@ function createWindow() {
         show: false
     });
 
-    // Handle new window requests (e.g., target="_blank") by opening in default browser
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };
     });
 
     mainWindow.maximize();
-    
-    // Wait for the content to be ready before showing
+
     mainWindow.once('ready-to-show', () => {
         if (splashWindow) {
             splashWindow.close();
@@ -115,92 +124,100 @@ function createWindow() {
 }
 
 function startBackend() {
-    const {javaExe, jarPath, workingDir, portFile, appDataDir, logFile} = getBackendPaths();
+    try {
+        const {javaExe, jarPath, workingDir, portFile, appDataDir, logFile} = getBackendPaths();
 
-    // Initialize log stream
-    logStream = fs.createWriteStream(logFile, {flags: 'w'});
-    const log = (msg) => {
-        console.log(msg);
-        if (logStream) logStream.write(msg + '\n');
-    };
-
-    if (fs.existsSync(portFile)) {
         try {
-            fs.unlinkSync(portFile);
+            logStream = fs.createWriteStream(logFile, {flags: 'w'});
         } catch (e) {
+            dialog.showErrorBox("Log Error", `Failed to create log file at ${logFile}:\n${e.message}`);
+            return;
         }
-    }
 
-    log(`Starting backend with: ${javaExe} -jar ${jarPath}`);
-    log(`App Data Dir: ${appDataDir}`);
+        const log = (msg) => {
+            console.log(msg);
+            if (logStream) logStream.write(msg + '\n');
+        };
 
-    if (!fs.existsSync(javaExe)) {
-        log(`CRITICAL ERROR: Java executable not found at ${javaExe}`);
-        if (splashWindow) splashWindow.close();
-        dialog.showErrorBox("Startup Error", `Java runtime not found.\nExpected at: ${javaExe}`);
-        return;
-    }
-
-    backendProcess = spawn(javaExe, [
-        '-jar', jarPath,
-        `--app.data.dir=${appDataDir}`
-    ], {
-        cwd: workingDir,
-        detached: process.platform !== 'win32'
-    });
-
-    backendProcess.stdout.on('data', (data) => {
-        const msg = data.toString();
-        // Don't console.log everything to avoid noise, but write to file
-        if (logStream) logStream.write(`[Backend]: ${msg}`);
-    });
-
-    backendProcess.stderr.on('data', (data) => {
-        const msg = data.toString();
-        console.error(`[Backend Error]: ${msg}`);
-        if (logStream) logStream.write(`[Backend Error]: ${msg}`);
-    });
-
-    backendProcess.on('error', (err) => {
-        log(`Failed to start backend process: ${err.message}`);
-        dialog.showErrorBox("Backend Error", `Failed to start backend process:\n${err.message}`);
-    });
-
-    backendProcess.on('close', (code) => {
-        log(`Backend process exited with code ${code}`);
-        if (code !== 0 && !mainWindow) {
-             // If backend crashes early, show error
-             if (splashWindow) splashWindow.close();
-             dialog.showErrorBox("Startup Error", `Backend exited unexpectedly with code ${code}.\nCheck ${logFile} for details.`);
-        }
-    });
-
-    const pollInterval = setInterval(() => {
         if (fs.existsSync(portFile)) {
             try {
-                const content = fs.readFileSync(portFile, 'utf8').trim();
-                const parts = content.split(':');
-                if (parts.length === 2) {
-                    backendPort = parseInt(parts[0]);
-                    handshakeToken = parts[1];
-                    log(`Backend detected on port: ${backendPort}`);
-                    clearInterval(pollInterval);
-                    createWindow();
-                }
+                fs.unlinkSync(portFile);
             } catch (e) {
-                console.error("Error reading port file:", e);
             }
         }
-    }, 200);
 
-    setTimeout(() => {
-        if (!backendPort) {
-            log("Backend failed to start within 30s");
-            clearInterval(pollInterval);
+        log(`Starting backend with: ${javaExe} -jar ${jarPath}`);
+        log(`App Data Dir: ${appDataDir}`);
+
+        if (app.isPackaged && !fs.existsSync(javaExe)) {
+            log(`CRITICAL ERROR: Java executable not found at ${javaExe}`);
             if (splashWindow) splashWindow.close();
-            dialog.showErrorBox("Timeout", "Backend failed to start within 30 seconds.\nCheck logs for details.");
+            dialog.showErrorBox("Startup Error", `Java runtime not found.\nExpected at: ${javaExe}`);
+            return;
         }
-    }, 30000);
+
+        backendProcess = spawn(javaExe, [
+            '-jar', jarPath,
+            `--app.data.dir=${appDataDir}`
+        ], {
+            cwd: workingDir,
+            detached: process.platform !== 'win32'
+        });
+
+        backendProcess.stdout.on('data', (data) => {
+            const msg = data.toString();
+            if (logStream) logStream.write(`[Backend]: ${msg}`);
+        });
+
+        backendProcess.stderr.on('data', (data) => {
+            const msg = data.toString();
+            console.error(`[Backend Error]: ${msg}`);
+            if (logStream) logStream.write(`[Backend Error]: ${msg}`);
+        });
+
+        backendProcess.on('error', (err) => {
+            log(`Failed to start backend process: ${err.message}`);
+            dialog.showErrorBox("Backend Error", `Failed to start backend process:\n${err.message}`);
+        });
+
+        backendProcess.on('close', (code) => {
+            log(`Backend process exited with code ${code}`);
+            if (code !== 0 && !mainWindow) {
+                 if (splashWindow) splashWindow.close();
+                 dialog.showErrorBox("Startup Error", `Backend exited unexpectedly with code ${code}.\nCheck ${logFile} for details.`);
+            }
+        });
+
+        const pollInterval = setInterval(() => {
+            if (fs.existsSync(portFile)) {
+                try {
+                    const content = fs.readFileSync(portFile, 'utf8').trim();
+                    const parts = content.split(':');
+                    if (parts.length === 2) {
+                        backendPort = parseInt(parts[0]);
+                        handshakeToken = parts[1];
+                        log(`Backend detected on port: ${backendPort}`);
+                        clearInterval(pollInterval);
+                        createWindow();
+                    }
+                } catch (e) {
+                    console.error("Error reading port file:", e);
+                }
+            }
+        }, 200);
+
+        setTimeout(() => {
+            if (!backendPort) {
+                log("Backend failed to start within 30s");
+                clearInterval(pollInterval);
+                if (splashWindow) splashWindow.close();
+                dialog.showErrorBox("Timeout", "Backend failed to start within 30 seconds.\nCheck logs for details.");
+            }
+        }, 30000);
+    } catch (e) {
+        dialog.showErrorBox("Critical Error", `Failed to initialize backend:\n${e.message}`);
+        if (splashWindow) splashWindow.close();
+    }
 }
 
 app.on('ready', () => {
@@ -213,7 +230,6 @@ app.on('ready', () => {
         return canceled ? null : filePaths[0];
     });
 
-    // Handle external link requests from renderer
     ipcMain.on('open-external-link', (event, url) => {
         shell.openExternal(url);
     });
