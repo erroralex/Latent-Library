@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Trigger only when a tag starting with 'v' is pushed (e.g., v1.0.2)
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
