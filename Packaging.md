@@ -1,110 +1,87 @@
-# 📦 Packaging Guide: Portable Desktop App
+# Packaging & Release Guide (GitHub Actions)
 
-This guide details how to build **Latent Library** as a standalone, portable Windows executable (`.exe`) that requires **no installation** and has **no external dependencies** (Java and Node.js are bundled).
+This guide explains how to build and release **Latent Library** for Windows, Linux, and macOS using GitHub Actions.
 
----
+## Prerequisites
 
-## 📋 Prerequisites
-
-1.  **JDK 21 Installed:** Ensure you have a JDK 21 installed (e.g., BellSoft Liberica, Corretto, or Zulu).
-2.  **Node.js Installed:** Required for building the frontend and Electron wrapper.
-3.  **Administrator Privileges:** Required for creating symbolic links during the final build process.
+*   You must be on the `development` branch (or whichever branch you are working on).
+*   You must have committed all your latest code changes.
+*   You are using **Git Bash** on Windows.
 
 ---
 
-## 🚀 Step-by-Step Build Process
+## 1. Commit Your Changes
 
-### Phase 1: Build the Frontend
+Ensure your local code is up to date and committed.
 
-Compile the Vue.js frontend. The build configuration is set to automatically output files into the backend's resource folder.
+```bash
+git add .
+git commit -m "Your commit message here"
+git push origin development
+```
 
-1.  Open a terminal in the **`frontend`** directory:
-    ```powershell
-    cd frontend
+## 2. Trigger a Build (Create a Release)
+
+The build pipeline is triggered **only** when you push a tag starting with `v` (e.g., `v1.0.2`).
+
+### Option A: New Release (Normal Flow)
+
+If everything is working fine and you want to release a new version (e.g., going from `1.0.2` to `1.0.3`):
+
+1.  **Update Version Numbers:**
+    *   Update `version` in `electron/package.json`.
+    *   Update `<version>` in `backend/pom.xml`.
+    *   Commit these changes: `git commit -am "Bump version to 1.0.3"` & `git push`.
+
+2.  **Tag and Push:**
+    ```bash
+    git tag v1.0.3
+    git push origin v1.0.3
     ```
-2.  Install dependencies and build:
-    ```powershell
-    npm install
-    npm run build
+
+### Option B: Retry a Failed Build (Fixing Errors)
+
+If a build failed for version `v1.0.2` and you want to retry **without** changing the version number to `1.0.3`:
+
+1.  **Delete the tag locally:**
+    ```bash
+    git tag -d v1.0.2
     ```
-    *Success Check:* Ensure files were generated in `../backend/src/main/resources/static/`.
 
----
-
-### Phase 2: Build the Backend JAR
-
-Compile the Spring Boot backend into a single executable JAR.
-
-1.  Navigate to the **`backend`** directory:
-    ```powershell
-    cd ../backend
+2.  **Delete the tag remotely (GitHub):**
+    ```bash
+    git push --delete origin v1.0.2
     ```
-2.  Run the Maven wrapper to build the JAR (skipping tests for speed):
-    ```powershell
-    .\mvnw.cmd clean package -DskipTests
+
+3.  **Push your fixes:**
+    Make your code changes, commit them, and push to your branch.
+    ```bash
+    git add .
+    git commit -m "Fix build configuration"
+    git push origin development
     ```
-    *Success Check:* Verify that `backend-0.0.1-SNAPSHOT.jar` exists in `backend/target/`.
 
----
-
-### Phase 3: Create Custom Java Runtime (JRE)
-
-Create a stripped-down, lightweight Java Runtime Environment to bundle with the app.
-
-1.  Navigate to the **Project Root** (`AIToolbox-Web`).
-2.  Identify your JDK path (e.g., `C:\Program Files\BellSoft\LibericaJDK-21`).
-3.  Run the following `jlink` command in PowerShell:
-
-    ```powershell
-    # Adjust the path to match YOUR JDK installation
-    & "C:\Program Files\BellSoft\LibericaJDK-21\bin\jlink.exe" `
-        --module-path "C:\Program Files\BellSoft\LibericaJDK-21\jmods" `
-        --add-modules java.base,java.desktop,java.instrument,java.logging,java.management,java.naming,java.net.http,java.prefs,java.rmi,java.scripting,java.security.jgss,java.security.sasl,java.sql,java.transaction.xa,java.xml,jdk.jfr,jdk.management,jdk.unsupported,jdk.crypto.ec `
-        --output electron/runtime `
-        --strip-debug `
-        --no-man-pages `
-        --no-header-files `
-        --compress=2
-    ```
-    *Success Check:* Verify that the folder `electron/runtime/bin` exists and contains `java.exe`.
-
----
-
-### Phase 4: Build the Portable Executable
-
-Package everything (Frontend + Backend JAR + Custom JRE) into a single `.exe`.
-
-**⚠️ Important:** You must run this step as **Administrator** to allow symbolic link creation.
-
-1.  **Right-click** your Terminal/PowerShell icon and select **"Run as Administrator"**.
-2.  Navigate to the **`electron`** directory:
-    ```powershell
-    cd C:\Users\error\IdeaProjects\Projects\AIToolbox-Web\electron
-    ```
-3.  Install dependencies and build:
-    ```powershell
-    npm install
-    npm run dist
+4.  **Re-create and push the tag:**
+    ```bash
+    git tag v1.0.2
+    git push origin v1.0.2
     ```
 
 ---
 
-## 📤 Release
+## 3. Monitor the Build
 
-1.  **Locate the Output:**
-    Go to `electron/dist/`. You will find:
-    *   `Latent Library 1.0.0.exe` (Portable Executable)
-    *   `win-unpacked/` (Unpacked folder version)
+1.  Go to your GitHub Repository.
+2.  Click the **Actions** tab.
+3.  Click on the **Build and Release** workflow.
+4.  Watch the jobs (`Build on windows-latest`, `ubuntu-latest`, `macos-latest`).
 
-2.  **Zip & Share:**
-    *   Right-click `Latent Library 1.0.0.exe` -> **Compress to ZIP file**.
-    *   Name it `Latent-Library-Portable-v1.0.0.zip`.
-    *   Upload this ZIP to GitHub Releases.
+## 4. Download Artifacts
 
----
-
-## 🛠️ Troubleshooting
-
-*   **"Cannot create symbolic link":** Ensure you are running the Phase 4 commands in an **Administrator** terminal.
-*   **"mvn not found":** Use `.\mvnw.cmd` instead of `mvn`.
-*   **"jlink not found":** Verify your JDK path in Phase 3. You can find it by running `$env:JAVA_HOME` in PowerShell.
+Once all jobs are green:
+1.  Go to the **Releases** tab on GitHub.
+2.  You will see the new release.
+3.  Download the files under **Assets**:
+    *   `.exe` (Windows)
+    *   `.AppImage` (Linux)
+    *   `.dmg` (macOS)

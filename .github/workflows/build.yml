@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Trigger only when a tag starting with 'v' is pushed (e.g., v1.0.2)
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -59,18 +62,18 @@ jobs:
       # This ensures the user doesn't need Java installed.
       - name: Download JRE (Windows)
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
-          # You would typically download a JRE here or use jlink.
-          # For simplicity in this example, we assume the system java is sufficient or
-          # you use jlink to create a custom runtime image in electron/runtime.
-          # A robust solution uses jlink:
-          $JAVA_HOME/bin/jlink --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
+          # Use jlink to create a custom runtime image.
+          # We include 'java.se' to ensure all standard modules are present, preventing ClassNotFoundExceptions.
+          # We also include 'jdk.unsupported' and 'jdk.crypto.ec' for library compatibility.
+          "$JAVA_HOME/bin/jlink" --add-modules java.se,jdk.unsupported,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
           cp -r electron/runtime/jre/* electron/runtime/
 
       - name: Download JRE (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
-          $JAVA_HOME/bin/jlink --add-modules java.base,java.desktop,java.sql,java.net.http,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
+          $JAVA_HOME/bin/jlink --add-modules java.se,jdk.unsupported,jdk.crypto.ec --output electron/runtime/jre --strip-debug --no-man-pages --no-header-files --compress=2
           cp -r electron/runtime/jre/* electron/runtime/
 
       - name: Build Electron App
