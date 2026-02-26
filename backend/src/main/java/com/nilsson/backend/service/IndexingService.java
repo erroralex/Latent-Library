@@ -1,5 +1,6 @@
 package com.nilsson.backend.service;
 
+import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.repository.ImageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +97,6 @@ public class IndexingService {
         }
 
         Runnable lazyReconcileTask = () -> {
-            logger.info("[Reconcile] Starting background library reconciliation...");
             long start = System.currentTimeMillis();
             AtomicInteger removedCount = new AtomicInteger(0);
             AtomicInteger markedMissingCount = new AtomicInteger(0);
@@ -243,10 +243,9 @@ public class IndexingService {
         stopWatching();
         if (directory == null || !directory.exists() || !directory.isDirectory()) return;
 
-        watchThread = new Thread(() -> watchLoop(directory, listener));
-        watchThread.setDaemon(true);
-        watchThread.setName("Folder-Watcher-" + directory.getName());
-        watchThread.start();
+        watchThread = Thread.ofVirtual()
+                .name("Folder-Watcher-" + directory.getName())
+                .start(() -> watchLoop(directory, listener));
     }
 
     public void stopWatching() {
@@ -344,6 +343,37 @@ public class IndexingService {
     private boolean isImageFile(File file) {
         String name = file.getName().toLowerCase();
         return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".webp");
+    }
+
+    public List<File> getImagesInFolder(File folder, boolean recursive, List<String> excludedPaths) {
+        List<File> files = new ArrayList<>();
+        String folderPath = pathService.getNormalizedAbsolutePath(folder);
+
+        if (recursive) {
+            try (Stream<Path> stream = Files.walk(folder.toPath())) {
+                stream.filter(p -> !Files.isDirectory(p))
+                      .filter(p -> {
+                          String pStr = pathService.getNormalizedAbsolutePath(p.toFile());
+                          for (String excluded : excludedPaths) {
+                              if (pStr.startsWith(excluded.replace("\\", "/"))) return false;
+                          }
+                          return true;
+                      })
+                      .map(Path::toFile)
+                      .filter(this::isImageFile)
+                      .forEach(files::add);
+            } catch (IOException e) {
+                throw new ApplicationException("Failed to walk directory recursively: " + folderPath, e);
+            }
+        } else {
+            File[] directFiles = folder.listFiles((dir, name) -> isImageFile(new File(dir, name)));
+            if (directFiles != null) {
+                files.addAll(Arrays.asList(directFiles));
+            }
+        }
+
+        files.sort(Comparator.comparingLong(File::lastModified).reversed());
+        return files;
     }
 
     private BatchResult processBatch(List<File> batch) {

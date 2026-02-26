@@ -1,6 +1,5 @@
 package com.nilsson.backend.controller;
 
-import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
@@ -15,14 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * REST Controller for library-wide management, folder scanning, and indexing orchestration.
@@ -62,65 +54,31 @@ public class LibraryController {
     @PostMapping("/scan")
     public ResponseEntity<List<ImageDTO>> scanFolder(
             @RequestParam String path,
-            @RequestParam(defaultValue = "false") boolean recursive) {
+            @RequestParam(defaultValue = "false") boolean recursive,
+            @RequestParam(defaultValue = "false") boolean skipIndex) {
         
         File folder = pathService.resolve(path);
         if (!folder.exists() || !folder.isDirectory()) {
             throw new ResourceNotFoundException("Folder", path);
         }
 
-        userDataManager.setLastFolder(folder);
+        if (!skipIndex) {
+            userDataManager.setLastFolder(folder);
 
-        String folderPath = pathService.getNormalizedAbsolutePath(folder);
-        List<String> excludedPaths = userDataManager.getExcludedPaths();
-        boolean isExcluded = false;
-        for (String excluded : excludedPaths) {
-            String normalizedExcluded = excluded.replace("\\", "/");
-            if (folderPath.startsWith(normalizedExcluded)) {
-                isExcluded = true;
-                logger.info("Skipping indexing for excluded folder: {}", folderPath);
-                break;
+            String folderPath = pathService.getNormalizedAbsolutePath(folder);
+            List<String> excludedPaths = userDataManager.getExcludedPaths();
+            boolean isExcluded = excludedPaths.stream()
+                    .anyMatch(ex -> folderPath.startsWith(ex.replace("\\", "/")));
+
+            if (!isExcluded) {
+                indexingService.indexFolder(folder, recursive);
+                indexingService.startWatching(folder, null);
             }
         }
 
-        if (!isExcluded) {
-            indexingService.indexFolder(folder, recursive);
-        }
-
-        List<File> files = new ArrayList<>();
-        if (recursive) {
-            try (Stream<Path> stream = Files.walk(folder.toPath())) {
-                stream.filter(p -> !Files.isDirectory(p))
-                      .filter(p -> {
-                          String pStr = pathService.getNormalizedAbsolutePath(p.toFile());
-                          for (String excluded : excludedPaths) {
-                              if (pStr.startsWith(excluded.replace("\\", "/"))) return false;
-                          }
-                          return true;
-                      })
-                      .map(Path::toFile)
-                      .filter(this::isImageFile)
-                      .forEach(files::add);
-            } catch (IOException e) {
-                logger.error("Failed to walk directory recursively: {}", folderPath, e);
-                throw new ApplicationException("Failed to scan subfolders. Please check file permissions.", e);
-            }
-        } else {
-            File[] directFiles = folder.listFiles((dir, name) -> isImageFile(new File(dir, name)));
-            if (directFiles != null) {
-                files.addAll(Arrays.asList(directFiles));
-            }
-        }
-
-        files.sort(Comparator.comparingLong(File::lastModified).reversed());
-
+        List<File> files = indexingService.getImagesInFolder(folder, recursive, userDataManager.getExcludedPaths());
         List<ImageDTO> imageDTOs = userDataManager.getBulkImageDTOs(files);
 
         return ResponseEntity.ok(imageDTOs);
-    }
-
-    private boolean isImageFile(File file) {
-        String lower = file.getName().toLowerCase();
-        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp");
     }
 }
