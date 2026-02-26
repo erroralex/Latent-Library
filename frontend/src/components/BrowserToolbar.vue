@@ -18,6 +18,8 @@
  *   and Metadata sidebars.
  * - **State Integration:** Synchronizes all filter and search states with the global
  *   Pinia store to ensure consistent results across the application.
+ * - **Hot Folder Controls:** Provides toggles for recursive subfolder scanning and
+ *   the "Auto-Show Latest" mode for real-time generation monitoring.
  */
 import {useBrowserStore} from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
@@ -110,6 +112,11 @@ const toggleRecursive = () => {
                       :class="{ 'active-nav-btn': store.recursiveView }"
                       v-tooltip.bottom="'Include Subfolders'"
                       @click="toggleRecursive"/>
+              <Button icon="pi pi-bolt"
+                      class="p-button-sm nav-btn"
+                      :class="{ 'active-nav-btn': store.autoShowLatest }"
+                      v-tooltip.bottom="'Auto-Show Latest Image'"
+                      @click="store.toggleAutoShowLatest()"/>
           </div>
 
           <Button icon="pi pi-th-large"

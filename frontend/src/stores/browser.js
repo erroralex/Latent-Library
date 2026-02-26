@@ -47,10 +47,12 @@ export const useBrowserStore = defineStore('browser', {
         collectionToEdit: null,
         includeAiTags: true,
         recursiveView: false,
+        autoShowLatest: false,
         page: 0,
         pageSize: 50,
         hasMore: true,
-        isFetchingMore: false
+        isFetchingMore: false,
+        refreshInterval: null
     }),
 
     actions: {
@@ -88,11 +90,49 @@ export const useBrowserStore = defineStore('browser', {
                     console.warn("Failed to load last folder setting", e);
                 }
 
+                this.startAutoRefresh();
+
             } catch (error) {
                 console.error("Initialization failed:", error);
                 this.backendError = true;
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        startAutoRefresh() {
+            if (this.refreshInterval) clearInterval(this.refreshInterval);
+            this.refreshInterval = setInterval(() => {
+                if (!this.isLoading && !this.isFetchingMore && this.lastFolderPath && !this.searchQuery && !this.activeCollection) {
+                    this.refreshCurrentFolder();
+                }
+            }, 3000);
+        },
+
+        async refreshCurrentFolder() {
+            if (!this.lastFolderPath) return;
+            try {
+                const response = await api.post('/library/scan', null, {
+                    params: {
+                        path: this.lastFolderPath,
+                        recursive: this.recursiveView,
+                        skipIndex: true
+                    }
+                });
+                
+                const newFiles = response.data;
+                
+                if (newFiles.length !== this.files.length || (newFiles.length > 0 && this.files.length > 0 && newFiles[0].path !== this.files[0].path)) {
+                    const oldFirstPath = this.files.length > 0 ? this.files[0].path : null;
+                    this.files = newFiles;
+
+                    if (this.autoShowLatest && newFiles.length > 0 && newFiles[0].path !== oldFirstPath) {
+                        this.selectFile(newFiles[0]);
+                        this.setViewMode('browser');
+                    }
+                }
+            } catch (error) {
+                console.debug('Auto-refresh poll skipped:', error.message);
             }
         },
 
@@ -173,6 +213,10 @@ export const useBrowserStore = defineStore('browser', {
             if (this.lastFolderPath) {
                 await this.loadFolder(this.lastFolderPath);
             }
+        },
+
+        toggleAutoShowLatest() {
+            this.autoShowLatest = !this.autoShowLatest;
         },
 
         async loadCollection(collectionName) {

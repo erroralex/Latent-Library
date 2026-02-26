@@ -27,8 +27,8 @@ import java.util.stream.Stream;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>File Registration & Tracking:</b> Implements {@code getOrCreateId} logic that
- *   uses file hashes to detect moved or renamed files, preserving metadata across path changes.</li>
+ *   <li><b>File Registration & Tracking:</b> Implements logic that uses file hashes to detect
+ *   moved or renamed files, preserving metadata across path changes.</li>
  *   <li><b>State Management:</b> Persists and retrieves image ratings, starred status, and
  *   perceptual hashes (dHash) used for similarity detection.</li>
  *   <li><b>Bulk Data Retrieval:</b> Provides an optimized method to fetch essential image information
@@ -37,8 +37,6 @@ import java.util.stream.Stream;
  *   large-scale library reconciliation or folder removals.</li>
  *   <li><b>Library Traversal:</b> Offers streaming access to all indexed file paths for
  *   background maintenance tasks like reconciliation and thumbnail generation.</li>
- *   <li><b>Integrity Maintenance:</b> Manages the {@code is_missing} flag to distinguish
- *   between permanently deleted files and temporarily disconnected storage media.</li>
  * </ul>
  */
 @Repository
@@ -72,6 +70,7 @@ public class ImageRepository {
                         rs.getInt("rating"),
                         rs.getString("model")
                 ))
+                .list()
                 .stream()
                 .collect(Collectors.toMap(ImageInfo::path, info -> info));
     }
@@ -153,7 +152,6 @@ public class ImageRepository {
         }
     }
 
-    @Transactional(readOnly = true)
     public void forEachFilePath(Consumer<String> action) {
         if (action == null) {
             throw new ValidationException("Consumer action cannot be null.");

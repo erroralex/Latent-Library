@@ -35,8 +35,8 @@ If everything is working fine and you want to release a new version (e.g., going
 
 2.  **Tag and Push:**
     ```bash
-    git tag v1.0.3
-    git push origin v1.0.3
+    git tag v1.0.4
+    git push origin v1.0.4
     ```
 
 ### Option B: Retry a Failed Build (Fixing Errors)
