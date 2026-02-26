@@ -34,16 +34,14 @@ import java.util.*;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Format Agnostic Extraction:</b> Utilizes {@code metadata-extractor} to find technical
- *   data in various image formats (PNG, JPG, WebP).</li>
- *   <li><b>Heuristic Scoring:</b> Implements a scoring mechanism to identify the most relevant
- *   metadata "chunk" when multiple exist (e.g., both EXIF and custom PNG chunks).</li>
- *   <li><b>Strategy-Based Parsing:</b> Employs a suite of {@link MetadataStrategy} implementations
- *   to parse tool-specific JSON or text formats into a unified key-value map.</li>
- *   <li><b>Physical Attribute Extraction:</b> Resolves image dimensions and file sizes using
- *   low-level I/O and metadata headers.</li>
- *   <li><b>Recursive JSON Traversal:</b> Deep-scans complex JSON structures (like ComfyUI workflows)
- *   to extract generation parameters even when nested deep within the graph.</li>
+ *   <li><b>Metadata Discovery:</b> Scans image files for known metadata locations (EXIF, PNG chunks, UserComments)
+ *   and identifies the most relevant data block.</li>
+ *   <li><b>Tool-Specific Parsing:</b> Utilizes a Strategy pattern to correctly interpret metadata from
+ *   different AI software ecosystems (e.g., ComfyUI's graph-based JSON vs. A1111's key-value text).</li>
+ *   <li><b>Physical Attribute Extraction:</b> Retrieves image dimensions and file size using low-level
+ *   ImageIO and MetadataExtractor libraries.</li>
+ *   <li><b>Normalization:</b> Transforms raw, tool-specific parameters into a standardized format
+ *   suitable for database indexing and frontend display.</li>
  * </ul>
  */
 @Service
@@ -150,18 +148,20 @@ public class MetadataService {
         }
 
         try (ImageInputStream in = ImageIO.createImageInputStream(file)) {
-            Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
-            if (readers.hasNext()) {
-                ImageReader reader = readers.next();
-                try {
-                    reader.setInput(in);
-                    width = reader.getWidth(0);
-                    height = reader.getHeight(0);
-                } finally {
-                    reader.dispose();
+            if (in != null) {
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    try {
+                        reader.setInput(in);
+                        width = reader.getWidth(0);
+                        height = reader.getHeight(0);
+                    } finally {
+                        reader.dispose();
+                    }
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.debug("Failed to read dimensions using ImageIO for {}: {}", file.getName(), e.getMessage());
         }
 
@@ -199,8 +199,7 @@ public class MetadataService {
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to extract metadata chunks for {}: {}", file.getName(), e.getMessage());
-            throw new ApplicationException("System error extracting raw metadata chunks.", e);
+            logger.debug("Failed to extract metadata chunks for {}: {}", file.getName(), e.getMessage());
         }
 
         String bestChunk = null;

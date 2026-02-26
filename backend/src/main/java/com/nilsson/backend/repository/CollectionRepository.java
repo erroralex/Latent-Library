@@ -188,6 +188,34 @@ public class CollectionRepository {
         }
     }
 
+    @Transactional
+    public void removeImages(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank() || imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        Integer collectionId = jdbcClient.sql("SELECT id FROM collections WHERE name = ?")
+                .param(collectionName.trim())
+                .query(Integer.class)
+                .optional()
+                .orElseThrow(() -> new ValidationException("Collection not found: " + collectionName));
+
+        int batchSize = 500;
+        for (int i = 0; i < imageIds.size(); i += batchSize) {
+            List<Integer> batch = imageIds.subList(i, Math.min(i + batchSize, imageIds.size()));
+            String placeholders = batch.stream().map(id -> "?").collect(Collectors.joining(","));
+            String sql = "DELETE FROM collection_images WHERE collection_id = ? AND is_manual = 1 AND image_id IN (" + placeholders + ")";
+
+            List<Object> params = new java.util.ArrayList<>();
+            params.add(collectionId);
+            params.addAll(batch);
+
+            jdbcClient.sql(sql)
+                    .params(params)
+                    .update();
+        }
+    }
+
     public void removeAllImages(String collectionName) {
         if (collectionName == null || collectionName.isBlank()) {
             throw new ValidationException("Collection name is required to clear images.");
@@ -232,6 +260,37 @@ public class CollectionRepository {
                 .param(imageId)
                 .param(collectionName.trim())
                 .update();
+    }
+
+    @Transactional
+    public void addExclusions(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank() || imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        Integer collectionId = jdbcClient.sql("SELECT id FROM collections WHERE name = ?")
+                .param(collectionName.trim())
+                .query(Integer.class)
+                .optional()
+                .orElseThrow(() -> new ValidationException("Collection not found: " + collectionName));
+
+        int batchSize = 500;
+        for (int i = 0; i < imageIds.size(); i += batchSize) {
+            List<Integer> batch = imageIds.subList(i, Math.min(i + batchSize, imageIds.size()));
+            StringBuilder sql = new StringBuilder("INSERT OR IGNORE INTO collection_exclusions (collection_id, image_id) VALUES ");
+            
+            List<Object> params = new java.util.ArrayList<>();
+            for (int j = 0; j < batch.size(); j++) {
+                sql.append("(?, ?)");
+                if (j < batch.size() - 1) sql.append(", ");
+                params.add(collectionId);
+                params.add(batch.get(j));
+            }
+
+            jdbcClient.sql(sql.toString())
+                    .params(params)
+                    .update();
+        }
     }
 
     @Transactional

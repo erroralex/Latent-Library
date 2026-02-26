@@ -117,6 +117,15 @@ public class CollectionController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{name}/batch/remove")
+    public ResponseEntity<Void> batchRemoveImagesFromCollection(@PathVariable String name, @RequestBody List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            throw new ValidationException("Path list cannot be empty.");
+        }
+        dataManager.removeImagesFromCollection(name, paths);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{name}/blacklist")
     public ResponseEntity<Void> blacklistImageFromCollection(@PathVariable String name, @RequestParam String path) {
         try {
@@ -129,6 +138,15 @@ public class CollectionController {
         } catch (InvalidPathException e) {
             throw new ValidationException("Invalid path format: " + path);
         }
+    }
+
+    @PostMapping("/{name}/batch/blacklist")
+    public ResponseEntity<Void> batchBlacklistImagesFromCollection(@PathVariable String name, @RequestBody List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            throw new ValidationException("Path list cannot be empty.");
+        }
+        dataManager.blacklistImagesFromCollection(name, paths);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/static-images")

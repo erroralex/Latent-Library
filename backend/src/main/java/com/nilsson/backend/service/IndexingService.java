@@ -26,15 +26,14 @@ import java.util.stream.Stream;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Folder Indexing:</b> Recursively scans directories to register new images and their metadata.</li>
- *   <li><b>Library Reconciliation:</b> Periodically verifies the existence of indexed files, removing
- *   stale records or marking them as missing.</li>
- *   <li><b>Real-time Monitoring:</b> Utilizes the OS {@link WatchService} to provide instant updates
- *   to the UI when files are added or removed on disk.</li>
- *   <li><b>Batch Processing:</b> Orchestrates the extraction of metadata and generation of thumbnails
- *   for large groups of files efficiently, with a configurable batch size.</li>
- *   <li><b>Event Debouncing:</b> Implements a configurable delay mechanism to prevent redundant processing of
- *   rapid-fire file system events.</li>
+ *   <li><b>Library Reconciliation:</b> Synchronizes the database state with the physical file system,
+ *   identifying missing or deleted files.</li>
+ *   <li><b>Parallel Indexing:</b> Utilizes Java 21 Virtual Threads to process large batches of images
+ *   concurrently, extracting metadata and calculating perceptual hashes.</li>
+ *   <li><b>File System Monitoring:</b> Implements a debounced {@link WatchService} to provide real-time
+ *   updates to the library as files are added or removed.</li>
+ *   <li><b>Resource Management:</b> Employs a {@link Semaphore} to prevent system saturation during
+ *   intensive recursive scans.</li>
  * </ul>
  */
 @Service
@@ -54,11 +53,12 @@ public class IndexingService {
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
     private final DHashService dHashService;
-
+    
     private WatchService watchService;
     private Thread watchThread;
-
     private final Map<String, Long> pendingEvents = new ConcurrentHashMap<>();
+
+    private final Semaphore processingPermits;
 
     public IndexingService(ImageRepository imageRepo,
                            MetadataService metaService,
@@ -68,7 +68,8 @@ public class IndexingService {
                            DHashService dHashService,
                            @Value("${app.indexing.batch-size:20}") int batchSize,
                            @Value("${app.indexing.debounce-ms:500}") long debounceDelayMs,
-                           @Value("${app.indexing.watch-retry-ms:5000}") long watchRetryDelayMs) {
+                           @Value("${app.indexing.watch-retry-ms:5000}") long watchRetryDelayMs,
+                           @Value("${app.indexing.max-concurrent:10}") int maxConcurrent) {
         this.imageRepo = imageRepo;
         this.metaService = metaService;
         this.dataManager = dataManager;
@@ -80,6 +81,7 @@ public class IndexingService {
         this.watchRetryDelayMs = watchRetryDelayMs;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
+        this.processingPermits = new Semaphore(maxConcurrent);
     }
 
     public void cancel() {
@@ -218,10 +220,19 @@ public class IndexingService {
                 int end = Math.min(i + batchSize, total);
                 List<File> batch = files.subList(i, end);
 
-                BatchResult result = processBatch(batch);
-
-                if (onBatchResult != null) {
-                    onBatchResult.accept(result);
+                try {
+                    processingPermits.acquire();
+                    try {
+                        BatchResult result = processBatch(batch);
+                        if (onBatchResult != null) {
+                            onBatchResult.accept(result);
+                        }
+                    } finally {
+                        processingPermits.release();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         };
@@ -347,7 +358,7 @@ public class IndexingService {
                 ratingMap.put(file, dataManager.getRating(file));
                 metadataMap.put(file, meta);
             } catch (Exception e) {
-                logger.error("Failed to index file: {}", file.getAbsolutePath(), e);
+                logger.debug("Failed to index file: {} - {}", file.getName(), e.getMessage());
             }
         }
         return new BatchResult(metadataMap, ratingMap);

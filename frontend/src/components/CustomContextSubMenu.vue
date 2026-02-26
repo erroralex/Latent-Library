@@ -61,8 +61,10 @@ const execute = (item) => {
           <i v-if="item.items" class="pi pi-angle-right submenu-arrow"></i>
         </div>
 
-        <div v-if="item.items && activeSubmenu === index" class="custom-context-menu submenu">
-          <CustomContextSubMenu :model="item.items" @execute="emit('execute')" />
+        <div v-if="item.items && activeSubmenu === index" class="submenu-wrapper">
+          <div class="custom-context-menu submenu">
+            <CustomContextSubMenu :model="item.items" @execute="emit('execute')" />
+          </div>
         </div>
       </li>
     </template>
@@ -131,10 +133,19 @@ const execute = (item) => {
   margin: 4px 0;
 }
 
-.submenu {
+.submenu-wrapper {
   position: absolute;
   left: 100%;
   top: 0;
-  margin-left: 4px;
+  height: 100%;
+  padding-left: 10px;
+  margin-left: -5px;
+  z-index: 10;
+}
+
+.submenu {
+  position: relative;
+  left: 0;
+  top: -6px;
 }
 </style>

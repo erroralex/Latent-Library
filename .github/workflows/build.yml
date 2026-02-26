@@ -56,7 +56,7 @@ jobs:
         run: |
           mkdir -p electron/runtime/app
           mkdir -p electron/runtime/bin
-          cp backend/target/backend-1.0.2.jar electron/runtime/app/
+          cp backend/target/backend-1.0.3.jar electron/runtime/app/
 
       # Copy the JRE (Java Runtime Environment) for the specific OS
       # This ensures the user doesn't need Java installed.

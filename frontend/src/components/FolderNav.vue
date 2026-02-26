@@ -559,6 +559,7 @@ onMounted(loadTree);
           <div v-if="slotProps.node.type === 'separator'" class="separator-line"></div>
           <div v-else class="w-full h-full flex align-items-center"
                @contextmenu.prevent.stop="onCustomContextMenu($event, slotProps.node)">
+            <span v-if="slotProps.node.icon" :class="['p-treenode-icon mr-2', slotProps.node.icon]"></span>
             <span class="p-treenode-label">{{ slotProps.node.label }}</span>
           </div>
         </template>
@@ -756,6 +757,11 @@ onMounted(loadTree);
   background: transparent !important;
   overflow: visible !important;
   width: fit-content;
+}
+
+/* Hide the default PrimeVue icon to avoid duplication */
+:deep(.p-tree .p-tree-container .p-treenode .p-treenode-content > .p-treenode-icon) {
+  display: none !important;
 }
 
 :deep(.p-tree .p-tree-container .p-treenode .p-treenode-content) {

@@ -34,12 +34,12 @@ import java.util.stream.IntStream;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>On-Demand Generation:</b> Creates thumbnails for images as they are requested by the UI.</li>
- *   <li><b>Proactive Caching:</b> Pre-generates thumbnails for batches of images during folder indexing.</li>
- *   <li><b>Concurrency Control:</b> Limits simultaneous CPU-intensive resizing operations to maintain system responsiveness.
- *   The number of permits is configurable via {@code app.thumbnails.cpu-permits}.</li>
- *   <li><b>Request Deduplication:</b> Ensures that multiple requests for the same thumbnail are handled by a single generation task.</li>
- *   <li><b>Persistent Storage:</b> Manages a local disk cache for generated thumbnails, using SHA-256 hashes for unique identification.</li>
+ * <li><b>On-Demand Generation:</b> Creates thumbnails for images as they are requested by the UI.</li>
+ * <li><b>Proactive Caching:</b> Pre-generates thumbnails for batches of images during folder indexing.</li>
+ * <li><b>Concurrency Control:</b> Limits simultaneous CPU-intensive resizing operations to maintain system responsiveness.
+ * The number of permits is configurable via {@code app.thumbnails.cpu-permits}.</li>
+ * <li><b>Request Deduplication:</b> Ensures that multiple requests for the same thumbnail are handled by a single generation task.</li>
+ * <li><b>Persistent Storage:</b> Manages a local disk cache for generated thumbnails, using SHA-256 hashes for unique identification.</li>
  * </ul>
  */
 @Service
@@ -110,7 +110,7 @@ public class ThumbnailService {
                             }
                         }
                     } catch (Exception e) {
-                        logger.debug("Thumbnail generation failed for {}: {}", sourceFile.getName(), e.getMessage());
+                        logger.trace("Thumbnail generation failed for {}: {}", sourceFile.getName(), e.getMessage());
                     } finally {
                         lock.unlock();
                     }

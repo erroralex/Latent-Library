@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Listener that facilitates the dynamic port and security handshake between the Spring Boot backend and Electron frontend.
@@ -22,12 +23,12 @@ import java.nio.file.Paths;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Handshake Orchestration:</b> Writes the port and security token to a shared file
- *   ({@code data/port.txt}) in a standardized {@code port:token} format.</li>
- *   <li><b>Filesystem Integration:</b> Ensures the target directory exists and handles
- *   atomic file writing to prevent race conditions during Electron startup.</li>
- *   <li><b>Lifecycle Synchronization:</b> Acts as the final step in the backend startup
- *   sequence, signaling to the Electron process that the server is ready for traffic.</li>
+ * <li><b>Handshake Orchestration:</b> Writes the port and security token to a shared file
+ * ({@code data/port.txt}) in a standardized {@code port:token} format.</li>
+ * <li><b>Filesystem Integration:</b> Ensures the target directory exists and utilizes
+ * atomic file moves to prevent race conditions during Electron's aggressive startup polling.</li>
+ * <li><b>Lifecycle Synchronization:</b> Acts as the final step in the backend startup
+ * sequence, signaling to the Electron process that the server is ready for traffic.</li>
  * </ul>
  */
 @Component
@@ -35,6 +36,7 @@ public class PortFileWriter implements ApplicationListener<WebServerInitializedE
 
     private static final Logger log = LoggerFactory.getLogger(PortFileWriter.class);
     private static final String PORT_FILE = "data/port.txt";
+    private static final String TEMP_PORT_FILE = "data/port.txt.tmp";
 
     private final String appDataDir;
 
@@ -48,15 +50,20 @@ public class PortFileWriter implements ApplicationListener<WebServerInitializedE
         String token = SecurityConfig.getHandshakeToken();
 
         try {
-            Path path = Paths.get(appDataDir).resolve(PORT_FILE).toAbsolutePath().normalize();
-            Files.createDirectories(path.getParent());
+            Path finalPath = Paths.get(appDataDir).resolve(PORT_FILE).toAbsolutePath().normalize();
+            Path tempPath = Paths.get(appDataDir).resolve(TEMP_PORT_FILE).toAbsolutePath().normalize();
+
+            Files.createDirectories(finalPath.getParent());
 
             String content = port + ":" + token;
-            Files.writeString(path, content);
 
-            log.info("Handshake data written to {}", path);
+            Files.writeString(tempPath, content);
+
+            Files.move(tempPath, finalPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("Handshake data written atomically to {}", finalPath);
         } catch (IOException e) {
-            log.error("Failed to write handshake file: {}", PORT_FILE, e);
+            log.error("Failed to write atomic handshake file: {}", PORT_FILE, e);
         }
     }
 }

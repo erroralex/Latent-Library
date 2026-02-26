@@ -11,13 +11,13 @@
  * Key functionalities:
  * - Dual View Modes: Seamlessly toggles between a 'Gallery' (grid) and 'Browser' (single) view.
  * - Keyboard Navigation: Implements comprehensive hotkeys for navigation (Arrows/WASD),
- *   view switching (G/B), and file management (F2 for rename).
+ * view switching (G/B), and file management (F2 for rename).
  * - Contextual Actions: Provides a rich right-click menu for collection management,
- *   file system operations (Open in Explorer), and deletion.
+ * file system operations (Open in Explorer), and deletion.
  * - State Synchronization: Coordinates with the Vuex/Pinia store to maintain selection state,
- *   filter criteria, and sidebar visibility across view transitions.
+ * filter criteria, and sidebar visibility across view transitions.
  * - Batch Processing: Supports multi-selection for bulk operations like adding to collections
- *   or moving files to the trash.
+ * or moving files to the trash.
  */
 import {onMounted, onUnmounted, ref, watch} from 'vue';
 import {useBrowserStore} from '@/stores/browser';
@@ -149,9 +149,9 @@ const onContextMenu = async (payload) => {
 
   if (store.activeCollection) {
     items.push({
-      label: `Blacklist (Remove)${batchLabel}`,
+      label: `Remove from Collection${batchLabel}`,
       icon: 'pi pi-ban',
-      command: () => blacklistImage(store.activeCollection, isBatch ? Array.from(store.selectedFiles) : [file.path])
+      command: () => removeFromCollection(store.activeCollection, isBatch ? Array.from(store.selectedFiles) : [file.path])
     });
   }
 
@@ -203,11 +203,17 @@ const createNewCollection = () => {
   router.push('/collections');
 };
 
-const blacklistImage = async (collectionName, paths) => {
+const removeFromCollection = async (collectionName, paths) => {
   try {
-    for (const path of paths) {
-      await api.post(`/collections/${collectionName}/blacklist`, null, {params: {path}});
+    const colDetails = await api.get(`/collections/${collectionName}`);
+    const isSmart = colDetails.data.isSmart;
+
+    if (isSmart) {
+      await api.post(`/collections/${collectionName}/batch/blacklist`, paths);
+    } else {
+      await api.post(`/collections/${collectionName}/batch/remove`, paths);
     }
+
     toast.add({
       severity: 'success',
       summary: 'Removed',
@@ -413,5 +419,26 @@ watch(() => store.imageFocusRequested, (requested) => {
   background: var(--bg-input) !important;
   border: 1px solid var(--border-input) !important;
   color: var(--text-primary) !important;
+}
+
+/* --- Added: Lazy Loading Image Placeholder Styles --- */
+/* Uses :deep() to inject styling down into the VirtualGallery child component */
+:deep(.image-card) {
+  background-color: var(--surface-card, rgba(255, 255, 255, 0.05));
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+:deep(.lazy-image) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+:deep(.lazy-image[src]) {
+  opacity: 1;
 }
 </style>

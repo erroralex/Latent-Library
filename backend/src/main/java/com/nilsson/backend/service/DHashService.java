@@ -23,14 +23,11 @@ import java.io.IOException;
  * <p>
  * Key Responsibilities:
  * <ul>
- *   <li><b>Image Normalization:</b> Standardizes images to a consistent RGB color space
- *   to eliminate alpha-channel interference.</li>
- *   <li><b>High-Quality Resizing:</b> Scales images to a 9x8 grayscale grid using
- *   bicubic interpolation to preserve structural gradients.</li>
- *   <li><b>Gradient Calculation:</b> Compares adjacent pixels horizontally to determine
- *   the direction of the intensity gradient, producing a 64-bit bitmask.</li>
- *   <li><b>Perceptual Fingerprinting:</b> Generates a {@code long} value that represents
- *   the image's visual structure, suitable for Hamming distance calculations.</li>
+ *   <li><b>Perceptual Fingerprinting:</b> Generates a 64-bit hash representing the visual structure of an image.</li>
+ *   <li><b>Format Standardization:</b> Normalizes images to a consistent color space (RGB) and size (9x8) to ensure
+ *   reliable comparisons across different file formats.</li>
+ *   <li><b>Resilience:</b> Employs bicubic interpolation and anti-aliasing during resizing to maintain
+ *   structural integrity for hashing.</li>
  * </ul>
  */
 @Service
@@ -42,7 +39,8 @@ public class DHashService {
         try {
             BufferedImage rawImage = ImageIO.read(file);
             if (rawImage == null) {
-                throw new ImageProcessingException("Failed to decode image for hashing: " + file.getName());
+                log.debug("Failed to decode image for hashing (unsupported or corrupt): {}", file.getName());
+                return 0;
             }
 
             BufferedImage standardImage = new BufferedImage(rawImage.getWidth(), rawImage.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -72,9 +70,9 @@ public class DHashService {
             }
 
             return hash;
-        } catch (IOException e) {
-            log.error("IO error calculating dHash for file: {}", file.getAbsolutePath(), e);
-            throw new ImageProcessingException("Failed to calculate dHash", e);
+        } catch (Exception e) {
+            log.debug("Error calculating dHash for file: {} - {}", file.getName(), e.getMessage());
+            return 0;
         }
     }
 }

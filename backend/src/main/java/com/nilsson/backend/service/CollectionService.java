@@ -16,7 +16,23 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Service for managing image collections and their dynamic population logic.
+ * Service responsible for managing image collections, including both static and dynamic "smart" collections.
+ * <p>
+ * This service provides the business logic for creating, updating, and deleting collections. It handles
+ * the orchestration between the collection repository and the search repository to facilitate
+ * "Smart Collections"—dynamic groupings of images based on metadata filters (e.g., specific models,
+ * samplers, or ratings).
+ * <p>
+ * Key Responsibilities:
+ * <ul>
+ *   <li><b>Collection Lifecycle:</b> Manages the persistence and retrieval of collection definitions.</li>
+ *   <li><b>Smart Population:</b> Executes complex search queries to automatically populate collections
+ *   based on user-defined criteria.</li>
+ *   <li><b>Manual Overrides:</b> Supports explicit addition, removal, and blacklisting of images
+ *   within collections, allowing for fine-grained user control.</li>
+ *   <li><b>Atomic Updates:</b> Ensures database consistency during collection modifications using
+ *   Spring's transactional management.</li>
+ * </ul>
  */
 @Service
 public class CollectionService {
@@ -94,8 +110,6 @@ public class CollectionService {
                 query = String.join(" ", f.prompt());
             }
 
-            // Refactored: Pass null for collectionName because we are populating the collection itself, 
-            // not searching within it.
             List<String> matchingPaths = searchRepository.findPaths(query, searchFilters, null, 0, 2000);
 
             for (String path : matchingPaths) {
@@ -142,6 +156,18 @@ public class CollectionService {
         collectionRepository.removeExclusions(collectionName, imageIds);
     }
 
+    @Transactional
+    public void removeImagesFromCollection(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
+        }
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        collectionRepository.removeImages(collectionName, imageIds);
+    }
+
     public void blacklistImageFromCollection(String collectionName, int imageId) {
         if (collectionName == null || collectionName.isBlank()) {
             throw new ValidationException("Collection name is required.");
@@ -151,6 +177,18 @@ public class CollectionService {
         }
 
         collectionRepository.addExclusion(collectionName, imageId);
+    }
+
+    @Transactional
+    public void blacklistImagesFromCollection(String collectionName, List<Integer> imageIds) {
+        if (collectionName == null || collectionName.isBlank()) {
+            throw new ValidationException("Collection name is required.");
+        }
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+
+        collectionRepository.addExclusions(collectionName, imageIds);
     }
 
     @Transactional
