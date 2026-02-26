@@ -134,14 +134,16 @@ defineExpose({gridCols});
       <template v-slot:item="{ item, options }">
         <div class="flex gap-2 justify-content-center"
              :style="{ height: (store.cardSize + 8) + 'px', marginBottom: '8px' }">
+
           <div v-for="file in item" :key="file.path"
                :style="{ width: store.cardSize + 'px', height: store.cardSize + 'px' }"
-               class="border-round transition-all transition-duration-100"
+               class="image-card border-round transition-all transition-duration-100"
                :class="{ 'outline-active': store.selectedFiles.has(file.path) }"
                @click="handleGalleryItemClick(file, $event)"
                @dblclick="handleGalleryItemDoubleClick(file)">
             <ImageCard :file="file" @contextmenu="onImageContextMenu"/>
           </div>
+
         </div>
       </template>
     </VirtualScroller>

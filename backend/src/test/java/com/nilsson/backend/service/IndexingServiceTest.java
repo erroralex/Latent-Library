@@ -50,7 +50,7 @@ class IndexingServiceTest {
     void setUp() {
         indexingService = new IndexingService(
                 imageRepo, metaService, dataManager, pathService, thumbnailService, dHashService,
-                20, 500, 5000
+                20, 500, 5000, 10
         );
     }
 

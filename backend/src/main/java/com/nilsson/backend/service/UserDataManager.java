@@ -38,8 +38,6 @@ import java.util.stream.Collectors;
  *   collections, tags, and application settings.</li>
  *   <li><b>Advanced Search Orchestration:</b> Combines SQLite FTS5 search with relational filtering
  *   and DTO mapping to deliver responsive search results.</li>
- *   <li><b>Bulk Data Retrieval:</b> Offers an optimized method to fetch DTOs for a large list of files
- *   by performing a single bulk database query.</li>
  *   <li><b>File Integrity & Tracking:</b> Implements a fast fingerprinting mechanism to detect when files have been
  *   moved or renamed, maintaining database consistency without re-indexing.</li>
  *   <li><b>Metadata Normalization:</b> Cleans and formats raw metadata values (e.g., LoRAs, Samplers)
@@ -113,7 +111,6 @@ public class UserDataManager {
                     if (info != null) {
                         return new ImageDTO(info.path(), info.rating(), info.model());
                     }
-                    // Fallback for files not yet in the database
                     return new ImageDTO(path, 0, "");
                 })
                 .collect(Collectors.toList());
@@ -252,15 +249,10 @@ public class UserDataManager {
         }
     }
 
-    /**
-     * Renames a file on disk and updates the database atomically.
-     * Uses a DB-First Intent pattern: The database is updated first within a transaction.
-     * If the physical file move fails, the transaction is rolled back, keeping the DB in sync.
-     */
     @Transactional
     public void renameFile(File file, String newName) {
         String oldPath = pathService.getNormalizedAbsolutePath(file);
-        
+
         File parent = file.getParentFile();
         File newFile = new File(parent, newName);
         String newPath = pathService.getNormalizedAbsolutePath(newFile);
@@ -296,11 +288,11 @@ public class UserDataManager {
 
             String hash = calculateHash(file);
             List<String> existingPaths = imageRepo.findPathsByHash(hash);
-            
+
             if (!existingPaths.isEmpty()) {
                 String oldPath = existingPaths.get(0);
                 File oldFile = pathService.resolve(oldPath);
-                
+
                 if (!oldFile.exists()) {
                     log.info("Detected file move: {} -> {}", oldPath, path);
                     imageRepo.updatePath(oldPath, path);
@@ -317,10 +309,6 @@ public class UserDataManager {
         }
     }
 
-    /**
-     * Calculates a unique SHA-256 fingerprint for a file.
-     * Publicly accessible for maintenance tasks like duplicate detection repair.
-     */
     public String calculateHash(File file) {
         try {
             long length = file.length();
@@ -466,9 +454,43 @@ public class UserDataManager {
         }
     }
 
+    public void removeImagesFromCollection(String collectionName, List<String> paths) {
+        List<Integer> ids = new ArrayList<>();
+        for (String path : paths) {
+            try {
+                File file = pathService.resolve(path);
+                if (file.exists()) {
+                    ids.add(imageRepo.getIdByPath(pathService.getNormalizedAbsolutePath(file)));
+                }
+            } catch (Exception e) {
+                log.warn("Skipping invalid path during batch remove: {}", path);
+            }
+        }
+        if (!ids.isEmpty()) {
+            collectionService.removeImagesFromCollection(collectionName, ids);
+        }
+    }
+
     public void blacklistImageFromCollection(String collectionName, File file) {
         int id = getOrCreateImageIdInternal(file);
         collectionService.blacklistImageFromCollection(collectionName, id);
+    }
+
+    public void blacklistImagesFromCollection(String collectionName, List<String> paths) {
+        List<Integer> ids = new ArrayList<>();
+        for (String path : paths) {
+            try {
+                File file = pathService.resolve(path);
+                if (file.exists()) {
+                    ids.add(getOrCreateImageIdInternal(file));
+                }
+            } catch (Exception e) {
+                log.warn("Skipping invalid path during batch blacklist: {}", path);
+            }
+        }
+        if (!ids.isEmpty()) {
+            collectionService.blacklistImagesFromCollection(collectionName, ids);
+        }
     }
 
     public List<File> getFilesFromCollection(String collectionName) {

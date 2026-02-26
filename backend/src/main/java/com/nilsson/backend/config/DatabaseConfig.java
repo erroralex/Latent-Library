@@ -55,14 +55,15 @@ public class DatabaseConfig {
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(jdbcUrl);
-        config.setMaximumPoolSize(1);
-        config.setMinimumIdle(1);
+
+        config.setMaximumPoolSize(25);
+        config.setMinimumIdle(5);
         config.setPoolName("ImageToolboxPool");
 
         // SQLite Optimization PRAGMAs
         config.addDataSourceProperty("journal_mode", "WAL");
         config.addDataSourceProperty("synchronous", "NORMAL");
-        config.addDataSourceProperty("busy_timeout", "30000");
+        config.addDataSourceProperty("busy_timeout", "60000");
         config.addDataSourceProperty("foreign_keys", "ON");
 
         return new HikariDataSource(config);

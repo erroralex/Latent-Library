@@ -42,15 +42,16 @@ const onRightClick = (event) => {
         class="h-full cursor-pointer hover:surface-hover transition-colors transition-duration-150 overflow-hidden relative border-none">
       <template #header>
         <div class="aspect-ratio-container surface-card flex align-items-center justify-content-center relative h-full">
-          <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-50"
-               :style="{ backgroundImage: `url('${imageUrl}')`, backgroundSize: 'cover', filter: 'blur(10px)' }">
-          </div>
 
-          <img :src="imageUrl" alt="AI Image" loading="lazy"
-               class="relative w-full h-full"
-               style="object-fit: contain;"/>
+          <img :src="imageUrl" aria-hidden="true" loading="lazy" decoding="async"
+               class="absolute top-0 left-0 w-full h-full opacity-50"
+               style="object-fit: cover; filter: blur(10px); pointer-events: none;" />
 
-          <div class="absolute bottom-0 left-0 w-full p-2 glass-overlay flex flex-column gap-1">
+          <img :src="imageUrl" alt="AI Image" loading="lazy" decoding="async"
+               class="lazy-image relative w-full h-full"
+               style="object-fit: contain; z-index: 1;" />
+
+          <div class="absolute bottom-0 left-0 w-full p-2 glass-overlay flex flex-column gap-1" style="z-index: 2;">
             <div class="flex gap-1" v-if="file.rating > 0">
               <i v-for="i in 5" :key="i"
                  class="pi text-xs"
