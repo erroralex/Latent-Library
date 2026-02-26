@@ -123,10 +123,10 @@ const onContextMenu = async (payload) => {
   const isBatch = selectedCount > 1;
   const batchLabel = isBatch ? ` (${selectedCount} items)` : '';
 
-  const addToCollectionItems = collections.map(colName => ({
-    label: colName,
+  const addToCollectionItems = collections.map(col => ({
+    label: col.name,
     icon: 'pi pi-folder',
-    command: () => addToCollection(colName, isBatch ? Array.from(store.selectedFiles) : [file.path])
+    command: () => addToCollection(col.name, isBatch ? Array.from(store.selectedFiles) : [file.path])
   }));
 
   addToCollectionItems.unshift({
