@@ -29,7 +29,7 @@ The build pipeline is triggered **only** when you push a tag starting with `v` (
 If everything is working fine and you want to release a new version (e.g., going from `1.0.2` to `1.0.3`):
 
 1.  **Update Version Numbers:**
-    *   Update `version` in `electron/package.json`.
+    *   Update `version` in `electron/package.json` and `frontend/package.json`.
     *   Update `<version>` in `backend/pom.xml`.
     *   Commit these changes: `git commit -am "Bump version to 1.0.3"` & `git push`.
 
