@@ -29,7 +29,9 @@ jobs:
 
       - name: Build Backend (Spring Boot)
         working-directory: ./backend
-        run: mvn clean package -DskipTests
+        run: |
+          mvn clean package -DskipTests
+          mv target/backend-*.jar target/backend.jar
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -56,7 +58,7 @@ jobs:
         run: |
           mkdir -p electron/runtime/app
           mkdir -p electron/runtime/bin
-          cp backend/target/backend-1.0.3.jar electron/runtime/app/
+          cp backend/target/backend.jar electron/runtime/app/
 
       # Copy the JRE (Java Runtime Environment) for the specific OS
       # This ensures the user doesn't need Java installed.

@@ -32,7 +32,7 @@ let backendPort = null;
 let handshakeToken = null;
 let logStream = null;
 
-const JAR_NAME = 'backend-1.0.2.jar';
+const JAR_NAME = 'backend.jar';
 
 function getBackendPaths() {
     let javaExe, jarPath, workingDir, appDataDir;
