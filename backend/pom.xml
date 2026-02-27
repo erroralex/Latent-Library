@@ -121,7 +121,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <!-- Plugin to sync version to package.json files -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -134,7 +133,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>powershell</executable>
+                            <executable>pwsh</executable>
                             <arguments>
                                 <argument>-Command</argument>
                                 <argument>
@@ -152,7 +151,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>powershell</executable>
+                            <executable>pwsh</executable>
                             <arguments>
                                 <argument>-Command</argument>
                                 <argument>
