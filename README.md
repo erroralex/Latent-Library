@@ -94,6 +94,8 @@ Designed for the privacy-conscious artist, this application operates on a strict
 * **Modern UX & Customization:**
   * **Multi-Theme System:** Choose between **Deep Neon Cinematic**, **Minimalist Light**, and **Dark Gold** themes.
   * **Image Comparator:** Side-by-side comparison tool with a draggable slider.
+* **Real-Time Hot Folder Sync:** Keep the app open alongside your generator. The UI automatically polls and injects new images into your gallery in real-time as they are generated, without locking the database.
+* **Native WSL & Network Drive Support:** Seamlessly pin and monitor output folders from Dockerized ComfyUI/Automatic1111 environments running inside Windows Subsystem for Linux (`\\wsl$\`).
 
 ---
 
@@ -103,14 +105,14 @@ Designed for the privacy-conscious artist, this application operates on a strict
 * **Memory:** 
   * **Minimum:** 4GB RAM.
   * **Recommended:** 8GB+ RAM (especially when using the AI Auto-Tagger).
-* **Storage:** ~300MB for the application + additional space for the WD14 AI model (~300MB) and thumbnail cache.
+* **Storage:** ~300MB for the application + additional space for the WD14 AI model (~300MB) and thumbnail cache (~50MB per 10,000 images).
 * **GPU:** Not required. AI interrogation runs efficiently on the CPU via ONNX Runtime.
 
 ---
 
 ## 🛠️ Technical Architecture
 
-The application is built as a hybrid desktop application combining a Spring Boot backend with a Vue.js frontend, packaged via Electron.
+The application is built as a highly concurrent hybrid desktop app, combining a resilient Spring Boot backend with a strict lazy-loading Vue.js frontend, packaged via Electron.
 
 * **Backend (Java 21 + Spring Boot 3.3):**
   * **SQLite + FTS5:** High-performance local indexing and relational storage.
@@ -152,6 +154,14 @@ The application is built as a hybrid desktop application combining a Spring Boot
 >    sudo xattr -cr "/Applications/Latent Library.app"
 >    ```
 > 4. You can now open the app normally.
+
+---
+
+### 🔄 How to Update
+Latent Library is completely portable. To update to a new version without losing your collections, tags, or database:
+1. **Download** the latest release for your OS.
+2. **Replace** your old executable with the new one.
+3. **Keep your `data/` folder intact.** As long as the new executable is placed next to your existing `data/` folder, it will seamlessly load your existing library.
 
 ---
 
