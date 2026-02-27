@@ -12,6 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Listener that facilitates the dynamic port and security handshake between the Spring Boot backend and Electron frontend.
@@ -58,6 +61,15 @@ public class PortFileWriter implements ApplicationListener<WebServerInitializedE
             String content = port + ":" + token;
 
             Files.writeString(tempPath, content);
+
+            // Restrict temp file to owner-read/write only before moving into place
+            try {
+                Set<PosixFilePermission> ownerOnly = PosixFilePermissions.fromString("rw-------");
+                Files.setPosixFilePermissions(tempPath, ownerOnly);
+            } catch (UnsupportedOperationException e) {
+                // Non-POSIX filesystem (e.g. Windows); skip permission enforcement
+                log.debug("POSIX file permissions not supported on this filesystem; skipping permission enforcement.");
+            }
 
             Files.move(tempPath, finalPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
 

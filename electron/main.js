@@ -94,11 +94,16 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
-            additionalArguments: [`--handshake-token=${handshakeToken}`]
+            preload: path.join(__dirname, 'preload.js')
         },
         autoHideMenuBar: true,
         show: false
+    });
+
+    // Provide the token to the preload via synchronous IPC rather than process
+    // argv so it is never visible in OS-level process listings (e.g. `ps aux`).
+    ipcMain.on('get-handshake-token-sync', (event) => {
+        event.returnValue = handshakeToken;
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {

@@ -17,8 +17,9 @@
  */
 const {contextBridge, ipcRenderer} = require('electron');
 
-const tokenArg = process.argv.find(arg => arg.startsWith('--handshake-token='));
-const handshakeToken = tokenArg ? tokenArg.split('=')[1] : null;
+// Retrieve the token from the main process via synchronous IPC so it is never
+// exposed in process argv (which is visible to all local users via `ps`).
+const handshakeToken = ipcRenderer.sendSync('get-handshake-token-sync');
 
 contextBridge.exposeInMainWorld('electronAPI', {
     selectFolder: () => ipcRenderer.invoke('dialog:openDirectory'),
