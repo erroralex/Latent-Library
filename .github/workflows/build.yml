@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
 
     steps:
       - name: Checkout Code
@@ -29,9 +29,7 @@ jobs:
 
       - name: Build Backend (Spring Boot)
         working-directory: ./backend
-        run: |
-          mvn clean package -DskipTests
-          mv target/backend-*.jar target/backend.jar
+        run: mvn clean package -DskipTests
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
