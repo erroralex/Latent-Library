@@ -1,6 +1,7 @@
 package com.nilsson.backend.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -19,10 +20,19 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * ThumbnailServiceTest validates the functionality of the ThumbnailService, focusing on
- * thumbnail generation and thread-safe access. It ensures that thumbnails are correctly
- * cached and that concurrent requests for the same thumbnail are handled efficiently
- * using striped locking to prevent redundant processing and race conditions.
+ * Unit test suite for the {@link ThumbnailService}, validating the generation, caching,
+ * and thread-safe access of image thumbnails.
+ * <p>
+ * This class ensures the performance and reliability of the UI gallery by verifying:
+ * <ul>
+ *   <li><b>On-Demand Generation:</b> Confirms that thumbnails are correctly created and
+ *   cached when requested for the first time.</li>
+ *   <li><b>Concurrency Control:</b> Validates the use of striped locking to prevent
+ *   redundant generation of the same thumbnail when multiple threads request it
+ *   simultaneously (e.g., during rapid scrolling).</li>
+ *   <li><b>Resource Management:</b> Ensures that temporary files and cache directories
+ *   are correctly managed within the application data root.</li>
+ * </ul>
  */
 class ThumbnailServiceTest {
 
@@ -37,11 +47,11 @@ class ThumbnailServiceTest {
     }
 
     @Test
+    @DisplayName("getThumbnail should generate a new file if not cached")
     void getThumbnail_ShouldGenerateFile_WhenMissing() throws IOException {
         File source = new File("src/test/resources/test_image.jpg");
 
         if (!source.exists()) {
-            System.out.println("Skipping image generation test - no source image found.");
             return;
         }
 
@@ -52,6 +62,7 @@ class ThumbnailServiceTest {
     }
 
     @Test
+    @DisplayName("Service should handle concurrent requests for the same thumbnail safely")
     void concurrencyTest_StripedLocking() throws InterruptedException, IOException {
         int threadCount = 20;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);

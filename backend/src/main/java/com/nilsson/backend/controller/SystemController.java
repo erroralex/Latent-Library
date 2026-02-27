@@ -66,7 +66,7 @@ public class SystemController {
                             IndexingService indexingService,
                             DatabaseService databaseService,
                             @Value("${app.data.dir:.}") String appDataDir,
-                            @Value("${project.version:1.0.2}") String version) {
+                            @Value("${project.version:unknown}") String version) {
         this.context = context;
         this.ftsService = ftsService;
         this.pathService = pathService;

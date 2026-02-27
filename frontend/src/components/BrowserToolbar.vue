@@ -26,12 +26,10 @@ import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Slider from 'primevue/slider';
-import Menu from 'primevue/menu';
 import Chip from 'primevue/chip';
 import InputSwitch from 'primevue/inputswitch';
 import Dropdown from 'primevue/dropdown';
 import {useConfirm} from 'primevue/useconfirm';
-import {ref, computed} from 'vue';
 
 const store = useBrowserStore();
 const confirm = useConfirm();

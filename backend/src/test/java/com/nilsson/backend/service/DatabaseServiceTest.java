@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -19,13 +18,20 @@ import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * DatabaseServiceTest verifies the core database infrastructure and maintenance operations.
- * It ensures that the application's SQLite database is correctly initialized with the
- * required schema via Flyway migrations and that maintenance tasks like clearing
- * all application data are performed accurately across all tables. The tests
- * also verify the reliability of the connection pooling mechanism provided
- * by HikariCP, ensuring that valid database connections are consistently
- * available for application use.
+ * Unit test suite for the {@link DatabaseService}, validating core database infrastructure,
+ * schema migrations, and maintenance operations.
+ * <p>
+ * This class ensures the reliability of the application's persistent storage layer by verifying:
+ * <ul>
+ *   <li><b>Schema Initialization:</b> Confirms that Flyway migrations are correctly applied
+ *   upon startup, creating the required table structures (e.g., {@code images}).</li>
+ *   <li><b>Data Maintenance:</b> Validates the {@code clearAllData} operation, ensuring it
+ *   atomically wipes all application tables while preserving the schema.</li>
+ *   <li><b>Connection Management:</b> Verifies that the service correctly provides valid,
+ *   open connections from the HikariCP pool.</li>
+ * </ul>
+ * The tests utilize a temporary file-based SQLite database to simulate production-like
+ * interactions with full schema support.
  */
 class DatabaseServiceTest {
 

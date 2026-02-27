@@ -1,6 +1,7 @@
 package com.nilsson.backend.repository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -15,11 +16,19 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * ImageMetadataRepositoryTest provides integration tests for the ImageMetadataRepository,
- * verifying the storage and retrieval of key-value metadata associated with images.
- * It ensures that metadata can be saved and retrieved accurately, and that the
- * repository can correctly identify distinct values for specific metadata keys,
- * which is essential for generating search filters and organizing the image library.
+ * Integration test suite for the {@link ImageMetadataRepository}, validating the storage
+ * and retrieval of technical generation parameters.
+ * <p>
+ * This class ensures the integrity of the metadata caching layer by verifying:
+ * <ul>
+ *   <li><b>Key-Value Persistence:</b> Confirms that complex metadata maps (e.g., prompts,
+ *   models) are correctly associated with image records and retrieved accurately.</li>
+ *   <li><b>Existence Checks:</b> Validates the {@code hasMetadata} logic used to optimize
+ *   I/O by preventing redundant extractions.</li>
+ *   <li><b>Distinct Value Discovery:</b> Ensures that the repository can correctly identify
+ *   unique values for specific keys (e.g., Samplers, Models), which is critical for
+ *   populating UI search filters.</li>
+ * </ul>
  */
 class ImageMetadataRepositoryTest {
 
@@ -42,18 +51,20 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
+    @DisplayName("saveMetadata should persist key-value pairs and getMetadata should retrieve them")
     void testSaveAndGetMetadata() {
         int imageId = imageRepository.getOrCreateId("/tmp/image.png", "hash");
         Map<String, String> metadata = Map.of("Prompt", "a test prompt", "Model", "test_model");
 
         metadataRepository.saveMetadata(imageId, metadata);
 
-        assertTrue(metadataRepository.hasMetadata(imageId), "Should report having metadata");
+        assertTrue(metadataRepository.hasMetadata(imageId));
         Map<String, String> retrieved = metadataRepository.getMetadata(imageId);
-        assertEquals(metadata, retrieved, "Retrieved metadata should match saved metadata");
+        assertEquals(metadata, retrieved);
     }
 
     @Test
+    @DisplayName("getDistinctValues should return unique values for a given metadata key")
     void testGetDistinctValues() {
         int imageId1 = imageRepository.getOrCreateId("/tmp/image1.png", "hash1");
         metadataRepository.saveMetadata(imageId1, Map.of("Sampler", "Euler"));
@@ -65,7 +76,7 @@ class ImageMetadataRepositoryTest {
         metadataRepository.saveMetadata(imageId3, Map.of("Sampler", "Euler"));
 
         var distinctSamplers = metadataRepository.getDistinctValues("Sampler");
-        assertEquals(2, distinctSamplers.size(), "Should find 2 distinct samplers");
+        assertEquals(2, distinctSamplers.size());
         assertTrue(distinctSamplers.contains("Euler"));
         assertTrue(distinctSamplers.contains("DPM++"));
     }

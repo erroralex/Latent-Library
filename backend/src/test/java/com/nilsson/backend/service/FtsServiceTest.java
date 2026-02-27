@@ -19,11 +19,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 /**
- * FtsServiceTest is responsible for validating the Full-Text Search (FTS) indexing logic within the application.
- * It ensures that image metadata and user-defined tags are correctly tokenized, sanitized, and aggregated
- * into a unified searchable string compatible with SQLite's FTS5 engine. The tests verify specialized
- * formatting rules for technical parameters and LoRA strings, ensuring that the search index remains
- * accurate and performant as data is updated or added to the system.
+ * Unit test suite for the {@link FtsService}, validating the Full-Text Search (FTS) indexing
+ * and tokenization logic.
+ * <p>
+ * This class ensures that image metadata and user-defined tags are correctly prepared for
+ * SQLite's FTS5 engine by verifying:
+ * <ul>
+ *   <li><b>Token Sanitization:</b> Confirms that keys and values are correctly formatted
+ *   into searchable tokens, replacing non-alphanumeric characters with safe separators.</li>
+ *   <li><b>Data Aggregation:</b> Validates the combination of disparate data sources
+ *   (metadata, tags) into a unified, searchable text block.</li>
+ *   <li><b>LoRA Formatting:</b> Ensures that complex LoRA strings are tokenized in a way
+ *    that preserves their searchability within the FTS index.</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 class FtsServiceTest {
@@ -67,7 +75,7 @@ class FtsServiceTest {
 
         try {
             ftsService.updateFtsIndex(imageId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
         verify(metadataRepository).getMetadata(imageId);

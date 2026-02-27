@@ -4,26 +4,31 @@ import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.repository.CollectionRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.SearchRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * CollectionServiceTest provides unit tests for the CollectionService, ensuring that
- * collection management operations such as creation, deletion, and image association
- * are correctly delegated to the underlying repositories. It validates the business
- * logic surrounding smart collections and manual image grouping, ensuring data
- * consistency and proper interaction with the persistence layer.
+ * Unit test suite for the {@link CollectionService}, validating the business logic for
+ * manual and smart image collections.
+ * <p>
+ * This class ensures the integrity of the collection management system by verifying:
+ * <ul>
+ *   <li><b>Lifecycle Management:</b> Confirms that collections can be created, updated,
+ *   and deleted with proper repository delegation.</li>
+ *   <li><b>Image Association:</b> Validates the logic for adding images to collections,
+ *   including the automatic removal of blacklisted exclusions.</li>
+ *   <li><b>Data Consistency:</b> Ensures that existence checks are performed before
+ *   destructive operations like deletion.</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 class CollectionServiceTest {
@@ -41,6 +46,7 @@ class CollectionServiceTest {
     private CollectionService collectionService;
 
     @Test
+    @DisplayName("createCollection should delegate to repository")
     void createCollection_ShouldCallRepository() {
         CreateCollectionRequest req = new CreateCollectionRequest("My Best AI Art", false, null);
 
@@ -50,6 +56,7 @@ class CollectionServiceTest {
     }
 
     @Test
+    @DisplayName("addImageToCollection should update repository and clear exclusions")
     void addImageToCollection_ShouldVerifyUniqueness() {
         collectionService.addImageToCollection("Favorites", 100);
 
@@ -58,6 +65,7 @@ class CollectionServiceTest {
     }
 
     @Test
+    @DisplayName("deleteCollection should verify existence before removal")
     void deleteCollection_ShouldCheckExistence() {
         when(collectionRepository.get("OldStuff")).thenReturn(Optional.of(new CreateCollectionRequest("OldStuff", false, null)));
 

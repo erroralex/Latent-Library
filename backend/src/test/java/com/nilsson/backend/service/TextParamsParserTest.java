@@ -8,12 +8,19 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * TextParamsParserTest is designed to validate the orchestration and routing logic of the TextParamsParser service.
- * It ensures that raw metadata strings from various AI generation tools (such as Automatic1111, ComfyUI,
- * and InvokeAI) are correctly identified based on their unique structural signatures and dispatched to
- * the appropriate parsing strategies. The tests verify that the resulting metadata maps are accurately
- * populated with technical parameters and that the service handles unrecognized, null, or empty
- * inputs gracefully without failure.
+ * Unit test suite for the {@link TextParamsParser}, validating the orchestration and routing
+ * logic for diverse AI generation metadata formats.
+ * <p>
+ * This class ensures that raw metadata strings are correctly identified and dispatched to
+ * the appropriate parsing strategies by verifying:
+ * <ul>
+ *   <li><b>Format Detection:</b> Confirms that the service can distinguish between
+ *   Automatic1111 text blocks, ComfyUI JSON graphs, and InvokeAI metadata.</li>
+ *   <li><b>Strategy Dispatch:</b> Validates that the correct internal strategy is
+ *   invoked based on the structural signatures of the input.</li>
+ *   <li><b>Resilience:</b> Ensures that unrecognized, null, or empty inputs are handled
+ *   gracefully, returning empty result sets instead of throwing exceptions.</li>
+ * </ul>
  */
 class TextParamsParserTest {
 

@@ -2,6 +2,7 @@ package com.nilsson.backend.controller;
 
 import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.service.UserDataManager;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,12 +21,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * SpeedSorterControllerTest provides unit tests for the SpeedSorterController, focusing on the
- * REST API endpoints for the application's rapid image organization tool. It verifies
- * that configuration settings for the speed sorter are correctly retrieved and
- * updated, and that file deletion requests are properly delegated to the
- * UserDataManager. The tests use MockMvc to simulate HTTP requests and
- * verify the controller's response status.
+ * Integration test suite for the {@link SpeedSorterController}, validating the REST API endpoints
+ * for the rapid image organization utility.
+ * <p>
+ * This class ensures the functionality of the Speed Sorter tool by verifying:
+ * <ul>
+ *   <li><b>Configuration Management:</b> Confirms that tool-specific settings are correctly
+ *   retrieved and updated via the data manager.</li>
+ *   <li><b>Input Orchestration:</b> Validates the setting of active input folders for
+ *   rapid sorting sessions.</li>
+ *   <li><b>File Operations:</b> Ensures that destructive operations (e.g., deletion)
+ *   triggered from the Speed Sorter UI are correctly delegated to the batch deletion engine.</li>
+ * </ul>
  */
 @WebMvcTest(SpeedSorterController.class)
 @ActiveProfiles("test")
@@ -41,6 +48,7 @@ class SpeedSorterControllerTest {
     private DataSource dataSource;
 
     @Test
+    @DisplayName("GET /api/speedsorter/config should return current settings")
     void getConfig_ShouldReturnSettings() throws Exception {
         when(userDataManager.getSettings()).thenReturn(new AppSettings());
 
@@ -49,6 +57,7 @@ class SpeedSorterControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/speedsorter/config/input should update active folder")
     void setInputFolder_ShouldUpdateSetting() throws Exception {
         String path = System.getProperty("java.io.tmpdir");
 
@@ -60,6 +69,7 @@ class SpeedSorterControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/speedsorter/delete should invoke batch deletion")
     void deleteFile_ShouldInvokeBatchDelete() throws Exception {
         mockMvc.perform(post("/api/speedsorter/delete")
                         .param("path", "/to-delete.png"))

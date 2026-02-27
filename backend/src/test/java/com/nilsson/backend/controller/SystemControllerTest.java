@@ -5,6 +5,7 @@ import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import com.nilsson.backend.service.IndexingService;
 import com.nilsson.backend.service.DatabaseService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,12 +23,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * SystemControllerTest provides unit tests for the SystemController, focusing on the
- * REST API endpoints for system-level maintenance and configuration. It verifies
- * that administrative tasks such as clearing the database, retrieving excluded
- * paths, and triggering a rebuild of the Full-Text Search (FTS) index are
- * correctly delegated to the appropriate services. The tests use MockMvc
- * to simulate HTTP requests and verify the controller's response status.
+ * Integration test suite for the {@link SystemController}, validating the REST API endpoints
+ * for system maintenance, configuration, and diagnostics.
+ * <p>
+ * This class ensures that administrative and maintenance operations are correctly
+ * exposed and delegated by verifying:
+ * <ul>
+ *   <li><b>Database Maintenance:</b> Confirms that requests to clear application data
+ *   are correctly routed to the data manager.</li>
+ *   <li><b>Configuration Access:</b> Validates the retrieval of system settings such
+ *   as excluded paths and application version information.</li>
+ *   <li><b>Index Management:</b> Ensures that background tasks like FTS index rebuilding
+ *   are triggered with the appropriate HTTP status codes (e.g., 202 Accepted).</li>
+ * </ul>
  */
 @WebMvcTest(SystemController.class)
 @ActiveProfiles("test")
@@ -55,6 +63,7 @@ class SystemControllerTest {
     private DataSource dataSource;
 
     @Test
+    @DisplayName("POST /api/system/clear-database should invoke data manager")
     void clearDatabase_ShouldInvokeService() throws Exception {
         mockMvc.perform(post("/api/system/clear-database"))
                 .andExpect(status().isOk());
@@ -63,6 +72,7 @@ class SystemControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/system/excluded-paths should return list of paths")
     void getExcludedPaths_ShouldReturnList() throws Exception {
         when(userDataManager.getExcludedPaths()).thenReturn(List.of("/path1", "/path2"));
 
@@ -71,6 +81,7 @@ class SystemControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/system/rebuild-fts-index should return 202 Accepted")
     void rebuildFtsIndex_ShouldReturnAccepted() throws Exception {
         mockMvc.perform(post("/api/system/rebuild-fts-index"))
                 .andExpect(status().isAccepted());

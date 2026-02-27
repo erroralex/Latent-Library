@@ -6,25 +6,32 @@ import com.nilsson.backend.repository.ImageRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * ImageMetadataServiceTest is responsible for validating the coordination logic between image metadata extraction,
- * database caching, and search indexing. It ensures that the service correctly prioritizes cached metadata
- * from the database to minimize file system I/O, while seamlessly falling back to extraction when necessary.
- * The tests also verify that any new metadata is properly persisted and synchronized with the Full-Text
- * Search (FTS) index, maintaining data consistency across the application's storage layers.
+ * Unit test suite for the {@link ImageMetadataService}, validating the coordination between
+ * metadata extraction, database caching, and search indexing.
+ * <p>
+ * This class ensures the efficiency and consistency of the metadata layer by verifying:
+ * <ul>
+ *   <li><b>Cache Prioritization:</b> Confirms that the service retrieves metadata from the
+ *   database when available to minimize expensive file system I/O.</li>
+ *   <li><b>Fallback Extraction:</b> Validates that the service seamlessly falls back to
+ *   physical extraction and perceptual hashing when cache misses occur.</li>
+ *   <li><b>Search Synchronization:</b> Ensures that the Full-Text Search (FTS) index is
+ *   automatically updated whenever new metadata is cached.</li>
+ *   <li><b>Error Handling:</b> Verifies that attempts to retrieve metadata for non-existent
+ *   files correctly trigger {@link ResourceNotFoundException}.</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 class ImageMetadataServiceTest {

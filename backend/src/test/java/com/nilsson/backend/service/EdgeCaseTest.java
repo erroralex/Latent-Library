@@ -16,12 +16,20 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * EdgeCaseTest is designed to verify the robustness and stability of the application's core services
- * when encountering extreme or malformed inputs. It specifically targets the MetadataService and
- * ThumbnailService, testing their resilience against exceptionally large metadata payloads,
- * complex UTF-8 character encodings (including emojis and non-Latin scripts), and corrupted
- * or non-image file formats. These tests ensure that the system handles edge cases gracefully
- * without crashing or compromising data integrity.
+ * Stress and resilience test suite for core application services, validating behavior
+ * under extreme or malformed input conditions.
+ * <p>
+ * This class ensures the stability of the system by verifying:
+ * <ul>
+ *   <li><b>Payload Limits:</b> Confirms that the {@link MetadataService} can process
+ *   exceptionally large metadata strings (e.g., 1MB+ prompts) without memory exhaustion.</li>
+ *   <li><b>Character Encoding:</b> Validates full UTF-8 support, ensuring that complex
+ *   Unicode characters, emojis, and non-Latin scripts are preserved during parsing.</li>
+ *   <li><b>I/O Resilience:</b> Ensures that the {@link ThumbnailService} handles corrupted,
+ *   empty, or non-image files gracefully without throwing unhandled exceptions.</li>
+ * </ul>
+ * These tests are critical for maintaining system uptime when processing untrusted or
+ * potentially corrupted user data.
  */
 class EdgeCaseTest {
 
@@ -59,7 +67,7 @@ class EdgeCaseTest {
         Files.writeString(corruptFile.toPath(), "not an image");
 
         assertDoesNotThrow(() -> {
-            File thumb = thumbnailService.getThumbnail(corruptFile);
+            thumbnailService.getThumbnail(corruptFile);
         });
     }
 }
