@@ -67,7 +67,7 @@ public class SecurityConfig implements WebMvcConfigurer {
 
             String path = request.getRequestURI();
 
-            if (!path.startsWith("/api/") || path.equals("/api/system/shutdown")) {
+            if (!path.startsWith("/api/")) {
                 return true;
             }
 

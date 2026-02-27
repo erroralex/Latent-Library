@@ -135,9 +135,18 @@ public class FileSystemService {
         if (newName == null || newName.isBlank()) {
             throw new ValidationException("New filename cannot be empty.");
         }
+        if (newName.contains("/") || newName.contains("\\") || newName.contains("..")) {
+            throw new ValidationException("New filename must not contain path separators or '..'.");
+        }
 
         File parent = file.getParentFile();
         File newFile = new File(parent, newName);
+
+        // Guard against symlink tricks: ensure the resolved destination is still
+        // a direct child of the same parent directory.
+        if (!newFile.toPath().normalize().getParent().equals(parent.toPath().normalize())) {
+            throw new ValidationException("New filename resolves outside the source directory.");
+        }
 
         if (newFile.exists()) {
             throw new ValidationException("A file with that name already exists in the destination folder.");
