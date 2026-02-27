@@ -19,12 +19,20 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * CollectionRepositoryTest is an integration test suite for the CollectionRepository, focusing on the
- * persistence and complex relational logic of image collections. It verifies the management of
- * both static and smart collections, ensuring that membership associations, manual additions,
- * and blacklisted exclusions are correctly handled in the SQLite database. The tests also
- * validate the serialization of smart filtering criteria into JSON format, confirming
- * that dynamic collection rules are accurately preserved and retrieved.
+ * Integration test suite for the {@link CollectionRepository}, validating the persistence
+ * and relational logic for image collections.
+ * <p>
+ * This class ensures the integrity of the collection system by verifying:
+ * <ul>
+ *   <li><b>Static Collections:</b> Confirms the creation and retrieval of manual image
+ *   groupings.</li>
+ *   <li><b>Membership Management:</b> Validates the association of images with collections
+ *   and the correct retrieval of file paths.</li>
+ *   <li><b>Exclusion Logic:</b> Ensures that blacklisted images are correctly hidden
+ *   from collection results.</li>
+ *   <li><b>Smart Collections:</b> Validates the serialization and persistence of complex
+ *   filtering criteria (JSON) for rule-based collections.</li>
+ * </ul>
  */
 class CollectionRepositoryTest {
 
@@ -39,7 +47,6 @@ class CollectionRepositoryTest {
         DataSource dataSource = new DriverManagerDataSource(connectionString);
 
         try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-            // Manually create tables with the latest schema including is_missing
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT UNIQUE, file_hash TEXT, is_starred BOOLEAN DEFAULT 0, rating INTEGER DEFAULT 0, last_scanned INTEGER, is_missing BOOLEAN DEFAULT 0)");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS collections (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER, is_smart BOOLEAN DEFAULT FALSE, filters_json TEXT)");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS collection_images (collection_id INTEGER, image_id INTEGER, added_at INTEGER, is_manual BOOLEAN DEFAULT 0, PRIMARY KEY (collection_id, image_id), FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE, FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE)");

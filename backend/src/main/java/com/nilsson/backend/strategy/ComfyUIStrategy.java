@@ -15,21 +15,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Metadata extraction strategy for ComfyUI workflows.
+ * Advanced metadata extraction strategy for ComfyUI, implementing a sophisticated graph-traversal
+ * algorithm to resolve generation parameters from node-based architectures.
  * <p>
- * This strategy implements a sophisticated graph-traversal algorithm to resolve generation
- * parameters from ComfyUI's node-based architecture. It supports both the "UI Schema"
- * (exported from the web interface) and the "API Schema" (execution graph). It recursively
- * traces connections between nodes (e.g., from a KSampler back to its CLIPTextEncode inputs)
- * to accurately identify positive prompts, negative prompts, models, and samplers.
- * <p>
- * Key functionalities:
- * - Graph Traversal: Recursively resolves linked parameters by following node input/output links.
- * - Schema Detection: Automatically distinguishes between UI-based workflows and API-based graphs.
- * - Intelligent Filtering: Uses extensive blacklists and whitelists to ignore utility nodes (reroutes,
- * switches, pipes) and focus on core generation parameters.
- * - LoRA Extraction: Identifies LoRAs from both specialized loader nodes and embedded prompt tags.
- * - Parameter Normalization: Resolves and formats technical values like CFG, Seed, and Sampler names.
+ * This strategy is designed to handle both the "UI Schema" (exported workflows) and the
+ * "API Schema" (execution graphs). It recursively traces connections between nodes to
+ * accurately identify:
+ * <ul>
+ *   <li><b>Core Parameters:</b> Steps, Seed, CFG, Sampler, and Scheduler, even when
+ *   dynamically linked via primitive or utility nodes.</li>
+ *   <li><b>Prompts:</b> Traces positive and negative conditioning back to their source
+ *   CLIPTextEncode or custom text nodes, handling concatenations and reroutes.</li>
+ *   <li><b>Models & LoRAs:</b> Identifies checkpoints and LoRAs from specialized loader
+ *   nodes and embedded prompt tags (e.g., {@code <lora:name:strength>}).</li>
+ *   <li><b>Custom Nodes:</b> Integrates with user-defined node types for specialized
+ *   metadata extraction (e.g., custom prompt or LoRA stack loaders).</li>
+ * </ul>
+ * The strategy employs extensive filtering to ignore utility nodes (reroutes, switches, pipes)
+ * and focuses on the primary generation path to ensure high-quality metadata extraction.
  */
 @Service
 public class ComfyUIStrategy implements MetadataStrategy {
@@ -42,7 +45,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
         this.userDataManager = userDataManager;
     }
 
-    // Default constructor for manual instantiation if needed, though Spring injection is preferred
     public ComfyUIStrategy() {
         this.userDataManager = null;
     }
@@ -528,6 +530,12 @@ public class ComfyUIStrategy implements MetadataStrategy {
                 }
             } else if (v.isTextual()) {
                 String txt = v.asText();
+                if (!skipCoreParams && !lockCore) {
+                    if (k.equals("steps")) results.put("Steps", txt);
+                    if (k.equals("cfg") || k.equals("cfg_scale")) results.put("CFG", txt);
+                    if ((k.equals("seed") || k.equals("noise_seed")) && !results.containsKey("_seed_locked"))
+                        results.put("Seed", txt);
+                }
                 if (isAllowedModelNode(type) && isValidModelFile(txt) && (k.contains("ckpt") || k.contains("model") || k.contains("unet") || k.contains("file"))) {
                     results.put("Model", cleanFilename(txt));
                 }
@@ -545,7 +553,6 @@ public class ComfyUIStrategy implements MetadataStrategy {
             }
         }
 
-        // Custom Node Handling
         if (userDataManager != null) {
             List<String> customPromptNodes = userDataManager.getCustomPromptNodes();
             List<String> customLoraNodes = userDataManager.getCustomLoraNodes();

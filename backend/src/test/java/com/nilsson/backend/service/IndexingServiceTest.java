@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -21,12 +22,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * IndexingServiceTest provides unit and integration tests for the IndexingService.
- * It verifies the logic for scanning directories, extracting metadata from images,
- * generating thumbnails, and synchronizing the database state with the physical file system.
- * The tests utilize Mockito for dependency isolation and JUnit 5's TempDir for file system
- * simulation, ensuring that the indexing pipeline correctly handles both new file additions
- * and the removal of obsolete records.
+ * Comprehensive test suite for the {@link IndexingService}, validating the background image indexing
+ * and library reconciliation engine.
+ * <p>
+ * This class utilizes Mockito for dependency isolation and JUnit 5's {@code @TempDir} for safe,
+ * platform-independent file system simulation. It ensures that the service correctly handles:
+ * <ul>
+ *   <li><b>Parallel Indexing:</b> Verifies that multiple images are processed concurrently,
+ *   metadata is extracted, and thumbnails are preloaded.</li>
+ *   <li><b>Library Reconciliation:</b> Validates the synchronization logic that removes obsolete
+ *   database records (ghost files) and marks unreachable directories as missing.</li>
+ *   <li><b>Task Cancellation:</b> Ensures that ongoing indexing operations can be gracefully
+ *   interrupted, preventing resource leaks and ensuring thread safety.</li>
+ * </ul>
+ * The tests are designed to run in a local-first environment, simulating various file system
+ * states to guarantee the integrity of the image library's persistent state.
  */
 @ExtendWith(MockitoExtension.class)
 class IndexingServiceTest {
@@ -72,7 +82,6 @@ class IndexingServiceTest {
         assertTrue(completed, "Indexing task did not complete in time");
 
         verify(dataManager, atLeastOnce()).cacheMetadata(eq(imageFile), any(), anyLong());
-        // Updated verification: startIndexing now calls preloadCache instead of getThumbnail directly
         verify(thumbnailService, atLeastOnce()).preloadCache(anyList());
     }
 
@@ -80,7 +89,7 @@ class IndexingServiceTest {
     void reconcileLibrary_ShouldRemoveGhostRecords(@TempDir Path tempDir) {
         File existingDir = tempDir.toFile();
         String ghostPath = new File(existingDir, "ghost.png").getAbsolutePath().replace("\\", "/");
-        
+
         when(dataManager.getLastFolder()).thenReturn(null);
 
         doAnswer(invocation -> {
@@ -94,8 +103,9 @@ class IndexingServiceTest {
         indexingService.reconcileLibrary();
 
         try {
-            Thread.sleep(200); // Wait for virtual thread
+            Thread.sleep(200);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         verify(imageRepo).deleteByPath(ghostPath);
@@ -117,11 +127,37 @@ class IndexingServiceTest {
         indexingService.reconcileLibrary();
 
         try {
-            Thread.sleep(200); // Wait for virtual thread
+            Thread.sleep(200);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         verify(imageRepo).setMissing(missingFolderPath, true);
         verify(imageRepo, never()).deleteByPath(anyString());
+    }
+
+    @Test
+    void cancel_ShouldStopOngoingIndexing() throws InterruptedException {
+        List<File> files = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            files.add(new File("dummy_" + i + ".png"));
+        }
+
+        when(metaService.getExtractedData(any())).thenAnswer(inv -> {
+            Thread.sleep(50);
+            return Map.of();
+        });
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        indexingService.startIndexing(files, (res) -> latch.countDown());
+
+        Thread.sleep(100);
+
+        indexingService.cancel();
+
+        Thread.sleep(200);
+
+        verify(dataManager, atMost(20)).cacheMetadata(any(), any(), anyLong());
     }
 }

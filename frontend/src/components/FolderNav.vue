@@ -17,6 +17,8 @@
  *   database maintenance, and path exclusion rules.
  * - **State Synchronization:** Automatically synchronizes the tree selection with the global browser store
  *   to reflect the currently active folder or collection.
+ * - **Manual Pinning:** Allows users to manually pin folders (including WSL and UNC paths)
+ *   via a native OS picker, bypassing Java's root drive limitations.
  */
 import {ref, onMounted, watch, computed} from 'vue';
 import api from '@/services/api';
@@ -54,7 +56,7 @@ const menuModel = ref([]);
 const showSettings = ref(false);
 const excludedPaths = ref([]);
 const newExcludedPath = ref('');
-const appVersion = ref('1.0.2-SNAPSHOT');
+const appVersion = ref('unknown');
 
 const customPromptNodes = ref([]);
 const newPromptNode = ref('');
@@ -294,6 +296,27 @@ const pinFolder = async (path) => {
   await api.post('/folders/pin', null, {params: {path}});
   await loadTree();
 };
+
+const pinNewFolder = async () => {
+  let path = '';
+  if (window.electronAPI) {
+    path = await window.electronAPI.selectFolder();
+  } else {
+    path = prompt("Enter absolute path to pin:");
+  }
+
+  if (path) {
+    try {
+      await api.post('/folders/pin', null, {params: {path}});
+      toast.add({severity: 'success', summary: 'Success', detail: 'Folder pinned', life: 2000});
+      await loadTree();
+    } catch (e) {
+      console.error("Failed to pin folder", e);
+      toast.add({severity: 'error', summary: 'Error', detail: 'Failed to pin folder', life: 3000});
+    }
+  }
+};
+
 const unpinFolder = async (path) => {
   await api.post('/folders/unpin', null, {params: {path}});
   await loadTree();
@@ -540,8 +563,12 @@ onMounted(loadTree);
       <div class="flex align-items-center gap-2">
         <span class="text-gradient">Library</span>
       </div>
-      <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white"
-              v-tooltip.bottom="'Open Settings'" @click="openSettings"/>
+      <div class="flex align-items-center gap-1">
+        <Button icon="pi pi-plus" class="p-button-text p-button-rounded p-button-sm text-white"
+                v-tooltip.bottom="'Pin New Folder'" @click="pinNewFolder"/>
+        <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-sm text-white"
+                v-tooltip.bottom="'Open Settings'" @click="openSettings"/>
+      </div>
     </div>
 
     <div class="flex-grow-1 overflow-y-auto custom-scrollbar">

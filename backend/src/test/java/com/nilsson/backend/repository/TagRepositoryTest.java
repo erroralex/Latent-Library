@@ -1,6 +1,7 @@
 package com.nilsson.backend.repository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -16,11 +17,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * TagRepositoryTest provides integration tests for the TagRepository, verifying the
- * persistence and retrieval of image tags in the SQLite database. It covers scenarios
- * such as adding multiple tags to an image, retrieving the set of tags associated
- * with a specific image ID, and removing individual tags, ensuring that the
- * many-to-many relationship between images and tags is correctly managed.
+ * Integration test suite for the {@link TagRepository}, validating the persistence and
+ * management of image-specific tags within the SQLite database.
+ * <p>
+ * This class ensures the integrity of the tagging system by verifying:
+ * <ul>
+ *   <li><b>Tag Association:</b> Confirms that multiple tags can be correctly linked to
+ *   an image and retrieved as a set.</li>
+ *   <li><b>Tag Removal:</b> Validates the deletion of specific tags while ensuring
+ *   other associations remain intact.</li>
+ *   <li><b>Relational Integrity:</b> Ensures that tags are correctly associated with
+ *   the primary image records via foreign key relationships.</li>
+ * </ul>
  */
 class TagRepositoryTest {
 
@@ -43,6 +51,7 @@ class TagRepositoryTest {
     }
 
     @Test
+    @DisplayName("addTag should persist tags and getTags should retrieve them")
     void testAddAndGetTags() {
         int imageId = imageRepository.getOrCreateId("/tmp/image.png", "hash");
         tagRepository.addTag(imageId, "test_tag");
@@ -55,6 +64,7 @@ class TagRepositoryTest {
     }
 
     @Test
+    @DisplayName("removeTag should delete specific tag association")
     void testRemoveTag() {
         int imageId = imageRepository.getOrCreateId("/tmp/image.png", "hash");
         tagRepository.addTag(imageId, "tag_to_keep");

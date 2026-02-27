@@ -11,10 +11,21 @@ import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
 
 /**
- * ArchitectureTests is responsible for validating the structural integrity and coding standards of the backend application.
- * It utilizes ArchUnit to enforce rules such as dependency injection patterns, logging frameworks, exception handling,
- * and the use of modern Java APIs. These tests ensure that the codebase remains maintainable, testable, and consistent
- * with the defined architectural principles.
+ * Architectural guardrails for the backend application, enforced via ArchUnit.
+ * <p>
+ * This class defines and executes automated rules to ensure the codebase adheres to
+ * Clean Architecture principles and modern Java best practices. It monitors:
+ * <ul>
+ *   <li><b>Dependency Injection:</b> Mandates constructor injection over field injection
+ *   to promote immutability and testability.</li>
+ *   <li><b>Logging Standards:</b> Prevents the use of legacy {@code java.util.logging}
+ *   in favor of the SLF4J facade.</li>
+ *   <li><b>Exception Handling:</b> Discourages throwing generic exceptions (e.g., {@code Exception},
+ *   {@code RuntimeException}) to ensure precise error reporting.</li>
+ *   <li><b>API Modernization:</b> Restricts legacy libraries like Joda-Time, ensuring
+ *   exclusive use of the Java 8+ {@code java.time} API.</li>
+ * </ul>
+ * These tests act as a continuous audit of the system's structural integrity.
  */
 @AnalyzeClasses(packages = "com.nilsson.backend", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTests {

@@ -1,60 +1,60 @@
 {
-  "name": "latent-library",
-  "version": "1.0.4",
-  "description": "Latent Library Desktop",
-  "main": "main.js",
-  "author": "Alexander Nilsson",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/erroralex/Latent-Library.git"
-  },
-  "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder"
-  },
-  "build": {
-    "appId": "com.nilsson.latentlibrary",
-    "productName": "Latent Library",
-    "directories": {
-      "output": "dist"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "erroralex",
-      "repo": "Latent-Library"
-    },
-    "win": {
-      "target": "portable",
-      "icon": "../frontend/src/assets/icon.png"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "../frontend/src/assets/icon.png",
-      "category": "Graphics"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "../frontend/src/assets/icon.png",
-      "identity": null
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "splash.html",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "runtime",
-        "to": "runtime",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ]
-  },
-  "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3"
-  }
+    "name":  "latent-library",
+    "version":  "1.1.0",
+    "description":  "Latent Library Desktop",
+    "main":  "main.js",
+    "author":  "Alexander Nilsson",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "https://github.com/erroralex/Latent-Library.git"
+                   },
+    "scripts":  {
+                    "start":  "electron .",
+                    "dist":  "electron-builder"
+                },
+    "build":  {
+                  "appId":  "com.nilsson.latentlibrary",
+                  "productName":  "Latent Library",
+                  "directories":  {
+                                      "output":  "dist"
+                                  },
+                  "publish":  {
+                                  "provider":  "github",
+                                  "owner":  "erroralex",
+                                  "repo":  "Latent-Library"
+                              },
+                  "win":  {
+                              "target":  "portable",
+                              "icon":  "../frontend/src/assets/icon.png"
+                          },
+                  "linux":  {
+                                "target":  "AppImage",
+                                "icon":  "../frontend/src/assets/icon.png",
+                                "category":  "Graphics"
+                            },
+                  "mac":  {
+                              "target":  "dmg",
+                              "icon":  "../frontend/src/assets/icon.png",
+                              "identity":  null
+                          },
+                  "files":  [
+                                "main.js",
+                                "preload.js",
+                                "splash.html",
+                                "package.json"
+                            ],
+                  "extraResources":  [
+                                         {
+                                             "from":  "runtime",
+                                             "to":  "runtime",
+                                             "filter":  [
+                                                            "**/*"
+                                                        ]
+                                         }
+                                     ]
+              },
+    "devDependencies":  {
+                            "electron":  "^31.0.0",
+                            "electron-builder":  "^24.13.3"
+                        }
 }

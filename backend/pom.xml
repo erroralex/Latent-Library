@@ -8,12 +8,14 @@
         <version>3.3.2</version>
         <relativePath/>
     </parent>
+
     <groupId>com.nilsson</groupId>
     <artifactId>backend</artifactId>
-    <version>1.0.4</version>
+    <version>1.1.0</version>
     <name>backend</name>
     <description>backend</description>
     <url/>
+
     <licenses>
         <license/>
     </licenses>
@@ -118,6 +120,50 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Plugin to sync version to package.json files -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>sync-version-frontend</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>powershell</executable>
+                            <arguments>
+                                <argument>-Command</argument>
+                                <argument>
+                                    $json = Get-Content ../frontend/package.json | ConvertFrom-Json;
+                                    $json.version = '${project.version}';
+                                    $json | ConvertTo-Json -Depth 100 | Set-Content ../frontend/package.json
+                                </argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>sync-version-electron</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>powershell</executable>
+                            <arguments>
+                                <argument>-Command</argument>
+                                <argument>
+                                    $json = Get-Content ../electron/package.json | ConvertFrom-Json;
+                                    $json.version = '${project.version}';
+                                    $json | ConvertTo-Json -Depth 100 | Set-Content ../electron/package.json
+                                </argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

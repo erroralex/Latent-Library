@@ -4,6 +4,7 @@ import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.ThumbnailService;
 import com.nilsson.backend.service.UserDataManager;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,7 +18,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -28,13 +28,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * ImageControllerTest provides unit tests for the ImageController, focusing on the
- * REST API endpoints for image searching, metadata retrieval, and management.
- * It utilizes MockMvc to simulate HTTP requests and verify the controller's
- * response status and interaction with the underlying services. The tests
- * cover scenarios such as searching for images with filters, retrieving
- * distinct metadata values for UI filters, updating image ratings, and
- * handling requests for non-existent files.
+ * Integration test suite for the {@link ImageController}, validating the REST API endpoints
+ * for image searching, metadata retrieval, and lifecycle management.
+ * <p>
+ * This class utilizes {@link MockMvc} to verify the controller's request mapping and
+ * response formatting logic, ensuring:
+ * <ul>
+ *   <li><b>Advanced Search:</b> Confirms that filtered search queries are correctly
+ *   delegated to the data manager and return standardized JSON payloads.</li>
+ *   <li><b>Metadata Access:</b> Validates the retrieval of image-specific metadata and
+ *   the correct handling of 404 Resource Not Found scenarios.</li>
+ *   <li><b>User Interactions:</b> Ensures that rating updates and file management
+ *   operations (renaming, batch deletion) are correctly processed.</li>
+ *   <li><b>Filter Discovery:</b> Verifies the dynamic generation of metadata filter
+ *   values for the UI.</li>
+ * </ul>
  */
 @WebMvcTest(ImageController.class)
 @ActiveProfiles("test")
@@ -56,6 +64,7 @@ class ImageControllerTest {
     private DataSource dataSource;
 
     @Test
+    @DisplayName("GET /api/images/search should return JSON list of images")
     void searchImages_ShouldReturnJsonList() throws Exception {
         when(dataManager.findFilesWithFilters(any(), any(), anyInt(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(new ImageDTO("/path.png", 0, ""))));
@@ -68,6 +77,7 @@ class ImageControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/images/filters should return distinct metadata values")
     void getFilters_ShouldReturnFilterMap() throws Exception {
         when(dataManager.getDistinctMetadataValues(anyString())).thenReturn(List.of("Val1", "Val2"));
 
@@ -76,6 +86,7 @@ class ImageControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/images/rating should update image rating")
     void setRating_ShouldUpdateRating() throws Exception {
         Path tempFile = Files.createTempFile("test-rating", ".png");
         try {
@@ -93,6 +104,7 @@ class ImageControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/images/metadata should return 404 for non-existent files")
     void getMetadata_NotFound_ShouldReturn404() throws Exception {
         File missingFile = new File("non-existent-file.png");
         when(pathService.resolve(anyString())).thenReturn(missingFile);
@@ -103,6 +115,7 @@ class ImageControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/images/batch/delete should invoke batch deletion logic")
     void batchDeleteImages_ShouldInvokeService() throws Exception {
         String json = "[\"/path/1.png\", \"/path/2.png\"]";
 

@@ -15,13 +15,18 @@ import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * SettingsRepositoryTest is an integration test suite for the SettingsRepository, focusing on the
- * persistence and retrieval of application-wide configuration settings. It verifies that
- * key-value pairs are correctly stored in the SQLite database, that existing settings
- * are updated atomically using 'INSERT OR REPLACE' logic, and that the repository
- * correctly handles requests for non-existent keys by returning specified default
- * values. These tests ensure the reliability of the application's persistent
- * state management across restarts.
+ * Integration test suite for the {@link SettingsRepository}, validating the persistence and
+ * retrieval of application-wide configuration settings.
+ * <p>
+ * This class ensures the reliability of the application's persistent state by verifying:
+ * <ul>
+ *   <li><b>Key-Value Persistence:</b> Confirms that settings are correctly stored and
+ *   retrieved from the database.</li>
+ *   <li><b>Atomic Updates:</b> Validates the {@code INSERT OR REPLACE} logic, ensuring
+ *   that existing settings are updated without duplication.</li>
+ *   <li><b>Default Fallbacks:</b> Ensures that the repository correctly returns provided
+ *   default values when a requested key is missing.</li>
+ * </ul>
  */
 class SettingsRepositoryTest {
 

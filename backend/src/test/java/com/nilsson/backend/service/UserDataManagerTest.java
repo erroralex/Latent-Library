@@ -6,28 +6,37 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
- * UserDataManagerTest is a high-level integration test suite for the UserDataManager facade.
- * It verifies the orchestration of complex business logic across multiple repositories and services,
- * including metadata normalization, file tracking via hashing, and system-level operations.
- * The tests ensure that the facade correctly aggregates data from specialized components
- * to provide a unified and consistent API for the application's controller layer.
- * It specifically validates the normalization of metadata values for UI display, the management
- * of application settings like excluded paths, and the coordination of image-specific
- * actions such as rating updates.
+ * High-level integration test suite for the {@link UserDataManager} facade, validating the
+ * orchestration of complex business logic across multiple repositories and services.
+ * <p>
+ * This class ensures the integrity of the application's data management layer by verifying:
+ * <ul>
+ *   <li><b>Intelligent File Tracking:</b> Validates the move-detection logic that uses file
+ *   hashes to reconcile database records when files are renamed or moved on disk.</li>
+ *   <li><b>Metadata Normalization:</b> Confirms that raw metadata values (e.g., LoRAs) are
+ *   correctly cleaned and formatted for UI display.</li>
+ *   <li><b>System Orchestration:</b> Ensures that batch operations like deletion and
+ *   collection management are correctly delegated to specialized services.</li>
+ *   <li><b>Settings Management:</b> Validates the persistence and retrieval of user
+ *   preferences and exclusion rules.</li>
+ * </ul>
+ * The tests utilize Mockito to isolate the facade from physical I/O and database side effects.
  */
 @ExtendWith(MockitoExtension.class)
 class UserDataManagerTest {
@@ -61,22 +70,75 @@ class UserDataManagerTest {
 
     @BeforeEach
     void setUp() {
-        // Manually construct the UserDataManager with all mocked dependencies
         userDataManager = new UserDataManager(
-                db,
-                settingsService,
-                imageRepo,
-                imageMetadataRepository,
-                pinnedFolderRepository,
-                collectionService,
-                imageMetadataService,
-                tagService,
-                pathService,
-                searchRepository,
-                fileSystemService,
-                dHashService,
-                64 // Default value for hashChunkSizeKb
+                db, settingsService, imageRepo, imageMetadataRepository, pinnedFolderRepository,
+                collectionService, imageMetadataService, tagService, pathService, searchRepository,
+                fileSystemService, dHashService, 64
         );
+    }
+
+    /**
+     * Verifies the "Move Detection" logic. When a file is encountered at a new path but
+     * shares a hash with a missing record, the system should update the existing record
+     * instead of creating a duplicate.
+     */
+    @Test
+    @DisplayName("getOrCreateImageIdInternal should detect file move via hash")
+    void testFileMoveDetection(@TempDir Path tempDir) throws IOException {
+        String oldPath = "/old/path/img.png";
+        
+        // Create a real file in the temp directory so RandomAccessFile doesn't NPE
+        Path newFilePath = tempDir.resolve("new_img.png");
+        Files.writeString(newFilePath, "dummy content for hashing");
+        File newFile = newFilePath.toFile();
+        String newPath = newFile.getAbsolutePath().replace("\\", "/");
+
+        File oldFile = mock(File.class);
+
+        when(pathService.getNormalizedAbsolutePath(newFile)).thenReturn(newPath);
+        when(imageRepo.getIdByPath(newPath)).thenReturn(-1); // Not in DB at new path
+
+        // Mock the repository finding the hash at an old location
+        when(imageRepo.findPathsByHash(anyString())).thenReturn(List.of(oldPath));
+        when(pathService.resolve(oldPath)).thenReturn(oldFile);
+        when(oldFile.exists()).thenReturn(false); // Old file is gone!
+
+        // Trigger the internal logic via a public method that calls it
+        userDataManager.setRating(newFile, 5);
+
+        // Verify that the system updated the path instead of inserting a new one
+        verify(imageRepo).updatePath(oldPath, newPath);
+    }
+
+    /**
+     * Verifies that if two files share a hash but both exist on disk, the system
+     * treats them as distinct copies rather than a move.
+     */
+    @Test
+    @DisplayName("getOrCreateImageIdInternal should treat identical existing files as copies")
+    void testFileCopyDetection(@TempDir Path tempDir) throws IOException {
+        String existingPath = "/path/copy1.png";
+        
+        Path newFilePath = tempDir.resolve("copy2.png");
+        Files.writeString(newFilePath, "identical content");
+        File newFile = newFilePath.toFile();
+        String newPath = newFile.getAbsolutePath().replace("\\", "/");
+
+        File existingFile = mock(File.class);
+
+        when(pathService.getNormalizedAbsolutePath(newFile)).thenReturn(newPath);
+        when(imageRepo.getIdByPath(newPath)).thenReturn(-1);
+
+        when(imageRepo.findPathsByHash(anyString())).thenReturn(List.of(existingPath));
+        when(pathService.resolve(existingPath)).thenReturn(existingFile);
+        when(existingFile.exists()).thenReturn(true); // Existing file is still there!
+
+        userDataManager.setRating(newFile, 5);
+
+        // Verify that updatePath was NEVER called (it's a copy, not a move)
+        verify(imageRepo, never()).updatePath(anyString(), anyString());
+        // Verify it tried to create a new record
+        verify(imageRepo).getOrCreateId(eq(newPath), anyString());
     }
 
     @Test
@@ -138,7 +200,6 @@ class UserDataManagerTest {
         when(file1.exists()).thenReturn(true);
         when(file2.exists()).thenReturn(true);
         
-        // Mock normalization to return the paths
         when(pathService.getNormalizedAbsolutePath(file1)).thenReturn(path1);
         when(pathService.getNormalizedAbsolutePath(file2)).thenReturn(path2);
 

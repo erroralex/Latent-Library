@@ -3,6 +3,7 @@ package com.nilsson.backend.controller;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,13 +24,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * CollectionControllerTest provides unit tests for the CollectionController, focusing on the
- * REST API endpoints for managing image collections. It verifies the full CRUD lifecycle
- * of collections, including creation, retrieval of details, and deletion. The tests
- * also cover membership management, such as adding images to collections in batches
- * or individually, ensuring that the controller correctly interacts with the
- * UserDataManager. MockMvc is used to simulate HTTP requests and verify
- * response statuses.
+ * Integration test suite for the {@link CollectionController}, validating the REST API endpoints
+ * for image collection management.
+ * <p>
+ * This class ensures the integrity of the collection system by verifying:
+ * <ul>
+ *   <li><b>CRUD Operations:</b> Confirms that collections can be created, retrieved,
+ *   and deleted with proper status codes and service delegation.</li>
+ *   <li><b>Membership Management:</b> Validates the addition and removal of images
+ *   from collections, including batch operations.</li>
+ *   <li><b>Error Handling:</b> Ensures that requests for non-existent collections
+ *   correctly return 404 Not Found.</li>
+ *   <li><b>Smart Collections:</b> Confirms that the controller correctly handles
+ *   requests for both manual and rule-based (smart) collections.</li>
+ * </ul>
  */
 @WebMvcTest(CollectionController.class)
 @ActiveProfiles("test")
@@ -48,6 +56,7 @@ class CollectionControllerTest {
     private DataSource dataSource;
 
     @Test
+    @DisplayName("GET /api/collections should return list of all collections")
     void getAllCollections_ShouldReturnList() throws Exception {
         when(dataManager.getCollections()).thenReturn(List.of("Coll1", "Coll2"));
         when(dataManager.getCollectionDetails(any())).thenReturn(Optional.of(new CreateCollectionRequest("test", false, null)));
@@ -57,6 +66,7 @@ class CollectionControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/collections should create a new collection")
     void createCollection_ShouldInvokeService() throws Exception {
         String json = "{\"name\": \"New Coll\", \"isSmart\": false}";
 
@@ -69,6 +79,7 @@ class CollectionControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/collections/{name} should remove the collection")
     void deleteCollection_ShouldInvokeService() throws Exception {
         when(dataManager.getCollectionDetails("Old")).thenReturn(Optional.of(new CreateCollectionRequest("Old", false, null)));
 
@@ -79,6 +90,7 @@ class CollectionControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/collections/{name} should return 404 if missing")
     void getCollection_NotFound_ShouldReturn404() throws Exception {
         when(dataManager.getCollectionDetails("Missing")).thenReturn(Optional.empty());
 
@@ -87,6 +99,7 @@ class CollectionControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/collections/{name}/batch/add should add multiple images")
     void batchAddImages_ShouldInvokeService() throws Exception {
         String json = "[\"/img1.png\", \"/img2.png\"]";
 
@@ -99,6 +112,7 @@ class CollectionControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/collections/{name}/images should add a single image")
     void addImage_ShouldDelegateToBatch() throws Exception {
         mockMvc.perform(post("/api/collections/MyColl/images")
                         .param("path", "/img1.png"))

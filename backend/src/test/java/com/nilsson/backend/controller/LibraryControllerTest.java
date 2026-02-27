@@ -4,6 +4,7 @@ import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,11 +24,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * LibraryControllerTest provides unit tests for the LibraryController, focusing on the
- * REST API endpoints for library-wide operations such as folder scanning. It
- * verifies that requests to initiate a scan of a specific directory are
- * correctly resolved and delegated to the IndexingService. The tests use
- * MockMvc to simulate HTTP requests and verify the controller's response status.
+ * Integration test suite for the {@link LibraryController}, validating the REST API endpoints
+ * for library-wide synchronization and discovery.
+ * <p>
+ * This class ensures that high-level library operations are correctly orchestrated by verifying:
+ * <ul>
+ *   <li><b>Folder Scanning:</b> Confirms that requests to index a specific directory are
+ *   correctly resolved via the path service and delegated to the indexing engine.</li>
+ *   <li><b>DTO Mapping:</b> Ensures that the controller returns a standardized list of
+ *   image summaries following a successful scan.</li>
+ *   <li><b>State Management:</b> Validates that the last visited folder is correctly
+ *   updated during the scanning process.</li>
+ * </ul>
  */
 @WebMvcTest(LibraryController.class)
 @ActiveProfiles("test")
@@ -49,6 +57,7 @@ class LibraryControllerTest {
     private DataSource dataSource;
 
     @Test
+    @DisplayName("POST /api/library/scan should trigger indexing and return image summaries")
     void scanFolder_ShouldTriggerIndexingAndReturnDTOs() throws Exception {
         String path = System.getProperty("java.io.tmpdir");
         when(pathService.resolve(any())).thenReturn(new File(path));

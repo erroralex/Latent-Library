@@ -15,11 +15,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * TagServiceTest provides unit tests for the TagService, focusing on the business logic and validation
- * rules associated with image tagging. It ensures that tags are properly sanitized (trimmed) and
- * validated before persistence, and that the Full-Text Search (FTS) index is consistently updated
- * following any modification to an image's tags. The tests utilize Mockito to isolate the service
- * from its repository and search index dependencies, verifying correct interaction patterns.
+ * Unit test suite for the {@link TagService}, validating the business logic and validation
+ * rules for user-defined image tagging.
+ * <p>
+ * This class ensures the integrity of the tagging system by verifying:
+ * <ul>
+ *   <li><b>Input Sanitization:</b> Confirms that tags are correctly trimmed and validated
+ *   before being persisted to the database.</li>
+ *   <li><b>Search Integration:</b> Validates that the Full-Text Search (FTS) index is
+ *   automatically updated whenever tags are added or removed.</li>
+ *   <li><b>Validation Rules:</b> Ensures that invalid inputs (e.g., empty tags, negative
+ *   image IDs) correctly trigger {@link ValidationException}.</li>
+ *   <li><b>Repository Delegation:</b> Confirms that the service correctly interacts with
+ *   the {@link TagRepository} for data retrieval and persistence.</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 class TagServiceTest {
