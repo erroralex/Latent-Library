@@ -20,12 +20,14 @@
  *   the OS file explorer.
  * - **Raw Data Inspection:** Includes a modal dialog for viewing the complete,
  *   unprocessed metadata string or JSON workflow.
+ * - **Custom Metadata Editing:** Allows users to override prompts, models, and add personal notes.
  */
 import {useBrowserStore} from '@/stores/browser';
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import api from '@/services/api';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
 import Chip from 'primevue/chip';
 import Divider from 'primevue/divider';
 import Dialog from 'primevue/dialog';
@@ -35,6 +37,25 @@ const store = useBrowserStore();
 const toast = useToast();
 const meta = computed(() => store.currentMetadata);
 const isRawVisible = ref(false);
+const isEditing = ref(false);
+
+const editForm = ref({
+  userNotes: '',
+  customPrompt: '',
+  customNegativePrompt: '',
+  customModel: ''
+});
+
+watch([isEditing, meta], ([editing, newMeta]) => {
+  if (editing) {
+    editForm.value = {
+      userNotes: newMeta.user_notes || '',
+      customPrompt: newMeta.custom_prompt || newMeta.Prompt || '',
+      customNegativePrompt: newMeta.custom_negative_prompt || newMeta.Negative || '',
+      customModel: newMeta.custom_model || newMeta.Model || ''
+    };
+  }
+});
 
 const fileName = computed(() => {
   if (!store.selectedFile) return 'No Selection';
@@ -89,6 +110,20 @@ const openTagger = () => {
   store.setTaggerOpen(true);
 };
 
+const saveMetadata = async () => {
+  try {
+    await store.updateMetadata(editForm.value);
+    isEditing.value = false;
+    toast.add({severity: 'success', summary: 'Saved', detail: 'Metadata updated successfully', life: 2000});
+  } catch (e) {
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to save metadata', life: 3000});
+  }
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+};
+
 </script>
 
 <template>
@@ -98,13 +133,25 @@ const openTagger = () => {
            :title="fileName">
         {{ fileName }}
       </div>
-      <div class="flex gap-2">
-        <Button icon="pi pi-folder-open" class="p-button-sm p-button-text text-white"
-                v-tooltip.bottom="'Open File Location'" @click="openFileLocation"/>
-        <Button icon="pi pi-code" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'View Raw Metadata'"
-                @click="isRawVisible = true"/>
-        <Button icon="pi pi-tags" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'Tag Image with WD14'"
-                @click="openTagger"/>
+      <div class="flex gap-2 justify-content-between">
+        <div class="flex gap-2">
+          <Button icon="pi pi-folder-open" class="p-button-sm p-button-text text-white"
+                  v-tooltip.bottom="'Open File Location'" @click="openFileLocation"/>
+          <Button icon="pi pi-code" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'View Raw Metadata'"
+                  @click="isRawVisible = true"/>
+          <Button icon="pi pi-tags" class="p-button-sm p-button-text text-white" v-tooltip.bottom="'Tag Image with WD14'"
+                  @click="openTagger"/>
+        </div>
+        <div>
+          <Button v-if="!isEditing" icon="pi pi-pencil" class="p-button-sm p-button-text text-white"
+                  v-tooltip.bottom="'Edit Metadata / Add Notes'" @click="isEditing = true"/>
+          <div v-else class="flex gap-1">
+            <Button icon="pi pi-check" class="p-button-sm p-button-success p-button-text"
+                    v-tooltip.bottom="'Save Changes'" @click="saveMetadata"/>
+            <Button icon="pi pi-times" class="p-button-sm p-button-danger p-button-text"
+                    v-tooltip.bottom="'Cancel'" @click="cancelEdit"/>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -124,84 +171,117 @@ const openTagger = () => {
 
       <Divider class="border-white-alpha-10"/>
 
-      <div class="mb-3">
-        <div class="flex justify-content-between align-items-center mb-1">
-          <span class="font-bold text-sm text-500">PROMPT</span>
-          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
-                  v-tooltip.left="'Copy Prompt'" @click="copyToClipboard(meta.Prompt)"/>
+      <div v-if="!isEditing">
+        <div class="mb-3">
+          <div class="flex justify-content-between align-items-center mb-1">
+            <span class="font-bold text-sm text-500">PROMPT</span>
+            <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
+                    v-tooltip.left="'Copy Prompt'" @click="copyToClipboard(meta.custom_prompt || meta.Prompt)"/>
+          </div>
+          <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
+               style="max-height: 150px; overflow-y: auto;">
+            {{ meta.custom_prompt || meta.Prompt || 'No prompt found' }}
+            <span v-if="meta.custom_prompt" class="text-xs text-yellow-500 block mt-1">(Custom Override)</span>
+          </div>
         </div>
-        <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
-             style="max-height: 150px; overflow-y: auto;">
-          {{ meta.Prompt || 'No prompt found' }}
+
+        <div class="mb-3">
+          <div class="flex justify-content-between align-items-center mb-1">
+            <span class="font-bold text-sm text-red-400">NEGATIVE PROMPT</span>
+            <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
+                    v-tooltip.left="'Copy Negative Prompt'" @click="copyToClipboard(meta.custom_negative_prompt || meta.Negative)"/>
+          </div>
+          <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
+               style="max-height: 100px; overflow-y: auto;">
+            {{ meta.custom_negative_prompt || meta.Negative || 'No negative prompt' }}
+            <span v-if="meta.custom_negative_prompt" class="text-xs text-yellow-500 block mt-1">(Custom Override)</span>
+          </div>
+        </div>
+
+        <div class="mb-3" v-if="meta.user_notes">
+          <span class="font-bold text-sm text-blue-400 block mb-1">NOTES</span>
+          <div class="glass-box p-2 border-round text-sm line-height-3 select-text white-space-pre-wrap">
+            {{ meta.user_notes }}
+          </div>
+        </div>
+
+        <Divider class="border-white-alpha-10"/>
+
+        <div class="grid grid-nogutter gap-3">
+          <div class="col-11">
+            <label class="block text-xs text-500 mb-1">Model</label>
+            <InputText :value="meta.custom_model || meta.Model || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">Sampler</label>
+            <InputText :value="meta.Sampler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">Scheduler</label>
+            <InputText :value="meta.Scheduler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-11">
+            <label class="block text-xs text-500 mb-1">Seed</label>
+            <InputText :value="meta.Seed || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">CFG</label>
+            <InputText :value="meta.CFG || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">Steps</label>
+            <InputText :value="meta.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">Resolution</label>
+            <InputText :value="meta.Resolution || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+          <div class="col-5">
+            <label class="block text-xs text-500 mb-1">Size</label>
+            <InputText :value="meta.FileSize || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+          </div>
+        </div>
+
+        <Divider class="border-white-alpha-10"/>
+
+        <div class="mb-3">
+          <span class="block font-bold text-sm text-500 mb-2">LoRAs</span>
+          <div class="flex flex-wrap gap-2">
+            <Chip v-for="lora in loras" :key="lora" :label="lora" class="lora-chip text-sm"/>
+            <span v-if="loras.length === 0" class="text-500 text-sm italic">None</span>
+          </div>
+        </div>
+
+        <div class="mb-3" v-if="meta.ai_tags">
+          <div class="text-gray-400 text-sm mt-4 mb-2 font-bold">Detected AI Tags (WD14)</div>
+          <div class="flex flex-wrap gap-2">
+            <Chip v-for="tag in meta.ai_tags.split(', ')" :key="tag" :label="tag"
+                  class="ai-tag-chip text-xs cursor-pointer"
+                  @click="store.search(tag)"/>
+          </div>
         </div>
       </div>
 
-      <div class="mb-3">
-        <div class="flex justify-content-between align-items-center mb-1">
-          <span class="font-bold text-sm text-red-400">NEGATIVE PROMPT</span>
-          <Button icon="pi pi-copy" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500"
-                  v-tooltip.left="'Copy Negative Prompt'" @click="copyToClipboard(meta.Negative)"/>
-        </div>
-        <div class="glass-box p-2 border-round text-sm line-height-3 select-text"
-             style="max-height: 100px; overflow-y: auto;">
-          {{ meta.Negative || 'No negative prompt' }}
-        </div>
-      </div>
-
-      <Divider class="border-white-alpha-10"/>
-
-      <div class="grid grid-nogutter gap-3">
-        <div class="col-11">
-          <label class="block text-xs text-500 mb-1">Model</label>
-          <InputText :value="meta.Model || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">Sampler</label>
-          <InputText :value="meta.Sampler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">Scheduler</label>
-          <InputText :value="meta.Scheduler || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-        <div class="col-11">
-          <label class="block text-xs text-500 mb-1">Seed</label>
-          <InputText :value="meta.Seed || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+      <div v-else class="flex flex-column gap-3">
+        <div>
+          <label class="block text-xs font-bold text-blue-400 mb-2">User Notes</label>
+          <Textarea v-model="editForm.userNotes" rows="4" class="w-full glass-input" placeholder="Add your personal notes here..."/>
         </div>
 
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">CFG</label>
-          <InputText :value="meta.CFG || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
+        <div>
+          <label class="block text-xs font-bold text-500 mb-2">Custom Prompt Override</label>
+          <Textarea v-model="editForm.customPrompt" rows="6" class="w-full glass-input" placeholder="Override the extracted prompt..."/>
         </div>
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">Steps</label>
-          <InputText :value="meta.Steps || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">Resolution</label>
-          <InputText :value="meta.Resolution || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-        <div class="col-5">
-          <label class="block text-xs text-500 mb-1">Size</label>
-          <InputText :value="meta.FileSize || '-'" readonly class="w-full p-inputtext-sm glass-input"/>
-        </div>
-      </div>
 
-      <Divider class="border-white-alpha-10"/>
-
-      <div class="mb-3">
-        <span class="block font-bold text-sm text-500 mb-2">LoRAs</span>
-        <div class="flex flex-wrap gap-2">
-          <Chip v-for="lora in loras" :key="lora" :label="lora" class="lora-chip text-sm"/>
-          <span v-if="loras.length === 0" class="text-500 text-sm italic">None</span>
+        <div>
+          <label class="block text-xs font-bold text-red-400 mb-2">Custom Negative Prompt Override</label>
+          <Textarea v-model="editForm.customNegativePrompt" rows="4" class="w-full glass-input" placeholder="Override the extracted negative prompt..."/>
         </div>
-      </div>
 
-      <div class="mb-3" v-if="meta.ai_tags">
-        <div class="text-gray-400 text-sm mt-4 mb-2 font-bold">Detected AI Tags (WD14)</div>
-        <div class="flex flex-wrap gap-2">
-          <Chip v-for="tag in meta.ai_tags.split(', ')" :key="tag" :label="tag"
-                class="ai-tag-chip text-xs cursor-pointer"
-                @click="store.search(tag)"/>
+        <div>
+          <label class="block text-xs font-bold text-500 mb-2">Custom Model Override</label>
+          <InputText v-model="editForm.customModel" class="w-full glass-input" placeholder="Override model name..."/>
         </div>
       </div>
     </div>
@@ -342,6 +422,10 @@ const openTagger = () => {
 
 .text-red-400 {
   color: var(--status-danger) !important;
+}
+
+.text-blue-400 {
+  color: var(--accent-primary) !important;
 }
 
 .text-500 {

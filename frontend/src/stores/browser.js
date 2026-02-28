@@ -1,19 +1,23 @@
 import {defineStore} from 'pinia';
-import api, {authenticatedUrl} from '../services/api';
+import api, {authenticatedUrl, patchImageMetadata} from '../services/api';
 
 /**
  * @file browser.js
- * @description The central state management hub for the Image Browser application using Pinia.
+ * @description The central state management hub for the Latent Library application, powered by Pinia.
  *
- * This store manages the global application state, including:
- * - **File Management:** Tracking the current list of images, selection state (single and multi-select),
- *   and pagination for large collections.
- * - **Search & Filtering:** Handling complex queries across metadata (models, samplers, ratings)
- *   and managing the active search context.
- * - **System State:** Monitoring backend connectivity, theme preferences, and UI component
- *   visibility (sidebars, taggers).
- * - **Metadata & Ratings:** Fetching and updating image-specific data and user ratings.
- * - **Navigation:** Providing logic for sequential image browsing and folder/collection switching.
+ * This store orchestrates the global application state, providing a reactive and unified interface
+ * for all major functional areas:
+ * 
+ * - **File & Collection Management:** Tracks the active set of images, handles selection states
+ *   (including complex range and multi-select), and manages pagination for large datasets.
+ * - **Search & Discovery:** Orchestrates multi-criteria filtering across technical metadata
+ *   (models, samplers, ratings) and executes Full-Text Search (FTS) queries against the backend.
+ * - **Metadata & User Overrides:** Manages the retrieval of technical metadata and facilitates
+ *   the persistence of user-defined notes and prompt/model overrides.
+ * - **System & UI State:** Monitors backend connectivity, manages theme preferences, and
+ *   controls the visibility of sidebars and utility panels.
+ * - **Navigation Logic:** Implements sequential browsing, folder traversal, and automatic
+ *   refresh polling to keep the UI in sync with the physical file system.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -65,7 +69,6 @@ export const useBrowserStore = defineStore('browser', {
                     if (e.response && e.response.status === 401) {
                         throw new Error("Security Handshake Failed: Unauthorized.");
                     }
-                    console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
                     await delay(1000);
                 }
             }
@@ -432,6 +435,26 @@ export const useBrowserStore = defineStore('browser', {
                 console.error('Metadata fetch failed:', error);
                 this.currentMetadata = {};
                 this.currentRating = 0;
+            }
+        },
+
+        async updateMetadata(payload) {
+            if (!this.currentMetadata || !this.currentMetadata.id) {
+                console.error("Cannot update metadata: No image ID available.");
+                return;
+            }
+            
+            try {
+                await patchImageMetadata(this.currentMetadata.id, payload);
+                
+                if (payload.userNotes !== undefined) this.currentMetadata.user_notes = payload.userNotes;
+                if (payload.customPrompt !== undefined) this.currentMetadata.custom_prompt = payload.customPrompt;
+                if (payload.customNegativePrompt !== undefined) this.currentMetadata.custom_negative_prompt = payload.customNegativePrompt;
+                if (payload.customModel !== undefined) this.currentMetadata.custom_model = payload.customModel;
+                
+            } catch (error) {
+                console.error("Failed to update metadata:", error);
+                throw error;
             }
         },
 

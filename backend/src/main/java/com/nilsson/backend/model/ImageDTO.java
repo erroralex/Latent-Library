@@ -13,6 +13,20 @@ package com.nilsson.backend.model;
  *         The user-assigned star rating (0-5).
  * @param model
  *         The name of the AI model used to generate the image, if available in cached metadata.
+ * @param userNotes
+ *         User-defined notes associated with the image.
+ * @param customPrompt
+ *         User-defined override for the generation prompt.
+ * @param customNegativePrompt
+ *         User-defined override for the negative generation prompt.
+ * @param customModel
+ *         User-defined override for the model name.
  */
-public record ImageDTO(String path, int rating, String model) {
+public record ImageDTO(String path, int rating, String model, String userNotes, String customPrompt, String customNegativePrompt, String customModel) {
+    /**
+     * Minimal constructor for backward compatibility and basic image listings.
+     */
+    public ImageDTO(String path, int rating, String model) {
+        this(path, rating, model, null, null, null, null);
+    }
 }

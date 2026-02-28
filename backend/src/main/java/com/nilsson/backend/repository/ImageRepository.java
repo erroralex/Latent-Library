@@ -3,6 +3,7 @@ package com.nilsson.backend.repository;
 import com.nilsson.backend.exception.ApplicationException;
 import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.ImageInfo;
+import com.nilsson.backend.model.UpdateMetadataRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -22,8 +23,9 @@ import java.util.stream.Stream;
  * <p>
  * This class serves as the primary data access layer for the {@code images} table. It handles
  * the registration of new files, tracking of file movements via cryptographic hashes, and
- * management of user-facing attributes such as ratings and "starred" status. It also
- * maintains the "missing" state for files that are indexed but currently unreachable on disk.
+ * management of user-facing attributes such as ratings, "starred" status, and custom
+ * metadata overrides. It also maintains the "missing" state for files that are indexed
+ * but currently unreachable on disk.
  * <p>
  * Key Responsibilities:
  * <ul>
@@ -31,12 +33,12 @@ import java.util.stream.Stream;
  *   moved or renamed files, preserving metadata across path changes.</li>
  *   <li><b>State Management:</b> Persists and retrieves image ratings, starred status, and
  *   perceptual hashes (dHash) used for similarity detection.</li>
+ *   <li><b>Custom Metadata:</b> Manages user-defined notes and prompt/model overrides
+ *   that supplement or replace extracted technical metadata.</li>
  *   <li><b>Bulk Data Retrieval:</b> Provides an optimized method to fetch essential image information
  *   for a large list of file paths in a single query.</li>
  *   <li><b>Batch Operations:</b> Provides efficient batch deletion mechanisms to handle
  *   large-scale library reconciliation or folder removals.</li>
- *   <li><b>Library Traversal:</b> Offers streaming access to all indexed file paths for
- *   background maintenance tasks like reconciliation and thumbnail generation.</li>
  * </ul>
  */
 @Repository
@@ -217,5 +219,19 @@ public class ImageRepository {
                 .query(Long.class)
                 .optional()
                 .orElse(null);
+    }
+
+    @Transactional
+    public void updateCustomMetadata(int id, UpdateMetadataRequest request) {
+        if (id <= 0) {
+            throw new ValidationException("Invalid image ID provided for metadata update.");
+        }
+        jdbcClient.sql("UPDATE images SET user_notes = ?, custom_prompt = ?, custom_negative_prompt = ?, custom_model = ? WHERE id = ?")
+                .param(request.userNotes())
+                .param(request.customPrompt())
+                .param(request.customNegativePrompt())
+                .param(request.customModel())
+                .param(id)
+                .update();
     }
 }

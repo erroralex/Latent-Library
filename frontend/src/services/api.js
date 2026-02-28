@@ -65,4 +65,8 @@ api.interceptors.response.use(
     }
 );
 
+export const patchImageMetadata = (id, payload) => {
+    return api.patch(`/images/${id}/metadata`, payload);
+};
+
 export default api;

@@ -7,6 +7,7 @@ import com.nilsson.backend.model.AppSettings;
 import com.nilsson.backend.model.CreateCollectionRequest;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.model.ImageInfo;
+import com.nilsson.backend.model.UpdateMetadataRequest;
 import com.nilsson.backend.repository.ImageMetadataRepository;
 import com.nilsson.backend.repository.ImageRepository;
 import com.nilsson.backend.repository.PinnedFolderRepository;
@@ -67,6 +68,7 @@ public class UserDataManager {
     private final SearchRepository searchRepository;
     private final FileSystemService fileSystemService;
     private final DHashService dHashService;
+    private final FtsService ftsService;
 
     public UserDataManager(DatabaseService db,
                            JsonSettingsService settingsService,
@@ -79,6 +81,7 @@ public class UserDataManager {
                            SearchRepository searchRepository,
                            FileSystemService fileSystemService,
                            DHashService dHashService,
+                           FtsService ftsService,
                            @Value("${app.files.hash-chunk-size-kb:64}") int hashChunkSizeKb) {
         this.db = db;
         this.settingsService = settingsService;
@@ -92,6 +95,7 @@ public class UserDataManager {
         this.searchRepository = searchRepository;
         this.fileSystemService = fileSystemService;
         this.dHashService = dHashService;
+        this.ftsService = ftsService;
         this.hashChunkSize = hashChunkSizeKb * 1024;
     }
 
@@ -597,5 +601,10 @@ public class UserDataManager {
                 s.setCustomLoraNodes(current);
             }
         });
+    }
+
+    public void updateCustomMetadata(int id, UpdateMetadataRequest request) {
+        imageRepo.updateCustomMetadata(id, request);
+        ftsService.updateFtsIndex(id);
     }
 }
