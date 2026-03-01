@@ -1,19 +1,24 @@
 import {defineStore} from 'pinia';
-import api, {authenticatedUrl} from '../services/api';
+import api, {authenticatedUrl, patchImageMetadata} from '../services/api';
 
 /**
  * @file browser.js
- * @description The central state management hub for the Image Browser application using Pinia.
+ * @description The central state management hub for the Latent Library application, powered by Pinia.
  *
- * This store manages the global application state, including:
- * - **File Management:** Tracking the current list of images, selection state (single and multi-select),
- *   and pagination for large collections.
- * - **Search & Filtering:** Handling complex queries across metadata (models, samplers, ratings)
- *   and managing the active search context.
- * - **System State:** Monitoring backend connectivity, theme preferences, and UI component
- *   visibility (sidebars, taggers).
- * - **Metadata & Ratings:** Fetching and updating image-specific data and user ratings.
- * - **Navigation:** Providing logic for sequential image browsing and folder/collection switching.
+ * This store orchestrates the global application state, providing a reactive and unified interface
+ * for all major functional areas:
+ * 
+ * - **File & Collection Management:** Tracks the active set of images, handles selection states
+ *   (including complex range and multi-select), and manages pagination for large datasets.
+ * - **Search & Discovery:** Orchestrates multi-criteria filtering across technical metadata
+ *   (models, samplers, ratings) and executes Full-Text Search (FTS) queries against the backend.
+ * - **Metadata & User Overrides:** Manages the retrieval of technical metadata and facilitates
+ *   the persistence of user-defined notes and prompt/model overrides.
+ * - **System & UI State:** Monitors backend connectivity, manages theme preferences, and
+ *   controls the visibility of sidebars and utility panels.
+ * - **Navigation Logic:** Implements sequential browsing, folder traversal, and automatic
+ *   refresh polling to keep the UI in sync with the physical file system.
+ * - **Indexing Status:** Polls the backend for real-time progress updates during massive folder scans.
  */
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -49,11 +54,36 @@ export const useBrowserStore = defineStore('browser', {
         recursiveView: false,
         autoShowLatest: false,
         page: 0,
-        pageSize: 50,
+        pageSize: 100,
+        totalPages: 0,
         hasMore: true,
         isFetchingMore: false,
-        refreshInterval: null
+        refreshInterval: null,
+        isIndexing: false,
+        totalFilesToScan: 0,
+        filesProcessed: 0,
+        indexingPollInterval: null
     }),
+
+    getters: {
+        formattedBreadcrumb: (state) => {
+            let targetPath = state.lastFolderPath;
+            
+            if (state.selectedFile) {
+                const separator = state.selectedFile.includes('/') ? '/' : '\\';
+                const lastSlash = state.selectedFile.lastIndexOf(separator);
+                if (lastSlash !== -1) {
+                    targetPath = state.selectedFile.substring(0, lastSlash);
+                }
+            }
+
+            if (!targetPath) return '';
+            
+            const parts = targetPath.split(/[/\\]/);
+            if (parts.length <= 3) return targetPath;
+            return '... / ' + parts.slice(-3).join(' / ');
+        }
+    },
 
     actions: {
         async waitForBackend(retries = 20) {
@@ -65,7 +95,6 @@ export const useBrowserStore = defineStore('browser', {
                     if (e.response && e.response.status === 401) {
                         throw new Error("Security Handshake Failed: Unauthorized.");
                     }
-                    console.debug(`Backend not ready, retrying (${i + 1}/${retries})...`);
                     await delay(1000);
                 }
             }
@@ -84,13 +113,14 @@ export const useBrowserStore = defineStore('browser', {
                     const res = await api.get('/system/last-folder');
                     if (res.data && res.data.path) {
                         this.lastFolderPath = res.data.path;
-                        await this.loadFolder(this.lastFolderPath);
+                        await this.loadInitialFolder(this.lastFolderPath);
                     }
                 } catch (e) {
                     console.warn("Failed to load last folder setting", e);
                 }
 
                 this.startAutoRefresh();
+                this.startIndexingPoll();
 
             } catch (error) {
                 console.error("Initialization failed:", error);
@@ -109,6 +139,32 @@ export const useBrowserStore = defineStore('browser', {
             }, 3000);
         },
 
+        startIndexingPoll() {
+            if (this.indexingPollInterval) clearInterval(this.indexingPollInterval);
+            
+            this.indexingPollInterval = setInterval(async () => {
+                try {
+                    const res = await api.get('/library/indexing-status');
+                    const status = res.data;
+                    
+                    this.isIndexing = status.isIndexing;
+                    if (status.isIndexing || status.totalFiles > 0) {
+                        this.totalFilesToScan = status.totalFiles;
+                        this.filesProcessed = status.processedFiles;
+                    }
+                } catch (e) {
+                    console.debug("Indexing poll failed (ignoring):", e.message);
+                }
+            }, 500);
+        },
+
+        stopIndexingPoll() {
+            if (this.indexingPollInterval) {
+                clearInterval(this.indexingPollInterval);
+                this.indexingPollInterval = null;
+            }
+        },
+
         async refreshCurrentFolder() {
             if (!this.lastFolderPath) return;
             try {
@@ -116,17 +172,20 @@ export const useBrowserStore = defineStore('browser', {
                     params: {
                         path: this.lastFolderPath,
                         recursive: this.recursiveView,
-                        skipIndex: true
+                        skipIndex: true,
+                        page: 0,
+                        size: this.pageSize
                     }
                 });
                 
-                const newFiles = response.data;
+                const newFiles = response.data.content;
                 
-                if (newFiles.length !== this.files.length || (newFiles.length > 0 && this.files.length > 0 && newFiles[0].path !== this.files[0].path)) {
-                    const oldFirstPath = this.files.length > 0 ? this.files[0].path : null;
-                    this.files = newFiles;
-
-                    if (this.autoShowLatest && newFiles.length > 0 && newFiles[0].path !== oldFirstPath) {
+                if (newFiles.length > 0 && this.files.length > 0 && newFiles[0].path !== this.files[0].path) {
+                    if (this.autoShowLatest) {
+                        this.files = newFiles;
+                        this.page = 0;
+                        this.totalPages = response.data.totalPages;
+                        this.hasMore = !response.data.last;
                         this.selectFile(newFiles[0]);
                         this.setViewMode('browser');
                     }
@@ -176,23 +235,29 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
-        async loadFolder(path) {
+        async loadInitialFolder(path) {
             this.isLoading = true;
             this.files = [];
             this.page = 0;
-            this.hasMore = false;
+            this.hasMore = true;
             this.activeCollection = null;
+            this.searchQuery = '';
+            this.lastFolderPath = path;
 
             try {
                 const response = await api.post('/library/scan', null, {
                     params: {
                         path,
-                        recursive: this.recursiveView
+                        recursive: this.recursiveView,
+                        page: 0,
+                        size: this.pageSize
                     }
                 });
-                this.files = response.data;
-                this.searchQuery = '';
-                this.lastFolderPath = path;
+                
+                const pageData = response.data;
+                this.files = pageData.content;
+                this.totalPages = pageData.totalPages;
+                this.hasMore = !pageData.last;
 
                 if (this.files.length > 0) {
                     this.selectFile(this.files[0]);
@@ -203,15 +268,79 @@ export const useBrowserStore = defineStore('browser', {
                 }
             } catch (error) {
                 console.error('Failed to load folder:', error);
+                this.files = [];
             } finally {
                 this.isLoading = false;
             }
         },
 
+        async loadMoreImages() {
+            if (this.isFetchingMore || !this.hasMore || this.isLoading) return;
+            
+            this.isFetchingMore = true;
+            const nextPage = this.page + 1;
+
+            try {
+                let response;
+                
+                if (this.activeCollection) {
+                    response = await api.get('/images/search', {
+                        params: {
+                            collection: this.activeCollection,
+                            page: nextPage,
+                            size: this.pageSize
+                        }
+                    });
+                } else if (this.searchQuery || this.selectedModel || this.selectedRating) {
+                    response = await api.get('/images/search', {
+                        params: {
+                            query: this.searchQuery,
+                            model: this.selectedModel,
+                            sampler: this.selectedSampler,
+                            lora: this.selectedLora,
+                            rating: this.selectedRating,
+                            includeAiTags: this.includeAiTags,
+                            page: nextPage,
+                            size: this.pageSize
+                        }
+                    });
+                } else {
+                    response = await api.post('/library/scan', null, {
+                        params: {
+                            path: this.lastFolderPath,
+                            recursive: this.recursiveView,
+                            skipIndex: true,
+                            page: nextPage,
+                            size: this.pageSize
+                        }
+                    });
+                }
+
+                const newFiles = this.activeCollection || this.searchQuery ? response.data : response.data.content;
+                const isLast = this.activeCollection || this.searchQuery ? (newFiles.length < this.pageSize) : response.data.last;
+
+                if (newFiles.length > 0) {
+                    this.files.push(...newFiles);
+                    this.page = nextPage;
+                }
+                
+                this.hasMore = !isLast;
+
+            } catch (error) {
+                console.error('Load more failed:', error);
+            } finally {
+                this.isFetchingMore = false;
+            }
+        },
+
+        async loadFolder(path) {
+            return this.loadInitialFolder(path);
+        },
+
         async toggleRecursiveView() {
             this.recursiveView = !this.recursiveView;
             if (this.lastFolderPath) {
-                await this.loadFolder(this.lastFolderPath);
+                await this.loadInitialFolder(this.lastFolderPath);
             }
         },
 
@@ -277,17 +406,7 @@ export const useBrowserStore = defineStore('browser', {
         },
 
         async loadMore() {
-            if (this.isFetchingMore || !this.hasMore) return;
-            this.isFetchingMore = true;
-            this.page++;
-            try {
-                await this.fetchPage();
-            } catch (error) {
-                console.error('Load more failed:', error);
-                this.page--;
-            } finally {
-                this.isFetchingMore = false;
-            }
+            await this.loadMoreImages();
         },
 
         async fetchPage() {
@@ -322,7 +441,7 @@ export const useBrowserStore = defineStore('browser', {
             const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.activeCollection;
 
             if (!isAnyFilterActive && this.lastFolderPath) {
-                this.loadFolder(this.lastFolderPath);
+                this.loadInitialFolder(this.lastFolderPath);
             } else {
                 this.search('');
             }
@@ -343,7 +462,7 @@ export const useBrowserStore = defineStore('browser', {
                 const isAnyFilterActive = this.selectedModel || this.selectedSampler || this.selectedLora || this.selectedRating || this.searchQuery || this.activeCollection;
 
                 if (!isAnyFilterActive && this.lastFolderPath) {
-                    this.loadFolder(this.lastFolderPath);
+                    this.loadInitialFolder(this.lastFolderPath);
                 } else {
                     this.search(this.searchQuery);
                 }
@@ -435,6 +554,26 @@ export const useBrowserStore = defineStore('browser', {
             }
         },
 
+        async updateMetadata(payload) {
+            if (!this.currentMetadata || !this.currentMetadata.id) {
+                console.error("Cannot update metadata: No image ID available.");
+                return;
+            }
+            
+            try {
+                await patchImageMetadata(this.currentMetadata.id, payload);
+                
+                if (payload.userNotes !== undefined) this.currentMetadata.user_notes = payload.userNotes;
+                if (payload.customPrompt !== undefined) this.currentMetadata.custom_prompt = payload.customPrompt;
+                if (payload.customNegativePrompt !== undefined) this.currentMetadata.custom_negative_prompt = payload.customNegativePrompt;
+                if (payload.customModel !== undefined) this.currentMetadata.custom_model = payload.customModel;
+                
+            } catch (error) {
+                console.error("Failed to update metadata:", error);
+                throw error;
+            }
+        },
+
         async setRating(rating) {
             if (!this.selectedFile) return;
             try {
@@ -488,6 +627,10 @@ export const useBrowserStore = defineStore('browser', {
             } else {
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= this.files.length) newIndex = this.files.length - 1;
+            }
+
+            if (direction === 1 && newIndex >= this.files.length - 5 && this.hasMore && !this.isFetchingMore) {
+                this.loadMoreImages();
             }
 
             this.selectFile(this.files[newIndex]);

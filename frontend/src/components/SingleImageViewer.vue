@@ -82,9 +82,12 @@ watch(mainImageUrl, (newUrl) => {
     }
   };
   img.src = newUrl;
-}, {immediate: true});
+});
 
-
+/**
+ * Handles mouse wheel events to perform cursor-relative zooming.
+ * Calculates the new scale and translation to keep the point under the cursor fixed.
+ */
 const onWheel = (e) => {
   e.preventDefault();
   if (!viewerContainer.value) return;

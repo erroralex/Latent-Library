@@ -2,11 +2,6 @@
  * @file api.js
  * @description Centralized Axios service for backend communication with integrated security and error handling.
  *
- * This module provides a pre-configured Axios instance for all frontend-to-backend API calls.
- * It implements a robust security layer by automatically attaching the handshake token
- * to all requests and provides a global error handling mechanism that translates
- * backend exceptions into user-friendly toast notifications.
- *
  * Key Responsibilities:
  * - **Security Integration:** Synchronously retrieves the handshake token from the Electron
  *   bridge and attaches it to the {@code Authorization} header of every outgoing request.
@@ -37,6 +32,10 @@ api.interceptors.request.use((config) => {
     if (handshakeToken) {
         config.headers['Authorization'] = `Bearer ${handshakeToken}`;
     }
+    if (config.params) {
+        if (config.params.page !== undefined) config.params.page = parseInt(config.params.page);
+        if (config.params.size !== undefined) config.params.size = parseInt(config.params.size);
+    }
     return config;
 });
 
@@ -64,5 +63,9 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+export const patchImageMetadata = (id, payload) => {
+    return api.patch(`/images/${id}/metadata`, payload);
+};
 
 export default api;

@@ -65,6 +65,8 @@ class UserDataManagerTest {
     private FileSystemService fileSystemService;
     @Mock
     private DHashService dHashService;
+    @Mock
+    private FtsService ftsService;
 
     private UserDataManager userDataManager;
 
@@ -73,7 +75,7 @@ class UserDataManagerTest {
         userDataManager = new UserDataManager(
                 db, settingsService, imageRepo, imageMetadataRepository, pinnedFolderRepository,
                 collectionService, imageMetadataService, tagService, pathService, searchRepository,
-                fileSystemService, dHashService, 64
+                fileSystemService, dHashService, ftsService, 64
         );
     }
 

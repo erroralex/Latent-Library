@@ -17,14 +17,16 @@
  *   allowing users to compare generation parameters before deciding which to keep.
  * - **Manual Resolution:** Allows users to selectively keep the left or right image
  *   using keyboard shortcuts (1/2) or UI buttons.
- * - **Automated Cleanup:** Features a "Resolve All" function that automatically keeps
- *   one copy of every duplicate set and moves the rest to the trash.
+ * - **Automated Cleanup:** Features a "Resolve Duplicates" function that allows users
+ *   to choose a resolution strategy (e.g., keep best resolution, largest file).
  * - **Hash Repair:** Includes a manual scan trigger to backfill missing hash data for
  *   images that haven't been fully indexed.
  */
 import {ref, onMounted, computed, onUnmounted} from 'vue';
 import api, {authenticatedUrl} from '@/services/api';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import Dropdown from 'primevue/dropdown';
 import {useToast} from 'primevue/usetoast';
 import {useConfirm} from 'primevue/useconfirm';
 import ImageSplitViewer from '@/components/ImageSplitViewer.vue';
@@ -38,6 +40,16 @@ const pairs = ref([]);
 const currentIndex = ref(0);
 const status = ref({missingHashes: 0, totalImages: 0});
 const isScanning = ref(false);
+const isResolving = ref(false);
+
+const showResolveDialog = ref(false);
+const selectedStrategy = ref('LATEST_SCANNED');
+const strategies = [
+  {label: 'Keep Latest (Most Recently Scanned)', value: 'LATEST_SCANNED'},
+  {label: 'Keep Oldest (First Scanned)', value: 'OLDEST_SCANNED'},
+  {label: 'Keep Best Resolution (Highest Pixel Count)', value: 'BEST_RESOLUTION'},
+  {label: 'Keep Largest Filesize', value: 'LARGEST_FILESIZE'}
+];
 
 const currentPair = computed(() => pairs.value[currentIndex.value] || null);
 const leftImage = computed(() => currentPair.value ? authenticatedUrl(`/api/images/content?path=${encodeURIComponent(currentPair.value.left.path)}`) : null);
@@ -118,27 +130,25 @@ const skip = () => {
   splitViewerRef.value?.resetZoom();
 };
 
-const resolveAll = () => {
-  confirm.require({
-    message: 'Are you sure you want to delete all duplicates? This will keep one copy and delete the rest.',
-    header: 'Resolve All Duplicates',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        const res = await api.post('/duplicates/resolve-all');
-        toast.add({severity: 'success', summary: 'Resolved', detail: res.data, life: 3000});
-        await loadPairs();
-      } catch (e) {
-        console.error("Failed to resolve all duplicates", e);
-        toast.add({severity: 'error', summary: 'Error', detail: 'Failed to resolve all duplicates', life: 3000});
-      }
-    }
-  });
+const resolveDuplicates = async () => {
+  isResolving.value = true;
+  try {
+    const res = await api.post('/duplicates/resolve-all', null, {
+      params: { strategy: selectedStrategy.value }
+    });
+    toast.add({severity: 'success', summary: 'Resolved', detail: res.data, life: 3000});
+    showResolveDialog.value = false;
+    await loadPairs();
+  } catch (e) {
+    console.error("Failed to resolve duplicates", e);
+    toast.add({severity: 'error', summary: 'Error', detail: 'Failed to resolve duplicates', life: 3000});
+  } finally {
+    isResolving.value = false;
+  }
 };
 
 const handleKeydown = (e) => {
-  if (e.target.tagName === 'INPUT') return;
+  if (e.target.tagName === 'INPUT' || showResolveDialog.value) return;
   switch (e.key) {
     case '1':
       keepLeft();
@@ -185,8 +195,8 @@ onUnmounted(() => {
         <Button label="Scan for Duplicates" icon="pi pi-search"
                 class="p-button-secondary p-button-outlined"
                 @click="scanHashes" :loading="isScanning"/>
-        <Button label="Resolve All (Auto)" icon="pi pi-trash" class="p-button-danger p-button-outlined"
-                @click="resolveAll" :disabled="pairs.length === 0"/>
+        <Button label="Resolve Duplicates" icon="pi pi-trash" class="p-button-danger p-button-outlined"
+                @click="showResolveDialog = true" :disabled="pairs.length === 0"/>
       </div>
     </div>
 
@@ -228,6 +238,35 @@ onUnmounted(() => {
         </p>
       </div>
     </div>
+
+    <!-- Resolve Strategy Dialog -->
+    <Dialog v-model:visible="showResolveDialog" header="Resolve Duplicates" :modal="true" :style="{width: '450px'}" class="resolve-dialog">
+        <div class="flex flex-column gap-4 py-3">
+            <div class="text-gray-300">
+                Choose a strategy to automatically resolve all detected duplicates.
+                The system will keep one image per group based on your selection and move the rest to the trash.
+            </div>
+
+            <div class="flex flex-column gap-2">
+                <label class="font-bold text-sm text-primary">Resolution Strategy</label>
+                <Dropdown v-model="selectedStrategy" :options="strategies" optionLabel="label" optionValue="value" class="w-full" />
+            </div>
+
+            <div class="p-3 bg-red-900-alpha-20 border-round border-1 border-red-900">
+                <div class="flex align-items-center gap-2 text-red-400 font-bold mb-1">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span>Warning</span>
+                </div>
+                <div class="text-xs text-red-200">
+                    This action will move files to your system trash. This process cannot be easily undone from within the application.
+                </div>
+            </div>
+        </div>
+        <template #footer>
+            <Button label="Cancel" icon="pi pi-times" @click="showResolveDialog = false" class="p-button-text" />
+            <Button label="Resolve All" icon="pi pi-trash" @click="resolveDuplicates" class="p-button-danger" :loading="isResolving" />
+        </template>
+    </Dialog>
   </div>
 </template>
 
@@ -241,5 +280,22 @@ onUnmounted(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+:deep(.resolve-dialog) {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: var(--shadow-panel) !important;
+}
+
+:deep(.resolve-dialog .p-dialog-header),
+:deep(.resolve-dialog .p-dialog-content),
+:deep(.resolve-dialog .p-dialog-footer) {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.bg-red-900-alpha-20 {
+    background: rgba(127, 29, 29, 0.2);
 }
 </style>

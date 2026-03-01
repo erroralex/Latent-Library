@@ -3,11 +3,12 @@
  * @file FilmstripView.vue
  * @description A horizontal, carousel-style navigation component that displays a "filmstrip" of image thumbnails.
  *
- * This component is designed to provide quick visual context and navigation within the current image set.
- * It features a dynamic centering mechanism that automatically scrolls the selected image into the center
- * of the view using CSS transforms.
+ * This component is optimized for performance by rendering only a slice of the total image set
+ * around the currently selected item (windowing). This prevents DOM bloat and network saturation
+ * when browsing large libraries.
  *
  * Key functionalities:
+ * - **Capped Render Slice:** Only renders ±VISIBLE_BUFFER items around the selection to maintain performance.
  * - **Reactive Centering:** Calculates the exact {@code translateX} offset needed to center the selected item within the container.
  * - **Smooth Transitions:** Uses CSS transitions for fluid movement when the selection changes.
  * - **Responsive Design:** Utilizes {@code ResizeObserver} to adapt centering logic to container size changes.
@@ -15,42 +16,77 @@
  * - **Authenticated Media:** Uses the {@code authenticatedUrl} helper to ensure thumbnails are loaded with the required security token.
  */
 import {useBrowserStore} from '@/stores/browser';
-import {ref, computed, onMounted, onUnmounted} from 'vue';
+import {ref, computed, onMounted, onUnmounted, watch} from 'vue';
 import {authenticatedUrl} from '@/services/api';
 
 const store = useBrowserStore();
 const containerRef = ref(null);
 const containerWidth = ref(0);
 
+const VISIBLE_BUFFER = 20;
+const DEFAULT_SLICE_SIZE = 40;
+
 const ITEM_WIDTH = 120;
 const ITEM_GAP = 8;
 const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_GAP;
 
-const carouselOffset = computed(() => {
-  if (!store.selectedFile || containerWidth.value === 0) {
-    return 0;
-  }
+/**
+ * Computes a slice of store.files centered around the selected index.
+ * This limits the number of <img> elements and network requests.
+ */
+const visibleFiles = computed(() => {
+  if (!store.files || store.files.length === 0) return [];
 
   const selectedIndex = store.files.findIndex(f => f.path === store.selectedFile);
+
   if (selectedIndex === -1) {
+    return store.files.slice(0, DEFAULT_SLICE_SIZE);
+  }
+
+  const start = Math.max(0, selectedIndex - VISIBLE_BUFFER);
+  const end = Math.min(store.files.length, selectedIndex + VISIBLE_BUFFER + 1);
+
+  return store.files.slice(start, end);
+});
+
+/**
+ * Calculates the translateX offset to center the selected item within the filmstrip.
+ * The calculation is relative to the visibleFiles slice.
+ */
+const carouselOffset = computed(() => {
+  if (!store.selectedFile || containerWidth.value === 0 || visibleFiles.value.length === 0) {
     return 0;
   }
 
-  const selectedItemCenter = (selectedIndex * TOTAL_ITEM_WIDTH) + (TOTAL_ITEM_WIDTH / 2);
+  const sliceIndex = visibleFiles.value.findIndex(f => f.path === store.selectedFile);
+  if (sliceIndex === -1) {
+    return 0;
+  }
+
+  const selectedItemCenter = (sliceIndex * TOTAL_ITEM_WIDTH) + (TOTAL_ITEM_WIDTH / 2);
   const containerCenter = containerWidth.value / 2;
 
   return containerCenter - selectedItemCenter;
+});
+
+watch(() => store.files.length, () => {
+  if (containerRef.value) {
+    containerWidth.value = containerRef.value.clientWidth;
+  }
 });
 
 let resizeObserver;
 onMounted(() => {
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(entries => {
-      if (entries[0]) {
-        containerWidth.value = entries[0].contentRect.width;
-      }
+      window.requestAnimationFrame(() => {
+        if (entries[0]) {
+          containerWidth.value = entries[0].contentRect.width;
+        }
+      });
     });
     resizeObserver.observe(containerRef.value);
+    containerWidth.value = containerRef.value.clientWidth;
   }
 });
 
@@ -68,7 +104,7 @@ onUnmounted(() => {
         class="flex flex-nowrap gap-2 px-2 transition-transform duration-500 ease-in-out"
         :style="{ transform: `translateX(${carouselOffset}px)` }"
     >
-      <div v-for="file in store.files" :key="file.path"
+      <div v-for="file in visibleFiles" :key="file.path"
            class="filmstrip-item flex-shrink-0 cursor-pointer border-round"
            :class="{ 'selected-item': store.selectedFile === file.path }"
            @click="store.selectFile(file)">

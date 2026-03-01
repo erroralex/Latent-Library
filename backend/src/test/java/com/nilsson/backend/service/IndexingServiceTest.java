@@ -53,13 +53,15 @@ class IndexingServiceTest {
     private ThumbnailService thumbnailService;
     @Mock
     private DHashService dHashService;
+    @Mock
+    private IndexingStatusTracker statusTracker;
 
     private IndexingService indexingService;
 
     @BeforeEach
     void setUp() {
         indexingService = new IndexingService(
-                imageRepo, metaService, dataManager, pathService, thumbnailService, dHashService,
+                imageRepo, metaService, dataManager, pathService, thumbnailService, dHashService, statusTracker,
                 20, 500, 5000, 10
         );
     }
@@ -74,7 +76,7 @@ class IndexingServiceTest {
 
         CountDownLatch latch = new CountDownLatch(1);
 
-        indexingService.startIndexing(List.of(imageFile), (batchResult) -> {
+        indexingService.startIndexing(List.of(imageFile), 1L, (batchResult) -> {
             latch.countDown();
         });
 
@@ -143,14 +145,14 @@ class IndexingServiceTest {
             files.add(new File("dummy_" + i + ".png"));
         }
 
-        when(metaService.getExtractedData(any())).thenAnswer(inv -> {
+        lenient().when(metaService.getExtractedData(any())).thenAnswer(inv -> {
             Thread.sleep(50);
             return Map.of();
         });
 
         CountDownLatch latch = new CountDownLatch(1);
 
-        indexingService.startIndexing(files, (res) -> latch.countDown());
+        indexingService.startIndexing(files, 1L, (res) -> latch.countDown());
 
         Thread.sleep(100);
 

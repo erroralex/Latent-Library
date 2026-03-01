@@ -3,15 +3,16 @@ package com.nilsson.backend.controller;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
+import com.nilsson.backend.service.IndexingStatusTracker;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.util.List;
@@ -34,6 +35,9 @@ import java.util.List;
  *   upon successful scan.</li>
  *   <li><b>Optimized DTO Mapping:</b> Returns a sorted list of {@link ImageDTO} objects for the scanned
  *   folder, using a high-performance bulk fetch to retrieve ratings and model information.</li>
+ *   <li><b>Pagination:</b> Supports paginated retrieval of folder contents to enable infinite scrolling
+ *   on the frontend.</li>
+ *   <li><b>Progress Monitoring:</b> Exposes the current status of background indexing jobs.</li>
  * </ul>
  */
 @RestController
@@ -44,18 +48,36 @@ public class LibraryController {
     private final IndexingService indexingService;
     private final UserDataManager userDataManager;
     private final PathService pathService;
+    private final IndexingStatusTracker statusTracker;
 
-    public LibraryController(IndexingService indexingService, UserDataManager userDataManager, PathService pathService) {
+    public LibraryController(IndexingService indexingService, UserDataManager userDataManager, PathService pathService, IndexingStatusTracker statusTracker) {
         this.indexingService = indexingService;
         this.userDataManager = userDataManager;
         this.pathService = pathService;
+        this.statusTracker = statusTracker;
     }
 
+    /**
+     * Scans a folder and returns a paginated list of images.
+     * <p>
+     * This endpoint performs two distinct actions:
+     * 1. Triggers an asynchronous background index of the folder (unless skipIndex is true).
+     * 2. Returns the first page (or requested page) of images currently known in the database for that folder.
+     *
+     * @param path       The absolute path of the folder to scan.
+     * @param recursive  Whether to include subfolders in the scan and result set.
+     * @param skipIndex  If true, skips the background indexing step (useful for pure navigation).
+     * @param page       The zero-based page index (default: 0).
+     * @param size       The size of the page to return (default: 100).
+     * @return A {@link ResponseEntity} containing a {@link Page} of {@link ImageDTO}s.
+     */
     @PostMapping("/scan")
-    public ResponseEntity<List<ImageDTO>> scanFolder(
+    public ResponseEntity<Page<ImageDTO>> scanFolder(
             @RequestParam String path,
             @RequestParam(defaultValue = "false") boolean recursive,
-            @RequestParam(defaultValue = "false") boolean skipIndex) {
+            @RequestParam(defaultValue = "false") boolean skipIndex,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
         
         File folder = pathService.resolve(path);
         if (!folder.exists() || !folder.isDirectory()) {
@@ -76,9 +98,19 @@ public class LibraryController {
             }
         }
 
-        List<File> files = indexingService.getImagesInFolder(folder, recursive, userDataManager.getExcludedPaths());
-        List<ImageDTO> imageDTOs = userDataManager.getBulkImageDTOs(files);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ImageDTO> imagePage = userDataManager.getImagesInFolderPaginated(folder, recursive, pageable);
 
-        return ResponseEntity.ok(imageDTOs);
+        return ResponseEntity.ok(imagePage);
+    }
+
+    /**
+     * Retrieves the real-time status of the current background indexing operation.
+     *
+     * @return A {@link IndexingStatusTracker.IndexingStatus} DTO containing progress metrics.
+     */
+    @GetMapping("/indexing-status")
+    public ResponseEntity<IndexingStatusTracker.IndexingStatus> getIndexingStatus() {
+        return ResponseEntity.ok(statusTracker.getStatus());
     }
 }

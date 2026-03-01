@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Service for identifying and resolving duplicate images using SHA-256 and dHash.
+ */
 @Service
 public class DuplicateService {
 
@@ -72,7 +75,6 @@ public class DuplicateService {
 
         AtomicInteger successCount = new AtomicInteger(0);
 
-        // Use virtual threads for I/O intensive hash calculation
         try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
             for (String path : paths) {
                 executor.submit(() -> {
@@ -103,8 +105,6 @@ public class DuplicateService {
         log.info("Starting duplicate analysis...");
         List<DuplicatePair> pairs = new ArrayList<>();
 
-        // 1. Exact Duplicates (SHA-256) - Optimized via SQL
-        log.info("Fetching exact duplicates...");
         List<ImageRecord> exactDuplicates = jdbcClient.sql("""
                     SELECT id, file_path, dhash, file_hash 
                     FROM images 
@@ -131,8 +131,6 @@ public class DuplicateService {
             }
         }
 
-        // 2. Visual Duplicates (dHash) - Optimized via BK-Tree
-        log.info("Fetching images for visual duplicate analysis...");
         List<ImageRecord> allImages = jdbcClient.sql("""
                     SELECT id, file_path, dhash, file_hash 
                     FROM images 
@@ -143,7 +141,6 @@ public class DuplicateService {
 
         if (allImages.isEmpty()) return pairs;
 
-        log.info("Building BK-Tree for {} images...", allImages.size());
         BKTree bkTree = new BKTree();
         for (ImageRecord img : allImages) {
             if (img.dhash() != null) {
@@ -151,18 +148,15 @@ public class DuplicateService {
             }
         }
 
-        log.info("Querying BK-Tree...");
-        
         for (ImageRecord img : allImages) {
             if (img.dhash() == null) continue;
             
             List<ImageRecord> matches = bkTree.search(img, hammingThreshold);
             for (ImageRecord match : matches) {
-                if (img.id() < match.id()) { // Enforce order to avoid duplicates
-                    // Check if we already have this pair from exact duplicates
+                if (img.id() < match.id()) {
                     if (img.file_hash() != null && match.file_hash() != null && 
                         img.file_hash().equals(match.file_hash())) {
-                        continue; // Already handled
+                        continue;
                     }
                     
                     addPair(pairs, img, match);
@@ -171,7 +165,6 @@ public class DuplicateService {
             }
         }
 
-        log.info("Found {} duplicate pairs.", pairs.size());
         return pairs;
     }
 
@@ -205,44 +198,44 @@ public class DuplicateService {
         }
     }
 
-    public String autoResolveDuplicates() {
-        int exactCount = resolveByField("file_hash");
-        int visualCount = resolveByField("dhash");
+    public String autoResolveDuplicates(String strategy) {
+        int exactCount = resolveByField("file_hash", strategy);
+        int visualCount = resolveByField("dhash", strategy);
         return "Resolved " + (exactCount + visualCount) + " duplicates.";
     }
 
-    private int resolveByField(String field) {
-        // Validate field name to prevent SQL injection
+    private int resolveByField(String field, String strategy) {
         if (!"file_hash".equals(field) && !"dhash".equals(field)) {
             throw new IllegalArgumentException("Invalid field for duplicate resolution: " + field);
         }
 
         String sql = String.format("""
-                    SELECT file_path, %s as hash, last_scanned 
-                    FROM images 
-                    WHERE %s IN (
+                    SELECT i.id, i.file_path, i.%s as hash, i.last_scanned, 
+                           (SELECT value FROM image_metadata WHERE image_id = i.id AND key = 'Resolution' LIMIT 1) as resolution,
+                           (SELECT value FROM image_metadata WHERE image_id = i.id AND key = 'FileSize' LIMIT 1) as filesize
+                    FROM images i
+                    WHERE i.%s IN (
                         SELECT %s FROM images 
                         WHERE %s IS NOT NULL AND %s != 0 AND %s != ''
                         GROUP BY %s HAVING COUNT(*) > 1
                     )
-                    ORDER BY %s, last_scanned DESC
-                """, field, field, field, field, field, field, field, field);
+                """, field, field, field, field, field, field, field);
 
         List<Map<String, Object>> rows = jdbcClient.sql(sql).query().listOfRows();
 
-        Map<Object, List<String>> groups = rows.stream()
-                .collect(Collectors.groupingBy(
-                        row -> row.get("hash"),
-                        Collectors.mapping(row -> (String) row.get("file_path"), Collectors.toList())
-                ));
+        Map<Object, List<Map<String, Object>>> groups = rows.stream()
+                .collect(Collectors.groupingBy(row -> row.get("hash")));
 
         List<String> pathsToDelete = new ArrayList<>();
 
-        for (List<String> group : groups.values()) {
+        for (List<Map<String, Object>> group : groups.values()) {
             if (group.size() < 2) continue;
-            // Keep the first one (most recently scanned due to ORDER BY DESC), delete the rest
-            for (int i = 1; i < group.size(); i++) {
-                pathsToDelete.add(group.get(i));
+
+            Map<String, Object> survivor = selectSurvivor(group, strategy);
+            for (Map<String, Object> row : group) {
+                if (row != survivor) {
+                    pathsToDelete.add((String) row.get("file_path"));
+                }
             }
         }
 
@@ -250,14 +243,49 @@ public class DuplicateService {
         return pathsToDelete.size();
     }
 
-    // Internal Records and Classes
+    private Map<String, Object> selectSurvivor(List<Map<String, Object>> group, String strategy) {
+        return switch (strategy) {
+            case "OLDEST_SCANNED" -> group.stream()
+                    .min(java.util.Comparator.comparing(r -> (Long) r.get("last_scanned")))
+                    .orElse(group.get(0));
+            case "BEST_RESOLUTION" -> group.stream()
+                    .max(java.util.Comparator.comparing(r -> parseResolution((String) r.get("resolution"))))
+                    .orElse(group.get(0));
+            case "LARGEST_FILESIZE" -> group.stream()
+                    .max(java.util.Comparator.comparing(r -> parseFileSize((String) r.get("filesize"))))
+                    .orElse(group.get(0));
+            default -> group.stream() // LATEST_SCANNED (Default)
+                    .max(java.util.Comparator.comparing(r -> (Long) r.get("last_scanned")))
+                    .orElse(group.get(0));
+        };
+    }
+
+    private long parseResolution(String res) {
+        if (res == null || !res.contains("x")) return 0;
+        try {
+            String[] parts = res.split("x");
+            return Long.parseLong(parts[0].trim()) * Long.parseLong(parts[1].trim());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private long parseFileSize(String size) {
+        if (size == null) return 0;
+        try {
+            String clean = size.toUpperCase().replace(" ", "");
+            if (clean.endsWith("MB")) return (long) (Double.parseDouble(clean.replace("MB", "")) * 1024 * 1024);
+            if (clean.endsWith("KB")) return (long) (Double.parseDouble(clean.replace("KB", "")) * 1024);
+            if (clean.endsWith("B")) return Long.parseLong(clean.replace("B", ""));
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 
     record ImageRecord(int id, String file_path, Long dhash, String file_hash) {
     }
 
-    /**
-     * Burkhard-Keller Tree implementation for efficient Hamming distance searches.
-     */
     private class BKTree {
         private Node root;
 

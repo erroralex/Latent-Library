@@ -4,6 +4,7 @@ import com.nilsson.backend.exception.ImageProcessingException;
 import com.nilsson.backend.exception.ResourceNotFoundException;
 import com.nilsson.backend.exception.ValidationException;
 import com.nilsson.backend.model.ImageDTO;
+import com.nilsson.backend.model.UpdateMetadataRequest;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.ThumbnailService;
 import com.nilsson.backend.service.UserDataManager;
@@ -31,16 +32,18 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * This controller provides the primary API for interacting with individual images within the library.
  * It handles complex search queries with multiple filters, retrieves detailed metadata (including
- * AI-generated tags), manages user ratings, and facilitates file operations like renaming and
- * batch deletion. Additionally, it serves both full-resolution image content and optimized
- * thumbnails with appropriate cache control headers.
+ * AI-generated tags and user-defined overrides), manages user ratings, and facilitates file
+ * operations like renaming and batch deletion. Additionally, it serves both full-resolution
+ * image content and optimized thumbnails with appropriate cache control headers.
  * <p>
  * Key Responsibilities:
  * <ul>
  *   <li><b>Advanced Search:</b> Executes filtered searches across the image library, supporting
  *   pagination and multi-criteria filtering (model, sampler, lora, rating, etc.).</li>
- *   <li><b>Metadata Retrieval:</b> Aggregates cached metadata and AI tags for a specific image path.</li>
- *   <li><b>User Interactions:</b> Provides endpoints for updating image ratings and renaming files.</li>
+ *   <li><b>Metadata Retrieval:</b> Aggregates cached metadata, AI tags, and user-defined
+ *   notes/overrides for a specific image path.</li>
+ *   <li><b>User Interactions:</b> Provides endpoints for updating image ratings, renaming files,
+ *   and modifying custom metadata fields.</li>
  *   <li><b>Batch Operations:</b> Supports the deletion of multiple images in a single request.</li>
  *   <li><b>Content Serving:</b> Streams image files and thumbnails to the client, implementing
  *   aggressive caching for performance.</li>
@@ -111,15 +114,28 @@ public class ImageController {
         Map<String, Object> response = new HashMap<>(meta);
         response.put("rating", rating);
 
-        String aiTags = jdbcClient.sql("SELECT ai_tags FROM images WHERE file_path = ?")
+        Map<String, Object> customData = jdbcClient.sql("SELECT id, ai_tags, user_notes, custom_prompt, custom_negative_prompt, custom_model FROM images WHERE file_path = ?")
                 .param(pathService.getNormalizedAbsolutePath(file))
-                .query(String.class)
-                .optional()
-                .orElse("");
+                .query((rs, rowNum) -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", rs.getInt("id"));
+                    map.put("ai_tags", rs.getString("ai_tags") != null ? rs.getString("ai_tags") : "");
+                    map.put("user_notes", rs.getString("user_notes") != null ? rs.getString("user_notes") : "");
+                    map.put("custom_prompt", rs.getString("custom_prompt") != null ? rs.getString("custom_prompt") : "");
+                    map.put("custom_negative_prompt", rs.getString("custom_negative_prompt") != null ? rs.getString("custom_negative_prompt") : "");
+                    map.put("custom_model", rs.getString("custom_model") != null ? rs.getString("custom_model") : "");
+                    return map;
+                }).optional().orElse(Map.of());
 
-        response.put("ai_tags", aiTags);
+        response.putAll(customData);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/metadata")
+    public ResponseEntity<Void> updateMetadata(@PathVariable int id, @RequestBody UpdateMetadataRequest request) {
+        dataManager.updateCustomMetadata(id, request);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/rating")
