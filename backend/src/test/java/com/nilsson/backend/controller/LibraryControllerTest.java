@@ -2,6 +2,7 @@ package com.nilsson.backend.controller;
 
 import com.nilsson.backend.model.ImageDTO;
 import com.nilsson.backend.service.IndexingService;
+import com.nilsson.backend.service.IndexingStatusTracker;
 import com.nilsson.backend.service.PathService;
 import com.nilsson.backend.service.UserDataManager;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -54,6 +57,9 @@ class LibraryControllerTest {
     private UserDataManager userDataManager;
 
     @MockBean
+    private IndexingStatusTracker indexingStatusTracker;
+
+    @MockBean
     private DataSource dataSource;
 
     @Test
@@ -61,13 +67,15 @@ class LibraryControllerTest {
     void scanFolder_ShouldTriggerIndexingAndReturnDTOs() throws Exception {
         String path = System.getProperty("java.io.tmpdir");
         when(pathService.resolve(any())).thenReturn(new File(path));
-        when(userDataManager.getBulkImageDTOs(any())).thenReturn(Collections.singletonList(new ImageDTO("test.png", 0, "")));
+        
+        when(userDataManager.getImagesInFolderPaginated(any(), eq(false), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.singletonList(new ImageDTO("test.png", 0, ""))));
 
         mockMvc.perform(post("/api/library/scan")
                         .param("path", path))
                 .andExpect(status().isOk());
 
         verify(indexingService).indexFolder(any(File.class), eq(false));
-        verify(userDataManager).getBulkImageDTOs(any());
+        verify(userDataManager).getImagesInFolderPaginated(any(File.class), eq(false), any(Pageable.class));
     }
 }

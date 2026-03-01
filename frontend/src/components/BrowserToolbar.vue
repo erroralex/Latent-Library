@@ -20,6 +20,7 @@
  *   Pinia store to ensure consistent results across the application.
  * - **Hot Folder Controls:** Provides toggles for recursive subfolder scanning and
  *   the "Auto-Show Latest" mode for real-time generation monitoring.
+ * - **Live Indexing Status:** Displays real-time progress of background indexing operations.
  */
 import {useBrowserStore} from '@/stores/browser';
 import Toolbar from 'primevue/toolbar';
@@ -30,6 +31,7 @@ import Chip from 'primevue/chip';
 import InputSwitch from 'primevue/inputswitch';
 import Dropdown from 'primevue/dropdown';
 import {useConfirm} from 'primevue/useconfirm';
+import {onUnmounted} from 'vue';
 
 const store = useBrowserStore();
 const confirm = useConfirm();
@@ -81,6 +83,10 @@ const toggleRecursive = () => {
     }
 };
 
+onUnmounted(() => {
+    store.stopIndexingPoll();
+});
+
 </script>
 
 <template>
@@ -97,129 +103,146 @@ const toggleRecursive = () => {
     </template>
 
     <template #center>
-      <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
-        <div v-if="store.viewMode === 'gallery'" class="flex gap-3 align-items-center mr-3">
-          <i class="pi pi-search-plus text-xl text-500"></i>
-          <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem"/>
-        </div>
+      <div class="flex flex-column align-items-center w-full">
+          <!-- Breadcrumb Display -->
+          <div v-if="store.formattedBreadcrumb" class="text-xs text-gray-400 mb-1 font-mono select-none">
+              {{ store.formattedBreadcrumb }}
+          </div>
 
-        <div class="flex gap-1 mr-2 align-items-center">
-          <div class="flex align-items-center gap-1 mr-2 border-right-1 border-white-alpha-10 pr-2" v-if="store.lastFolderPath">
-              <Button icon="pi pi-sitemap"
+          <div class="flex gap-2 align-items-center flex-wrap justify-content-center">
+            <div v-if="store.viewMode === 'gallery'" class="flex gap-3 align-items-center mr-3">
+              <i class="pi pi-search-plus text-xl text-500"></i>
+              <Slider v-model="store.cardSize" :min="100" :max="400" class="w-8rem"/>
+            </div>
+
+            <div class="flex gap-1 mr-2 align-items-center">
+              <div class="flex align-items-center gap-1 mr-2 border-right-1 border-white-alpha-10 pr-2" v-if="store.lastFolderPath">
+                  <Button icon="pi pi-sitemap"
+                          class="p-button-sm nav-btn"
+                          :class="{ 'active-nav-btn': store.recursiveView }"
+                          v-tooltip.bottom="'Include Subfolders'"
+                          @click="toggleRecursive"/>
+                  <Button icon="pi pi-bolt"
+                          class="p-button-sm nav-btn"
+                          :class="{ 'active-nav-btn': store.autoShowLatest }"
+                          v-tooltip.bottom="'Auto-Show Latest Image'"
+                          @click="store.toggleAutoShowLatest()"/>
+              </div>
+
+              <Button icon="pi pi-th-large"
                       class="p-button-sm nav-btn"
-                      :class="{ 'active-nav-btn': store.recursiveView }"
-                      v-tooltip.bottom="'Include Subfolders'"
-                      @click="toggleRecursive"/>
-              <Button icon="pi pi-bolt"
+                      :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"
+                      @click="store.setViewMode('gallery')"
+                      v-tooltip.bottom="'Gallery View'"/>
+              <Button icon="pi pi-image"
                       class="p-button-sm nav-btn"
-                      :class="{ 'active-nav-btn': store.autoShowLatest }"
-                      v-tooltip.bottom="'Auto-Show Latest Image'"
-                      @click="store.toggleAutoShowLatest()"/>
+                      :class="{ 'active-nav-btn': store.viewMode === 'browser' }"
+                      @click="store.setViewMode('browser')"
+                      v-tooltip.bottom="'Browser View'"/>
+            </div>
+
+            <div class="flex align-items-center gap-2 mr-2">
+              <Chip v-if="store.activeCollection"
+                    :label="store.activeCollection"
+                    icon="pi pi-folder"
+                    removable @remove="clearCollection"
+                    class="collection-chip text-xs"/>
+
+              <span class="p-input-icon-left p-input-icon-right">
+                  <i class="pi pi-search"/>
+                  <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input"
+                             @keyup.enter="onSearch"/>
+                  <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
+              </span>
+
+              <div class="flex align-items-center gap-2 ml-2" v-tooltip.bottom="'Include AI Tags in Search'">
+                <InputSwitch v-model="store.includeAiTags" @change="toggleAiTags" class="ai-tags-toggle" />
+                <label class="text-xs font-bold uppercase tracking-wider select-none"
+                       :class="store.includeAiTags ? 'text-primary' : 'text-gray-500'">AI Tags</label>
+              </div>
+            </div>
+
+            <div class="flex gap-2 align-items-center">
+
+              <div class="flex align-items-center">
+                <Dropdown :options="store.availableModels" v-model="store.selectedModel"
+                          placeholder="Model" class="p-button-sm"
+                          :showClear="isFilterActive(store.selectedModel)"
+                          @change="store.setFilter('model', $event.value)"
+                          :scrollHeight="'40vh'"
+                          @before-show="refreshFilters"
+                          v-tooltip.bottom="'Filter by Model'"/>
+              </div>
+
+              <div class="flex align-items-center">
+                <Dropdown :options="store.availableSamplers" v-model="store.selectedSampler"
+                          placeholder="Sampler" class="p-button-sm"
+                          :showClear="isFilterActive(store.selectedSampler)"
+                          @change="store.setFilter('sampler', $event.value)"
+                          :scrollHeight="'40vh'"
+                          @before-show="refreshFilters"
+                          v-tooltip.bottom="'Filter by Sampler'"/>
+              </div>
+
+              <div class="flex align-items-center">
+                <Dropdown :options="store.availableLoras" v-model="store.selectedLora"
+                          placeholder="LoRA" class="p-button-sm"
+                          :showClear="isFilterActive(store.selectedLora)"
+                          @change="store.setFilter('lora', $event.value)"
+                          :scrollHeight="'40vh'"
+                          @before-show="refreshFilters"
+                          v-tooltip.bottom="'Filter by LoRA'"/>
+              </div>
+
+              <div class="flex align-items-center">
+                <Dropdown v-model="store.selectedRating"
+                          :options="['Any Star Count', '1', '2', '3', '4', '5']"
+                          placeholder="Stars" class="p-button-sm"
+                          :showClear="isFilterActive(store.selectedRating)"
+                          @change="store.setFilter('rating', $event.value)"
+                          :scrollHeight="'40vh'"
+                          v-tooltip.bottom="'Filter by Rating'">
+                  <template #option="slotProps">
+                    <div v-if="slotProps.option === 'Any Star Count'" class="flex align-items-center">
+                      <span>Any Star Count</span>
+                    </div>
+                    <div v-else class="flex">
+                      <i v-for="i in 5" :key="i"
+                         class="pi text-sm mr-1"
+                         :class="i <= parseInt(slotProps.option) ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
+                    </div>
+                  </template>
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value === 'Any Star Count'" class="flex align-items-center">
+                      <span>Starred</span>
+                    </div>
+                    <div v-else-if="slotProps.value" class="flex align-items-center gap-1">
+                      <span>{{ slotProps.value }}</span>
+                      <i class="pi pi-star-fill text-yellow-500 text-xs"></i>
+                    </div>
+                    <span v-else>
+                      {{ slotProps.placeholder }}
+                    </span>
+                  </template>
+                </Dropdown>
+              </div>
+            </div>
           </div>
-
-          <Button icon="pi pi-th-large"
-                  class="p-button-sm nav-btn"
-                  :class="{ 'active-nav-btn': store.viewMode === 'gallery' }"
-                  @click="store.setViewMode('gallery')"
-                  v-tooltip.bottom="'Gallery View'"/>
-          <Button icon="pi pi-image"
-                  class="p-button-sm nav-btn"
-                  :class="{ 'active-nav-btn': store.viewMode === 'browser' }"
-                  @click="store.setViewMode('browser')"
-                  v-tooltip.bottom="'Browser View'"/>
-        </div>
-
-        <div class="flex align-items-center gap-2 mr-2">
-          <Chip v-if="store.activeCollection"
-                :label="store.activeCollection"
-                icon="pi pi-folder"
-                removable @remove="clearCollection"
-                class="collection-chip text-xs"/>
-
-          <span class="p-input-icon-left p-input-icon-right">
-              <i class="pi pi-search"/>
-              <InputText v-model="store.searchQuery" placeholder="Search..." class="p-inputtext-sm w-15rem glass-input"
-                         @keyup.enter="onSearch"/>
-              <i v-if="store.searchQuery" class="pi pi-times cursor-pointer" @click="store.clearSearch()"/>
-          </span>
-
-          <div class="flex align-items-center gap-2 ml-2" v-tooltip.bottom="'Include AI Tags in Search'">
-            <InputSwitch v-model="store.includeAiTags" @change="toggleAiTags" class="ai-tags-toggle" />
-            <label class="text-xs font-bold uppercase tracking-wider select-none"
-                   :class="store.includeAiTags ? 'text-primary' : 'text-gray-500'">AI Tags</label>
-          </div>
-        </div>
-
-        <div class="flex gap-2 align-items-center">
-
-          <div class="flex align-items-center">
-            <Dropdown :options="store.availableModels" v-model="store.selectedModel"
-                      placeholder="Model" class="p-button-sm"
-                      :showClear="isFilterActive(store.selectedModel)"
-                      @change="store.setFilter('model', $event.value)"
-                      :scrollHeight="'40vh'"
-                      @before-show="refreshFilters"
-                      v-tooltip.bottom="'Filter by Model'"/>
-          </div>
-
-          <div class="flex align-items-center">
-            <Dropdown :options="store.availableSamplers" v-model="store.selectedSampler"
-                      placeholder="Sampler" class="p-button-sm"
-                      :showClear="isFilterActive(store.selectedSampler)"
-                      @change="store.setFilter('sampler', $event.value)"
-                      :scrollHeight="'40vh'"
-                      @before-show="refreshFilters"
-                      v-tooltip.bottom="'Filter by Sampler'"/>
-          </div>
-
-          <div class="flex align-items-center">
-            <Dropdown :options="store.availableLoras" v-model="store.selectedLora"
-                      placeholder="LoRA" class="p-button-sm"
-                      :showClear="isFilterActive(store.selectedLora)"
-                      @change="store.setFilter('lora', $event.value)"
-                      :scrollHeight="'40vh'"
-                      @before-show="refreshFilters"
-                      v-tooltip.bottom="'Filter by LoRA'"/>
-          </div>
-
-          <div class="flex align-items-center">
-            <Dropdown v-model="store.selectedRating"
-                      :options="['Any Star Count', '1', '2', '3', '4', '5']"
-                      placeholder="Stars" class="p-button-sm"
-                      :showClear="isFilterActive(store.selectedRating)"
-                      @change="store.setFilter('rating', $event.value)"
-                      :scrollHeight="'40vh'"
-                      v-tooltip.bottom="'Filter by Rating'">
-              <template #option="slotProps">
-                <div v-if="slotProps.option === 'Any Star Count'" class="flex align-items-center">
-                  <span>Any Star Count</span>
-                </div>
-                <div v-else class="flex">
-                  <i v-for="i in 5" :key="i"
-                     class="pi text-sm mr-1"
-                     :class="i <= parseInt(slotProps.option) ? 'pi-star-fill text-yellow-500' : 'pi-star text-500'"></i>
-                </div>
-              </template>
-              <template #value="slotProps">
-                <div v-if="slotProps.value === 'Any Star Count'" class="flex align-items-center">
-                  <span>Starred</span>
-                </div>
-                <div v-else-if="slotProps.value" class="flex align-items-center gap-1">
-                  <span>{{ slotProps.value }}</span>
-                  <i class="pi pi-star-fill text-yellow-500 text-xs"></i>
-                </div>
-                <span v-else>
-                  {{ slotProps.placeholder }}
-                </span>
-              </template>
-            </Dropdown>
-          </div>
-        </div>
       </div>
     </template>
 
     <template #end>
       <div class="flex gap-3 align-items-center">
+        <!-- Indexing Status Indicator -->
+        <div v-if="store.isIndexing" class="flex align-items-center gap-2 text-xs text-primary animate-pulse">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Indexing: {{ store.filesProcessed }} / {{ store.totalFilesToScan }}</span>
+        </div>
+        <div v-else-if="store.totalFilesToScan > 0" class="flex align-items-center gap-2 text-xs text-green-400">
+            <i class="pi pi-check-circle"></i>
+            <span>Indexed: {{ store.totalFilesToScan }} files</span>
+        </div>
+
         <Button icon="pi pi-info-circle"
                 :class="[ store.isSidebarOpen ? 'text-primary' : 'text-secondary' ]"
                 class="p-button-rounded p-button-text"
@@ -304,5 +327,15 @@ const toggleRecursive = () => {
 :deep(.p-dropdown) {
     background: var(--bg-input) !important;
     border: 1px solid var(--border-input) !important;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>

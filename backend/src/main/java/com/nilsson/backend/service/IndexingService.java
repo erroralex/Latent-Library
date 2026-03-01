@@ -35,6 +35,7 @@ import java.util.stream.Stream;
  *   updates to the library as files are added or removed.</li>
  *   <li><b>Resource Management:</b> Employs a {@link Semaphore} to prevent system saturation during
  *   intensive recursive scans.</li>
+ *   <li><b>Progress Tracking:</b> Updates the {@link IndexingStatusTracker} to provide real-time feedback to the UI.</li>
  * </ul>
  */
 @Service
@@ -54,6 +55,7 @@ public class IndexingService {
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
     private final DHashService dHashService;
+    private final IndexingStatusTracker statusTracker;
     
     private WatchService watchService;
     private Thread watchThread;
@@ -67,6 +69,7 @@ public class IndexingService {
                            PathService pathService,
                            ThumbnailService thumbnailService,
                            DHashService dHashService,
+                           IndexingStatusTracker statusTracker,
                            @Value("${app.indexing.batch-size:20}") int batchSize,
                            @Value("${app.indexing.debounce-ms:500}") long debounceDelayMs,
                            @Value("${app.indexing.watch-retry-ms:5000}") long watchRetryDelayMs,
@@ -77,6 +80,7 @@ public class IndexingService {
         this.pathService = pathService;
         this.thumbnailService = thumbnailService;
         this.dHashService = dHashService;
+        this.statusTracker = statusTracker;
         this.batchSize = batchSize;
         this.debounceDelayMs = debounceDelayMs;
         this.watchRetryDelayMs = watchRetryDelayMs;
@@ -88,6 +92,7 @@ public class IndexingService {
     public void cancel() {
         stopWatching();
         scheduler.shutdownNow();
+        statusTracker.finishScan();
     }
 
     public void reconcileLibrary() {
@@ -158,18 +163,14 @@ public class IndexingService {
 
         Runnable scanTask = () -> {
             try {
-                List<File> batch = new ArrayList<>(batchSize);
+                List<File> allFiles = new ArrayList<>();
 
                 if (recursive) {
                     Files.walkFileTree(folder.toPath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                             if (isImageFile(file.toFile())) {
-                                batch.add(file.toFile());
-                                if (batch.size() >= batchSize) {
-                                    startIndexing(new ArrayList<>(batch), null);
-                                    batch.clear();
-                                }
+                                allFiles.add(file.toFile());
                             }
                             return FileVisitResult.CONTINUE;
                         }
@@ -188,28 +189,36 @@ public class IndexingService {
                 } else {
                     try (Stream<Path> stream = Files.list(folder.toPath())) {
                         stream.filter(path -> isImageFile(path.toFile()))
-                                .forEach(path -> {
-                                    batch.add(path.toFile());
-                                    if (batch.size() >= batchSize) {
-                                        startIndexing(new ArrayList<>(batch), null);
-                                        batch.clear();
-                                    }
-                                });
+                                .forEach(path -> allFiles.add(path.toFile()));
                     }
                 }
 
-                if (!batch.isEmpty()) {
-                    startIndexing(batch, null);
+                // Filter out files that are already indexed and not missing
+                List<File> newFiles = new ArrayList<>();
+                for (File file : allFiles) {
+                    String path = pathService.getNormalizedAbsolutePath(file);
+                    int id = imageRepo.getIdByPath(path);
+                    if (id == -1 || imageRepo.isMissing(path)) {
+                        newFiles.add(file);
+                    }
+                }
+
+                if (!newFiles.isEmpty()) {
+                    long scanId = statusTracker.startNewScan(newFiles.size());
+                    startIndexing(newFiles, scanId, null);
+                } else {
+                    statusTracker.finishScan();
                 }
             } catch (IOException e) {
                 logger.error("Failed to scan folder: {}", folder.getAbsolutePath(), e);
+                statusTracker.finishScan();
             }
         };
 
         executor.submit(scanTask);
     }
 
-    public void startIndexing(List<File> files, Consumer<BatchResult> onBatchResult) {
+    public void startIndexing(List<File> files, long scanId, Consumer<BatchResult> onBatchResult) {
         if (files == null || files.isEmpty()) return;
 
         thumbnailService.preloadCache(files);
@@ -223,7 +232,7 @@ public class IndexingService {
                 try {
                     processingPermits.acquire();
                     try {
-                        BatchResult result = processBatch(batch);
+                        BatchResult result = processBatch(batch, scanId);
                         if (onBatchResult != null) {
                             onBatchResult.accept(result);
                         }
@@ -235,6 +244,7 @@ public class IndexingService {
                     break;
                 }
             }
+            statusTracker.finishScan();
         };
         executor.submit(task);
     }
@@ -376,7 +386,7 @@ public class IndexingService {
         return files;
     }
 
-    private BatchResult processBatch(List<File> batch) {
+    private BatchResult processBatch(List<File> batch, long scanId) {
         Map<File, Map<String, String>> metadataMap = new HashMap<>();
         Map<File, Integer> ratingMap = new HashMap<>();
 
@@ -387,6 +397,7 @@ public class IndexingService {
                 dataManager.cacheMetadata(file, meta, dHash);
                 ratingMap.put(file, dataManager.getRating(file));
                 metadataMap.put(file, meta);
+                statusTracker.incrementProcessed(scanId);
             } catch (Exception e) {
                 logger.debug("Failed to index file: {} - {}", file.getName(), e.getMessage());
             }

@@ -15,6 +15,9 @@ import com.nilsson.backend.repository.SearchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +121,40 @@ public class UserDataManager {
                     return new ImageDTO(path, 0, "");
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves a paginated list of {@link ImageDTO}s for a specific folder.
+     *
+     * @param folder    The root folder to scan.
+     * @param recursive Whether to include subfolders.
+     * @param pageable  Pagination information.
+     * @return A page of enriched ImageDTOs.
+     */
+    public Page<ImageDTO> getImagesInFolderPaginated(File folder, boolean recursive, Pageable pageable) {
+        String folderPath = pathService.getNormalizedAbsolutePath(folder);
+        
+        Page<String> pathsPage = imageRepo.findPathsByFolder(folderPath, recursive, pageable);
+        
+        if (pathsPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<String> paths = pathsPage.getContent();
+        
+        Map<String, ImageInfo> infoMap = imageRepo.getBulkImageInfo(paths);
+
+        List<ImageDTO> dtos = paths.stream()
+                .map(path -> {
+                    ImageInfo info = infoMap.get(path);
+                    if (info != null) {
+                        return new ImageDTO(info.path(), info.rating(), info.model());
+                    }
+                    return new ImageDTO(path, 0, "");
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, pathsPage.getTotalElements());
     }
 
     public void shutdown() {
@@ -313,6 +350,10 @@ public class UserDataManager {
         }
     }
 
+    /**
+     * Calculates a unique SHA-256 fingerprint for a file using a chunked approach.
+     * To maintain performance, only the head and tail of large files are hashed.
+     */
     public String calculateHash(File file) {
         try {
             long length = file.length();

@@ -85,13 +85,27 @@ public class FtsService {
                 .map(tag -> formatFtsToken("tag", tag))
                 .collect(Collectors.joining(" "));
 
-        String globalText = (metadataText + " " + tagsText).trim();
-
-        String aiTags = jdbcClient.sql("SELECT ai_tags FROM images WHERE id = ?")
+        Map<String, Object> customData = jdbcClient.sql("SELECT ai_tags, user_notes, custom_prompt, custom_negative_prompt, custom_model FROM images WHERE id = ?")
                 .param(imageId)
-                .query(String.class)
-                .optional()
-                .orElse("");
+                .query((rs, rowNum) -> {
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("ai_tags", rs.getString("ai_tags") != null ? rs.getString("ai_tags") : "");
+                    map.put("user_notes", rs.getString("user_notes") != null ? rs.getString("user_notes") : "");
+                    map.put("custom_prompt", rs.getString("custom_prompt") != null ? rs.getString("custom_prompt") : "");
+                    map.put("custom_negative_prompt", rs.getString("custom_negative_prompt") != null ? rs.getString("custom_negative_prompt") : "");
+                    map.put("custom_model", rs.getString("custom_model") != null ? rs.getString("custom_model") : "");
+                    return map;
+                }).optional().orElse(Map.of());
+
+        String customText = String.join(" ", 
+            (String) customData.getOrDefault("user_notes", ""),
+            (String) customData.getOrDefault("custom_prompt", ""),
+            (String) customData.getOrDefault("custom_negative_prompt", ""),
+            (String) customData.getOrDefault("custom_model", "")
+        );
+
+        String globalText = (metadataText + " " + tagsText + " " + customText).trim();
+        String aiTags = (String) customData.getOrDefault("ai_tags", "");
 
         jdbcClient.sql("INSERT OR REPLACE INTO metadata_fts(image_id, global_text, ai_tags) VALUES (?, ?, ?)")
                 .param(imageId)

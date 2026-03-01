@@ -3,10 +3,7 @@ package com.nilsson.backend.controller;
 import com.nilsson.backend.model.DuplicatePair;
 import com.nilsson.backend.service.DuplicateService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -44,8 +41,8 @@ public class DuplicateController {
     }
 
     @PostMapping("/resolve-all")
-    public ResponseEntity<String> resolveAllDuplicates() {
-        String result = duplicateService.autoResolveDuplicates();
+    public ResponseEntity<String> resolveAllDuplicates(@RequestParam(defaultValue = "LATEST_SCANNED") String strategy) {
+        String result = duplicateService.autoResolveDuplicates(strategy);
         return ResponseEntity.ok(result);
     }
 }

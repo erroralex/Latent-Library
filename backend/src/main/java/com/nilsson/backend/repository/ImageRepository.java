@@ -6,6 +6,9 @@ import com.nilsson.backend.model.ImageInfo;
 import com.nilsson.backend.model.UpdateMetadataRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +42,7 @@ import java.util.stream.Stream;
  *   for a large list of file paths in a single query.</li>
  *   <li><b>Batch Operations:</b> Provides efficient batch deletion mechanisms to handle
  *   large-scale library reconciliation or folder removals.</li>
+ *   <li><b>Pagination:</b> Supports efficient paginated retrieval of images for infinite scroll.</li>
  * </ul>
  */
 @Repository
@@ -75,6 +79,46 @@ public class ImageRepository {
                 .list()
                 .stream()
                 .collect(Collectors.toMap(ImageInfo::path, info -> info));
+    }
+
+    /**
+     * Retrieves a paginated list of image paths for a specific folder, optionally including subfolders.
+     *
+     * @param folderPath The absolute path of the root folder to search.
+     * @param recursive  If true, includes images from all subdirectories.
+     * @param pageable   The pagination information (page number and size).
+     * @return A {@link Page} containing the list of file paths for the requested chunk.
+     */
+    public Page<String> findPathsByFolder(String folderPath, boolean recursive, Pageable pageable) {
+        String normalizedPath = folderPath.replace("\\", "/");
+        String countSql;
+        String querySql;
+        List<Object> params;
+
+        if (recursive) {
+            countSql = "SELECT COUNT(*) FROM images WHERE file_path LIKE ? || '%'";
+            querySql = "SELECT file_path FROM images WHERE file_path LIKE ? || '%' ORDER BY last_scanned DESC, file_path ASC LIMIT ? OFFSET ?";
+            params = List.of(normalizedPath, pageable.getPageSize(), pageable.getOffset());
+        } else {
+            String globPattern = normalizedPath + "/*";
+            String excludePattern = normalizedPath + "/*/*";
+            
+            countSql = "SELECT COUNT(*) FROM images WHERE file_path GLOB ? AND file_path NOT GLOB ?";
+            querySql = "SELECT file_path FROM images WHERE file_path GLOB ? AND file_path NOT GLOB ? ORDER BY last_scanned DESC, file_path ASC LIMIT ? OFFSET ?";
+            params = List.of(globPattern, excludePattern, pageable.getPageSize(), pageable.getOffset());
+        }
+
+        Long total = jdbcClient.sql(countSql)
+                .params(recursive ? List.of(normalizedPath) : List.of(params.get(0), params.get(1)))
+                .query(Long.class)
+                .single();
+
+        List<String> paths = jdbcClient.sql(querySql)
+                .params(params)
+                .query(String.class)
+                .list();
+
+        return new PageImpl<>(paths, pageable, total);
     }
 
     public int getIdByPath(String path) {
