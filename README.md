@@ -167,7 +167,7 @@ Latent Library is completely portable. To update to a new version without losing
 
 ## 📜 License
 
-Distributed under the **MIT License**. Free for personal and commercial use.
+Distributed under the **MIT License**. Free for personal use.
 
 ---
 
